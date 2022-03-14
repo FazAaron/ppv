@@ -18,7 +18,7 @@ class Application:
         self.curr_sent: int = 0
 
     def can_send(self) -> bool:
-        return self.curr_sent != self.amount
+        return self.curr_sent <= self.amount
 
     def send(self, target_ip: str, ppv: int) -> Packet:
         self.curr_sent += 1
