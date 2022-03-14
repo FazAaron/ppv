@@ -1,14 +1,53 @@
 from typing import List
-from route import Route
+
+
+class Route:
+    """
+    Abstract representation of routes in a routing table
+    """
+
+    def __init__(self,
+                 destination: str,
+                 gateway:     str,
+                 interface:   str,
+                 metrics:     int
+                 ) -> None:
+        self.destination: str = destination
+        self.gateway:     str = gateway
+        self.interface:   str = interface
+        self.metrics:     int = metrics
+
+    def __eq__(self, __o: object) -> bool:
+        """
+        Overriding the behaviour of default = operator on Route objects
+        """
+        if isinstance(__o, self.__class__):
+            return __o.destination == self.destination and\
+                __o.gateway == self.gateway and\
+                __o.interface == self.interface and\
+                __o.metrics == self.metrics
+        return False
+
+    def __str__(self) -> str:
+        """
+        Overriding the behaviour of the string representation of
+        Route objects
+        """
+        return (f"Destination: {self.destination}\n"
+                f"Gateway: {self.gateway}\n"
+                f"Interface: {self.interface}\n"
+                f"Metrics: {self.metrics}")
+
 
 class RoutingTable:
     """
     Abstract representation of routing tables used by Node objects
     """
+
     def __init__(self) -> None:
         self.routes: List[Route] = []
-    
-    def get_routes(self, destination : str) -> List[Route]:
+
+    def get_routes(self, destination: str) -> List[Route]:
         """
         Returns the list of routes corrseponding to the destination
         """
@@ -35,18 +74,17 @@ class RoutingTable:
         Overrides the corresponding Route with the one passed as an argument.
         The Route with the same destination and interface is going to be the
         one overwritten. If no such Route exists, this adds it.
-        If the exact Route is present in the table, nothing will change.
+        If the exact Route is present, nothing changes in the list.
         """
         for route in self.routes:
             if to_set == route:
                 return False
             elif to_set.destination == route.destination and\
-                 to_set.interface == route.interface:
+                    to_set.interface == route.interface:
                 route = to_set
                 return True
         self.routes.append(to_set)
-        return True    
-                            
+        return True
 
     def del_route(self, to_delete) -> None:
         """
