@@ -6,6 +6,8 @@ from node import Node, Host, Router
 
 class Network:
     # TODO building a network from the components
+    # TODO expose the API
+    # TODO tests, documentation
     """
     Abstract implementation of a Network, consisting of different components.
     """
@@ -37,5 +39,43 @@ class Network:
             links.add(interface.link)
         return links
 
-    def send_packet() -> None:
+    # TODO helper for dijkstra
+    def create_graph(self) -> str:
+        for host in self.hosts:
+            for interface in host.interfaces:
+                pass
+
+    def create_host(self, name: str, ip: str, send_rate: int,) -> None:
+        self.hosts.append(Host(name, ip, send_rate))
+        
+    def create_router(self, 
+                      name: str, 
+                      ip: str, 
+                      send_rate: int,
+                      buffer_size: int
+                      ) -> None:
+        self.routers.append(Router(name, ip, send_rate, buffer_size))
+
+    def add_interface(self, node: Node, interface_name: str) -> None:
+        node.add_interface(interface_name)
+
+    def delete_interface(self, node: Node, interface_name: str) -> None:
+        node.delete_interface(interface_name)
+
+    def set_application(self) -> None:
+        pass
+
+    def connect_nodes(self) -> None:
+        pass
+
+    def disconnect_nodes(self) -> None:
+        pass
+
+    def update_routing_tables(self) -> None:
+        pass
+
+    def print_node(self, node: Node) -> None:
+        node.print_details()
+
+    def send_packet(self) -> None:
         pass

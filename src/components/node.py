@@ -3,11 +3,9 @@ from application import Application
 from packet import Packet
 from routing_table import RoutingTable, Route
 from interface import Interface
-from typing import List
+from typing import List, Tuple
 from link import Link
 import random
-
-# TODO implement discover_routes to be a proper routing table population algorithm
 
 
 class Node:
@@ -16,13 +14,13 @@ class Node:
         self.ip:            str = ip
         self.send_rate:     int = send_rate
         self.interfaces:    List[Interface] = []
-        self.connections:   List[(Interface, Interface)] = []
+        self.connections:   List[(Interface, Node), (Interface, Node)] = []
         self.routing_table: RoutingTable = RoutingTable()
 
     def add_route(self, route: Route) -> None:
         self.routing_table.set_route(route)
 
-    # TODO
+    # TODO Implement it to be a proper routing table population algorithm
     def discover_routes(self) -> None:
         pass
 
@@ -49,10 +47,15 @@ class Node:
         self.interfaces.append(Interface(name))
 
     def delete_interface(self, name: str) -> None:
+        for connection in self.connections:
+            if connection[0][0].name == name:
+               self.disconnect_from_interface(connection[0][0],
+                                              connection[1][0]) 
         for interface in self.interfaces:
             if interface.name == name:
                 self.interfaces.remove(interface)
 
+    # TODO move it to Network
     def connect_to_interface(self,
                              __o: Node,
                              self_interface: Interface,
@@ -60,11 +63,14 @@ class Node:
                              speed: int,
                              metrics: int
                              ) -> None:
-        for (ownx, owny), (otherx, othery) in \
-                zip(self.connections, __o.connections):
-            if ownx is self_interface and owny is other_interface and \
-                    otherx is other_interface and othery is self_interface:
-                return
+        for connection in self.connections:
+            if connection[0][0] is self_interface and \
+               connection[1][0] is other_interface:
+                   for o_connection in __o.connections:
+                       if o_connection[0][0] is other_interface and \
+                          o_connection[1][0] is self_interface:
+                              self.connections.remove(connection)
+                              __o.connections.remove(o_connection)
         connection: Link = Link(speed, metrics)
         self_interface.connect_link(connection,
                                     connection.channels[0],
@@ -72,24 +78,35 @@ class Node:
         other_interface.connect_link(connection,
                                      connection.channels[1],
                                      connection.channels[0])
-        self.connections.append((self_interface, other_interface))
-        __o.connections.append((other_interface, self_interface))
+        self_connection:  Tuple(Interface, Node) = (self_interface, self)
+        other_connection: Tuple(Interface, Node) = (other_interface, __o)
+        self.connections.append((self_connection, 
+                                 other_connection))
+        __o.connections.append((other_connection, 
+                                self_connection))
 
+    # TODO move it to Network
     def disconnect_from_interface(self,
                                   self_interface: Interface,
                                   other_interface: Interface
                                   ) -> None:
         for item in self.connections:
-            if item[0] is self_interface and item[1] is other_interface:
+            if item[0][0] is self_interface and item[1][0] is other_interface:
                 self_interface.disconnect_link()
-                other_interface.disconnect_link()
                 self.connections.remove(item)
+                other_interface.disconnect_link()
+                for connection in item[1][1].connections:
+                    if connection[0][0] is item[1][0]:
+                        item[1][1].connections.remove(connection)
                 return
 
     def send_packet(self) -> None:
         raise NotImplementedError("Base class method call.")
 
     def receive_packet(self) -> None:
+        raise NotImplementedError("Base class method call.")
+
+    def print_details(self) -> None:
         raise NotImplementedError("Base class method call.")
 
 
@@ -105,14 +122,6 @@ class Host(Node):
     def set_application(self, name: str, amount: int) -> None:
         self.application: Application = \
             Application(name, self.ip, amount, self.send_rate)
-
-    def set_ip(self, ip: str) -> None:
-        self.ip = ip
-        self.application.ip = ip
-
-    def set_send_rate(self, send_rate: int) -> None:
-        self.send_rate = send_rate
-        self.application.send_rate = send_rate
 
     def send_packet(self, destination: str) -> str:
         if self.application.can_send():
@@ -131,6 +140,7 @@ class Host(Node):
             print(f"Received packet on {self.name}")
             self.application.receive(packet)
 
+    # TODO make it so that packages' PPV are not randomly generated
     def calculate_ppv(self) -> int:
         return random.randint(1, 10)
 
@@ -150,7 +160,7 @@ class Host(Node):
             print("None")
         else:
             for same_node, other_node in self.connections:
-                print(f"\n{same_node}\n---\nCONNECTED TO\n---\n{other_node}")
+                print(f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n")
 
 
 class Router(Node):
@@ -211,4 +221,4 @@ class Router(Node):
             print("None")
         else:
             for same_node, other_node in self.connections:
-                print(f"\n{same_node}\n---\nCONNECTED TO\n---\n{other_node}")
+                print(f"\n{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}")
