@@ -23,9 +23,9 @@ class Route:
         """
         if isinstance(__o, self.__class__):
             return __o.destination == self.destination and\
-                __o.gateway == self.gateway and\
-                __o.interface == self.interface and\
-                __o.metrics == self.metrics
+                   __o.gateway == self.gateway and\
+                   __o.interface == self.interface and\
+                   __o.metrics == self.metrics
         return False
 
     def __str__(self) -> str:
@@ -81,7 +81,8 @@ class RoutingTable:
                 return False
             elif to_set.destination == route.destination and\
                     to_set.interface == route.interface:
-                route = to_set
+                self.routes.remove(route)
+                self.routes.append(to_set)
                 return True
         self.routes.append(to_set)
         return True

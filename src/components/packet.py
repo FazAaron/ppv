@@ -21,6 +21,6 @@ class Packet:
         Overriding the default behaviour of the string representation for
         Packet objects
         """
-        return (f"ID: {self.uuid}\n"
+        return (f"Packet ID: {self.uuid}\n"
                 f"Source IP: {self.source_ip}\nTarget IP: {self.target_ip}\n"
                 f"PPV: {self.ppv}")

@@ -35,6 +35,7 @@ class Interface:
         return None
 
     def put_to_link(self, packet: Packet) -> None:
+        print("Put packet on link")
         self.send_channel.fill_payload(packet)
 
     def __str__(self) -> str:
