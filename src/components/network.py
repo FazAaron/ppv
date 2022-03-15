@@ -65,10 +65,10 @@ class Network:
     def set_application(self) -> None:
         pass
 
-    def connect_nodes(self) -> None:
+    def connect_node_interfaces(self) -> None:
         pass
 
-    def disconnect_nodes(self) -> None:
+    def disconnect_node_interfaces(self) -> None:
         pass
 
     def update_routing_tables(self) -> None:

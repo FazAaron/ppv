@@ -55,7 +55,6 @@ class Node:
             if interface.name == name:
                 self.interfaces.remove(interface)
 
-    # TODO move it to Network
     def connect_to_interface(self,
                              __o: Node,
                              self_interface: Interface,
@@ -85,7 +84,6 @@ class Node:
         __o.connections.append((other_connection, 
                                 self_connection))
 
-    # TODO move it to Network
     def disconnect_from_interface(self,
                                   self_interface: Interface,
                                   other_interface: Interface
