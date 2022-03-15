@@ -22,9 +22,9 @@ class Route:
         Overriding the behaviour of default = operator on Route objects
         """
         if isinstance(__o, self.__class__):
-            return __o.destination == self.destination and\
-                   __o.gateway == self.gateway and\
-                   __o.interface == self.interface and\
+            return __o.destination == self.destination and \
+                   __o.gateway == self.gateway and \
+                   __o.interface == self.interface and \
                    __o.metrics == self.metrics
         return False
 

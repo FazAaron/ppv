@@ -12,12 +12,12 @@ import random
 
 class Node:
     def __init__(self, name: str, ip: str, send_rate: int) -> None:
-        self.name:          str                          = name
-        self.ip:            str                          = ip
-        self.send_rate:     int                          = send_rate
-        self.interfaces:    List[Interface]              = []
+        self.name:          str = name
+        self.ip:            str = ip
+        self.send_rate:     int = send_rate
+        self.interfaces:    List[Interface] = []
         self.connections:   List[(Interface, Interface)] = []
-        self.routing_table: RoutingTable                 = RoutingTable()
+        self.routing_table: RoutingTable = RoutingTable()
 
     def add_route(self, route: Route) -> None:
         self.routing_table.set_route(route)
@@ -61,16 +61,16 @@ class Node:
                              metrics: int
                              ) -> None:
         for (ownx, owny), (otherx, othery) in \
-            zip(self.connections, __o.connections):
+                zip(self.connections, __o.connections):
             if ownx is self_interface and owny is other_interface and \
-                otherx is other_interface and othery is self_interface:
+                    otherx is other_interface and othery is self_interface:
                 return
         connection: Link = Link(speed, metrics)
-        self_interface.connect_link(connection, 
-                                    connection.channels[0], 
+        self_interface.connect_link(connection,
+                                    connection.channels[0],
                                     connection.channels[1])
-        other_interface.connect_link(connection, 
-                                     connection.channels[1], 
+        other_interface.connect_link(connection,
+                                     connection.channels[1],
                                      connection.channels[0])
         self.connections.append((self_interface, other_interface))
         __o.connections.append((other_interface, self_interface))
@@ -114,7 +114,7 @@ class Host(Node):
         self.send_rate = send_rate
         self.application.send_rate = send_rate
 
-    def send_packet(self, destination: str) -> None:
+    def send_packet(self, destination: str) -> str:
         if self.application.can_send():
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
@@ -123,6 +123,7 @@ class Host(Node):
                 if route.interface == interface.name:
                     print(f"Sent packet from {self.name}")
                     interface.put_to_link(packet)
+                    return route.gateway
 
     def receive_packet(self, interface: Interface) -> None:
         packet: Packet = interface.receive_from_link()
@@ -151,6 +152,7 @@ class Host(Node):
             for same_node, other_node in self.connections:
                 print(f"\n{same_node}\n---\nCONNECTED TO\n---\n{other_node}")
 
+
 class Router(Node):
     def __init__(self,
                  name: str,
@@ -169,7 +171,7 @@ class Router(Node):
                 min_packet = packet
         return min_packet
 
-    def send_packet(self) -> None:
+    def send_packet(self) -> str:
         if len(self.buffer) > 0:
             print(f"Sent packet from {self.name}")
             packet: Packet = self.buffer.pop()
@@ -177,6 +179,7 @@ class Router(Node):
             for interface in self.interfaces:
                 if route.interface == interface.name:
                     interface.put_to_link(packet)
+                    return route.gateway
 
     def receive_packet(self, interface: Interface) -> None:
         packet: Packet = interface.receive_from_link()
