@@ -20,10 +20,6 @@ class Node:
     def add_route(self, route: Route) -> None:
         self.routing_table.set_route(route)
 
-    # TODO Implement it to be a proper routing table population algorithm
-    def discover_routes(self) -> None:
-        pass
-
     def get_best_route(self, destination: str) -> Route:
         best_route: Route = None
         for route in self.routing_table.routes:
@@ -49,7 +45,8 @@ class Node:
     def delete_interface(self, name: str) -> None:
         for connection in self.connections:
             if connection[0][0].name == name:
-               self.disconnect_from_interface(connection[0][0],
+               self.disconnect_from_interface(connection[1][1],
+                                              connection[0][0],
                                               connection[1][0]) 
         for interface in self.interfaces:
             if interface.name == name:
@@ -85,6 +82,7 @@ class Node:
                                 self_connection))
 
     def disconnect_from_interface(self,
+                                  __o: Node,
                                   self_interface: Interface,
                                   other_interface: Interface
                                   ) -> None:
@@ -93,9 +91,9 @@ class Node:
                 self_interface.disconnect_link()
                 self.connections.remove(item)
                 other_interface.disconnect_link()
-                for connection in item[1][1].connections:
+                for connection in __o.connections:
                     if connection[0][0] is item[1][0]:
-                        item[1][1].connections.remove(connection)
+                        __o.connections.remove(connection)
                 return
 
     def send_packet(self) -> None:
@@ -117,9 +115,10 @@ class Host(Node):
         super().__init__(name, ip, send_rate)
         self.application = None
 
-    def set_application(self, name: str, amount: int) -> None:
+    def set_application(self, name: str, amount: int, send_rate: int) -> None:
         self.application: Application = \
-            Application(name, self.ip, amount, self.send_rate)
+            Application(name, self.ip, amount, send_rate)
+        self.send_rate = send_rate
 
     def send_packet(self, destination: str) -> str:
         if self.application.can_send():
