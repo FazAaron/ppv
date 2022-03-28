@@ -11,6 +11,19 @@ from routing_table import Route, RoutingTable
 
 
 class Node:
+    """
+    Abstract implementation of a Node in a Network\n
+    This being the main component handles most of the logic
+
+    Data members:
+    name                            (str): Name of the Node
+    ip                              (str): IP address of the Node
+    send_rate                       (int): Sending rate (Packets / second)
+    interfaces          (List[Interface]): Interfaces available on the Node
+    connections (List[(Interface, Node), \
+                      (Interface, Node)]): Node - Node connections
+    routing_table          (RoutingTable): Routing table on the Node
+    """
     def __init__(self, name: str, ip: str, send_rate: int) -> None:
         self.name:          str = name
         self.ip:            str = ip
@@ -123,6 +136,7 @@ class Host(Node):
         self.send_rate = send_rate
 
     def send_packet(self, destination: str) -> str:
+        # TODO check the Application's send rate, and adjust if needed
         if self.application.can_send():
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)

@@ -83,11 +83,11 @@ class RoutingTable:
 
     def set_route(self, to_set: Route) -> bool:
         """
-        Overrides the corresponding Route with the one passed as an argument
+        Overrides the corresponding Route with the one passed as an argument\n
         The Route with the same destination and interface is going to be the
-        one overwritten
-        If no such Route exists, this adds it instead of overwriting it
-        If the exact Route is present, nothing changes in the RoutingTable
+        one overwritten\n
+        If no such Route exists, this adds it instead of overwriting it\n
+        If the exact Route is present, nothing changes in the RoutingTable\n
 
         Parameters:
         to_set (Route): New Route to add or set
