@@ -2,6 +2,7 @@ from packet import Packet
 
 
 class Application:
+    # TODO Make this a base class for the below classes
     """
     Abstract implementation of an Application running on a Host machine\n
     This object is responsible for the sending behaviour of the Host
@@ -64,7 +65,9 @@ class Application:
                 f"Send rate: {self.send_rate}")
 
 class ConstantApplication(Application):
+    # TODO Move the neccessary Application code here
     pass
 
 class AIMDApplication(Application):
+    # TODO Move the neccessary Application code here, implement the rest
     pass

@@ -65,7 +65,7 @@ class Network:
         node.add_interface(interface_name)
 
     def delete_interface(self, node: Node, interface_name: str) -> None:
-        node.delete_interface(interface_name)
+        node.delete_interface(node.get_interface(interface_name))
 
     def set_application(self, 
                         host: Host, 
@@ -89,11 +89,9 @@ class Network:
 
     def disconnect_node_interfaces(self,
                                    node: Node,
-                                   o_node: Node,
-                                   node_interface: Interface,
-                                   o_interface: Interface,
+                                   node_interface: Interface
                                    ) -> None:
-        node.disconnect_from_interface(o_node, node_interface, o_interface)
+        node.disconnect_interface(node_interface)
         self.update_routing_tables()
 
     def print_node(self, node: Node) -> None:

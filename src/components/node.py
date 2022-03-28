@@ -13,7 +13,8 @@ from routing_table import Route, RoutingTable
 class Node:
     """
     Abstract implementation of a Node in a Network\n
-    This being the main component handles most of the logic
+    This being the main component, handles most of the logic
+    Base class for Host and Router
 
     Data members:
     name                            (str): Name of the Node
@@ -25,17 +26,33 @@ class Node:
     routing_table          (RoutingTable): Routing table on the Node
     """
     def __init__(self, name: str, ip: str, send_rate: int) -> None:
-        self.name:          str = name
-        self.ip:            str = ip
-        self.send_rate:     int = send_rate
-        self.interfaces:    List[Interface] = []
-        self.connections:   List[(Interface, Node), (Interface, Node)] = []
-        self.routing_table: RoutingTable = RoutingTable()
+        self.name:          str                     = name
+        self.ip:            str                     = ip
+        self.send_rate:     int                     = send_rate
+        self.interfaces:    List[Interface]         = []
+        self.connections:   List[(Interface, Node), 
+                                 (Interface, Node)] = []
+        self.routing_table: RoutingTable            = RoutingTable()
 
     def add_route(self, route: Route) -> None:
+        """
+        Adds a Route to the RoutingTable
+
+        Parameters:
+        route (Route): The route to add
+        """
         self.routing_table.set_route(route)
 
     def get_best_route(self, destination: str) -> Route:
+        """
+        Get the best Route that matches the destination's IP address or nothing
+
+        Parameters:
+        destination (str): The IP address of the destination Node
+        
+        Returns:
+        Route: The best route that matches the destination IP address or None
+        """
         best_route: Route = None
         for route in self.routing_table.routes:
             if route.destination == destination:
@@ -46,42 +63,81 @@ class Node:
         return best_route
 
     def get_interface(self, name: str) -> Interface:
+        """
+        Get an interface based on it's name or nothing
+
+        Parameters:
+        name (str): The name of the interface to find
+
+        Returns:
+        Interface: The corresponding interface or None (if not present)
+        """
         for interface in self.interfaces:
             if interface.name == name:
                 return interface
         return None
 
     def add_interface(self, name: str) -> None:
+        """
+        Adds an Interface to the Node if it does not match an already existing
+        Interface's name
+
+        Parameters:
+        name (str): The name of the new Interface to add
+        """
         for interface in self.interfaces:
             if interface.name == name:
                 return
         self.interfaces.append(Interface(name))
 
     def delete_interface(self, name: str) -> None:
-        for connection in self.connections:
-            if connection[0][0].name == name:
-               self.disconnect_from_interface(connection[1][1],
-                                              connection[0][0],
-                                              connection[1][0]) 
-        for interface in self.interfaces:
-            if interface.name == name:
-                self.interfaces.remove(interface)
+        """
+        Deletes an Interface on the Node\n
+        Before deletion, the Interface is disconnected and is removed from all
+        connections
 
+        Parameters:
+        name (str): The Interface's name to delete
+        """
+        interface: Interface = self.get_interface(name)
+        if interface is None:
+            return
+        for connection in self.connections:
+            if connection[0][0] == interface:
+                self.disconnect_interface(name)
+                self.interfaces.remove(interface)
+                return
+            
     def connect_to_interface(self,
                              __o: Node,
-                             self_interface: Interface,
-                             other_interface: Interface,
+                             self_name: str,
+                             other_name: str,
                              speed: int,
                              metrics: int
                              ) -> None:
+        """
+        Connects an Interface of the Node to another Node's Interface\n
+        This creates a Link between the two Interfaces\n
+        Before connecting the two Interfaces, it also disconnects them from any
+        other connection
+
+        Parameters:
+        __o                  (Node): Other Node
+        self_name             (str): This Node's Interface's name to connect
+        other_name            (str): Other Node's Interface's name to connect
+        speed                 (int): Speed of the Link between the Interfaces
+        metrics               (int): Metrics of Link between the Interfaces
+        """
+        if self is __o:
+            return
+        self_interface:  Interface = self.get_interface(self_name)
+        other_interface: Interface = __o.get_interface(other_name)
+        if self_interface is None or other_interface is None:
+            return
         for connection in self.connections:
             if connection[0][0] is self_interface and \
                connection[1][0] is other_interface:
-                   for o_connection in __o.connections:
-                       if o_connection[0][0] is other_interface and \
-                          o_connection[1][0] is self_interface:
-                              self.connections.remove(connection)
-                              __o.connections.remove(o_connection)
+                   self.disconnect_interface(connection[0][0])
         connection: Link = Link(speed, metrics)
         self_interface.connect_link(connection,
                                     connection.channels[0],
@@ -96,46 +152,83 @@ class Node:
         __o.connections.append((other_connection, 
                                 self_connection))
 
-    def disconnect_from_interface(self,
-                                  __o: Node,
-                                  self_interface: Interface,
-                                  other_interface: Interface
-                                  ) -> None:
+    def disconnect_interface(self, name: str) -> None:
+        """
+        Disconnects an Interface and also disconnects the corresponding
+        Interface on the other Node
+
+        Parameters:
+        name (str): The Interface's name to disconnect
+        """
+        self_interface: Interface = self.get_interface(name)
+        if self_interface is None:
+            return
         for item in self.connections:
-            if item[0][0] is self_interface and item[1][0] is other_interface:
+            if item[0][0] is self_interface:
+                other_interface: Interface = item[1][0]
+                other_node:      Node      = item[1][1]
                 self_interface.disconnect_link()
                 self.connections.remove(item)
                 other_interface.disconnect_link()
-                for connection in __o.connections:
-                    if connection[0][0] is item[1][0]:
-                        __o.connections.remove(connection)
-                return
-
-    def send_packet(self) -> None:
-        raise NotImplementedError("Base class method call.")
-
-    def receive_packet(self) -> None:
-        raise NotImplementedError("Base class method call.")
+                for connection in other_node.connections:
+                    if connection[0][0] is other_interface:
+                        other_node.connections.remove(connection)
+                        return
 
     def print_details(self) -> None:
+        """
+        Prints the details of the Node object - should not be called, only used
+        because of the Python language server wouldn't help out with the method
+        signature
+        """
         raise NotImplementedError("Base class method call.")
 
 
 class Host(Node):
+    """
+    Abstract Host in the Network
+    These are the Nodes in the Network that handle sending and setting PPV
+
+    Data members:
+    name                            (str): Name of the Host
+    ip                              (str): IP address of the Host
+    send_rate                       (int): Sending rate (Packets / second)
+    interfaces          (List[Interface]): Interfaces available on the Host
+    connections (List[(Interface, Node), \
+                      (Interface, Node)]): Host - Node connections
+    routing_table          (RoutingTable): Routing table on the Host
+    application             (Application): The Application on the Host
+    """
     def __init__(self,
                  name: str,
                  ip: str,
                  send_rate: int,
                  ) -> None:
         super().__init__(name, ip, send_rate)
-        self.application = None
+        self.application: Application = None
 
     def set_application(self, name: str, amount: int, send_rate: int) -> None:
-        self.application: Application = \
-            Application(name, self.ip, amount, send_rate)
-        self.send_rate = send_rate
+        """
+        Sets the Application and the send_rate accordingly in the Host
+
+        Parameters:
+        name      (str): Name of the Application
+        amount    (int): Amount of Packets to send
+        send_rate (int): Send rate of the Application
+        """
+        self.application = Application(name, self.ip, amount, send_rate)
+        self.send_rate   = send_rate
 
     def send_packet(self, destination: str) -> str:
+        """
+        Leverages the Application to send a Packet
+
+        Parameters:
+        destination (str): IP address of the destination Node
+
+        Returns:
+        str: The next hop in the Route
+        """
         # TODO check the Application's send rate, and adjust if needed
         if self.application.can_send():
             ppv: int = self.calculate_ppv()
@@ -148,16 +241,38 @@ class Host(Node):
                     return route.gateway
 
     def receive_packet(self, interface: Interface) -> None:
+        """
+        Handles an incoming Packet accordingly - consumes it in this case
+
+        Parameters:
+        interface (Interface): The Interface the Packet came from
+        """
         packet: Packet = interface.receive_from_link()
         if packet is not None:
             print(f"Received packet on {self.name}")
             self.application.receive(packet)
 
+    def receive_all_packets(self) -> None:
+        """
+        Receives all Packets on all Interfaces by going through all of them
+        """
+        # TODO Iterate over all interfaces and get all packets
+        pass
+
     # TODO make it so that packages' PPV are not randomly generated
     def calculate_ppv(self) -> int:
+        """
+        Calculates the PPV for the next Packet.
+
+        Returns:
+        int: The calculated PPV value for the next Packet
+        """
         return random.randint(1, 10)
 
     def print_details(self) -> None:
+        """
+        Prints details of the Host, listing every attribute of it
+        """
         print(f"\nNODE {self.name} - {self.ip}:\n"
               f"Send rate: {self.send_rate} packets / s\n"
               f"Running application:\n{self.application}")
@@ -177,6 +292,21 @@ class Host(Node):
 
 
 class Router(Node):
+    """
+    Abstract Routes in the Network
+    These are the Nodes in the Network that handle Packets marked with PPV
+
+    Data members:
+    name                            (str): Name of the Host
+    ip                              (str): IP address of the Host
+    send_rate                       (int): Sending rate (Packets / second)
+    interfaces          (List[Interface]): Interfaces available on the Host
+    connections (List[(Interface, Node), \
+                      (Interface, Node)]): Host - Node connections
+    routing_table          (RoutingTable): Routing table on the Host
+    buffer                 (List[Packet]): Buffer for Packets to send out
+    buffer_size                     (int): Maximum buffer size available
+    """
     def __init__(self,
                  name: str,
                  ip: str,
@@ -188,6 +318,12 @@ class Router(Node):
         self.buffer_size: int = buffer_size
 
     def lowest_buffer_ppv(self) -> Packet:
+        """
+        Gets the lowest PPV Packet in the buffer, or nothing
+
+        Returns:
+        Packet: The lowest PPV Packet or None
+        """
         min_packet: Packet = None
         for packet in self.buffer:
             if min_packet is None or packet.ppv < min_packet.ppv:
@@ -195,6 +331,12 @@ class Router(Node):
         return min_packet
 
     def send_packet(self) -> str:
+        """
+        Takes a Packet from the buffer, or nothing
+
+        Returns:
+        str: The next hop in the Route, or None
+        """
         if len(self.buffer) > 0:
             print(f"Sent packet from {self.name}")
             packet: Packet = self.buffer.pop()
@@ -203,8 +345,17 @@ class Router(Node):
                 if route.interface == interface.name:
                     interface.put_to_link(packet)
                     return route.gateway
+        return None
 
     def receive_packet(self, interface: Interface) -> None:
+        """
+        Handles an incoming Packet accordingly
+        Puts it in the buffer, or throws it away, since this is the step that
+        compares PPV in Packets (lowest_buffer_ppv vs. incoming_ppv)
+
+        Parameters:
+        interface (Interface): The Interface the Packet came from
+        """
         packet: Packet = interface.receive_from_link()
         if packet is not None:
             print(f"Received packet on {self.name}")
@@ -218,7 +369,16 @@ class Router(Node):
                 else:
                     print(f"Dropped incoming packet:\n{packet}.")
 
+    def receive_all_packets(self) -> None:
+        """
+        Receives all Packets on all Interfaces by going through all of them
+        """
+        pass
+
     def print_details(self) -> None:
+        """
+        Prints details of the Router, listing every attribute of it
+        """
         print(f"\nNODE {self.name} - {self.ip}:\n"
               f"Send rate: {self.send_rate} packets / s\n"
               f"Buffer: {len(self.buffer)} / {self.buffer_size}")
