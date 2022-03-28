@@ -1,11 +1,13 @@
 from __future__ import annotations
-from application import Application
-from packet import Packet
-from routing_table import RoutingTable, Route
-from interface import Interface
-from typing import List, Tuple
-from link import Link
+
 import random
+from typing import List, Tuple
+
+from application import Application
+from interface import Interface
+from link import Link
+from packet import Packet
+from routing_table import Route, RoutingTable
 
 
 class Node:

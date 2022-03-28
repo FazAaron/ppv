@@ -1,9 +1,19 @@
-from packet import Packet
-from typing import List
 import uuid
+from typing import List
+
+from packet import Packet
 
 
 class Channel:
+    """
+    Abstract representation of a one-directional dataflow in a duplex Link
+
+    Data members:
+    speed           (int): How many Packets / second can go through the Channel
+    metrics         (int): Abstract immutable metric number set upon creation
+    payload: List[Packet]: Packets currently traveling through the Channel
+    """
+    
     def __init__(self,
                  speed: int,
                  metrics: int
@@ -13,10 +23,25 @@ class Channel:
         self.payload: List[Packet] = []
 
     def fill_payload(self, packet: Packet) -> None:
+        """
+        Adds a Packet to the payload to send it to the receiving side
+
+        Parameters:
+        packet (Packet): The packet to send through the Channel
+        """
         self.payload.append(packet)
 
     def pop_payload(self) -> Packet:
-        return self.payload.pop()
+        """
+        Removes and returns the first element from the payload
+        
+        Returns:
+        Packet: The Packet added first or None if the payload is empty
+        """
+        try:
+            return self.payload.pop(0)
+        except IndexError:
+            return None
 
     def __str__(self) -> str:
         return (f"Speed: {self.speed} packet / second\n"
@@ -28,12 +53,17 @@ class Link:
     """
     Abstract representation of a duplex link in the network, connecting 
     different Node objects.
+
+    Data members:
+    uuid    (str): Unique ID that helps distinguish Links
+    speed   (int): How many Packets / second can go through the Link
+    metrics (int): Abstract immutable metric number set upon creation    
     """
 
     def __init__(self, speed: int, metrics: int):
-        self.uuid:     str = uuid.uuid4()
+        self.uuid:     str           = uuid.uuid4()
         self.channels: List[Channel] = \
             [Channel(speed, metrics), Channel(speed, metrics)]
 
     def __str__(self) -> str:
-        return f"Link UUID: {self.uuid}\n{self.channels[0].__str__()}"
+        return f"Link UUID: {self.uuid}\n{self.channels[0]}"

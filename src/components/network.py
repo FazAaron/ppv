@@ -1,13 +1,12 @@
 from typing import List, Set
-from link import Link
-from interface import Interface
+
 from application import Application
-from node import Node, Host, Router
+from interface import Interface
+from link import Link
+from node import Host, Node, Router
+
 
 class Network:
-    # TODO building a network from the components
-    # TODO expose the API
-    # TODO tests, documentation
     """
     Abstract implementation of a Network, consisting of different components.
     """

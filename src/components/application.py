@@ -29,3 +29,9 @@ class Application:
         return (f"APP {self.name} - {self.ip}:\n"
                 f"Sent packets: {self.curr_sent} / {self.amount}\n"
                 f"Send rate: {self.send_rate}")
+
+class ConstantApplication(Application):
+    pass
+
+class AIMDApplication(Application):
+    pass
