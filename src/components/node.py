@@ -457,7 +457,7 @@ class Router(Node):
         from_ip: str = self.get_best_route(packet_source).gateway
         for connection in self.connections:
             if connection[1][1].ip == from_ip:
-                connection[1][1].receive_feedback((feedback, packet_source))
+                connection[1][1].receive_feedback(packet_source, feedback)
 
     def receive_feedback(self, packet_source: str, feedback: int) -> None:
         """
