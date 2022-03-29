@@ -4,7 +4,6 @@ from packet import Packet
 class Application:
     """
     Abstract implementation of an Application running on a Host machine\n
-    This object is responsible for the sending behaviour of the Host
 
     Data members:
     name      (str): Name of the Application
@@ -64,12 +63,34 @@ class Application:
                 f"Send rate: {self.send_rate}")
 
 class ConstantApplication(Application):
+    """
+    Abstract implementation of an Application running on a Host machine\n
+    This is needed due to separate sending behaviour on Host
+
+    Data members:
+    name      (str): Name of the Application
+    ip        (str): IP address of the Application (matches the Host's)
+    amount    (int): Total Packets to send
+    send_rate (int): How many Packets to send per second
+    curr_sent (int): Total number of Packets sent since initialization
+    """
     def __str__(self) -> str:
         return (f"CONST_APP {self.name} - {self.ip}:\n"
                 f"Sent packets: {self.curr_sent} / {self.amount}\n"
                 f"Send rate: {self.send_rate}")
 
 class AIMDApplication(Application):
+    """
+    Abstract implementation of an Application running on a Host machine\n
+    This is needed due to separate sending behaviour on Host
+
+    Data members:
+    name      (str): Name of the Application
+    ip        (str): IP address of the Application (matches the Host's)
+    amount    (int): Total Packets to send
+    send_rate (int): How many Packets to send per second
+    curr_sent (int): Total number of Packets sent since initialization
+    """
     def __str__(self) -> str:
         return (f"AIMD_APP {self.name} - {self.ip}:\n"
                 f"Sent packets: {self.curr_sent} / {self.amount}\n"
