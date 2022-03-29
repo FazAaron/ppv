@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import List, Tuple
 
-from application import Application
+from application import Application, AIMDApplication
 from interface import Interface
 from link import Link
 from packet import Packet
@@ -175,11 +175,24 @@ class Node:
                         other_node.connections.remove(connection)
                         return
 
+    def send_feedback(self) -> None:
+        """
+        Sends feedback - should not be called, only used because of 
+        polymorphism's sake
+        """
+        raise NotImplementedError("Base class method call.")
+
+    def receive_feedback(self) -> None:
+        """
+        Receives feedback - should not be called, only used 
+        because of polymorphism's sake
+        """
+        raise NotImplementedError("Base class method call.")
+
     def print_details(self) -> None:
         """
         Prints the details of the Node object - should not be called, only used
-        because of the Python language server wouldn't help out with the method
-        signature
+        because of polymorphism's sake
         """
         raise NotImplementedError("Base class method call.")
 
@@ -219,6 +232,7 @@ class Host(Node):
         self.application = Application(name, self.ip, amount, send_rate)
         self.send_rate   = send_rate
 
+    # TODO redo sending? or atleast make it in network as well
     def send_packet(self, destination: str) -> str:
         """
         Leverages the Application to send a Packet
@@ -229,7 +243,6 @@ class Host(Node):
         Returns:
         str: The next hop in the Route
         """
-        # TODO check the Application's send rate, and adjust if needed
         if self.application.can_send():
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
@@ -256,9 +269,38 @@ class Host(Node):
         """
         Receives all Packets on all Interfaces by going through all of them
         """
-        # TODO Iterate over all interfaces and get all packets
-        pass
+        for interface in self.interfaces:
+            self.receive_packet(interface)
 
+    def handle_feedback(self, feedback: int) -> None:
+        """
+        Adjusts sending rate on the Node and Application based on feedback
+
+        Parameters:
+        feedback (int): The feedback received from the Router
+        """
+        if feedback == 1:
+            self.send_rate += 1
+            self.application.send_rate += 1
+        elif feedback == -1:
+            self.send_rate //= 2
+            self.application.send_rate //= 2
+
+    def receive_feedback(self, packet_source: str, feedback: int) -> None:
+        """
+        Gets a feedback from the receiving Node in the Network,
+        and adjusts the sending rate according to that (if needed)
+
+        Parameters:
+        packet_source (str): This Node's IP address
+        feedback      (int): The feedback data being sent back
+        """
+        if isinstance(self.application, AIMDApplication):
+            if packet_source == self.ip:
+                self.handle_feedback(feedback)
+            else:
+                print("Something went wrong during routing.")
+                                
     # TODO make it so that packages' PPV are not randomly generated
     def calculate_ppv(self) -> int:
         """
@@ -352,6 +394,7 @@ class Router(Node):
         Handles an incoming Packet accordingly
         Puts it in the buffer, or throws it away, since this is the step that
         compares PPV in Packets (lowest_buffer_ppv vs. incoming_ppv)
+        Also sends a feedback to the source of the Packet
 
         Parameters:
         interface (Interface): The Interface the Packet came from
@@ -361,19 +404,50 @@ class Router(Node):
             print(f"Received packet on {self.name}")
             if len(self.buffer) < self.buffer_size:
                 self.buffer.append(packet)
+                ratio: float = len(self.buffer) / self.buffer_size
+                if ratio < 0.45:
+                    self.send_feedback(packet.source_ip, 1)
+                else:
+                    self.send_feedback(packet.source_ip, 0)
             elif self.buffer_size != 0:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
                 if buffer_packet.ppv < packet.ppv:
                     self.buffer.remove(buffer_packet)
+                    self.buffer.append(packet)
                     print(f"Dropped from buffer:\n{buffer_packet}")
                 else:
                     print(f"Dropped incoming packet:\n{packet}.")
+                self.send_feedback(packet.source_ip, -1)
 
     def receive_all_packets(self) -> None:
         """
         Receives all Packets on all Interfaces by going through all of them
         """
-        pass
+        for interface in self.interfaces:
+            self.receive_packet(interface)
+
+    def send_feedback(self, packet_source: str, feedback: int) -> None:
+        """
+        Sends feedback data to the Node the Packet was received from
+
+        Parameters:
+        packet (Packet): The received Packet's source IP
+        feedback  (int): The feedback data being sent back
+        """
+        from_ip: str = self.get_best_route(packet_source).gateway
+        for connection in self.connections:
+            if connection[1][1].ip == from_ip:
+                connection[1][1].receive_feedback((feedback, packet_source))
+
+    def receive_feedback(self, packet_source: str, feedback: int) -> None:
+        """
+        Receives feedback data, sending it to the intended Node
+
+        Parameters:
+        packet_source (str): The source to send feedback to
+        feedback      (int): The feedback data being sent back
+        """
+        self.send_feedback(packet_source, feedback)
 
     def print_details(self) -> None:
         """
