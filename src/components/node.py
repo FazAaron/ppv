@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import List, Tuple
 
-from application import Application, AIMDApplication
+from application import Application, AIMDApplication, ConstantApplication
 from interface import Interface
 from link import Link
 from packet import Packet
@@ -220,7 +220,11 @@ class Host(Node):
         super().__init__(name, ip, send_rate)
         self.application: Application = None
 
-    def set_application(self, name: str, amount: int, send_rate: int) -> None:
+    def set_application(self, 
+                        name: str, 
+                        amount: int, 
+                        send_rate: int,
+                        app_type: str) -> None:
         """
         Sets the Application and the send_rate accordingly in the Host
 
@@ -228,11 +232,16 @@ class Host(Node):
         name      (str): Name of the Application
         amount    (int): Amount of Packets to send
         send_rate (int): Send rate of the Application
+        app_type   (str): Type of the Application - AIMD or CONST
         """
-        self.application = Application(name, self.ip, amount, send_rate)
+        if app_type == "AIMD":
+            self.application = \
+                AIMDApplication(name, self.ip, amount, send_rate)
+        elif app_type == "CONST":
+            self.application = \
+                ConstantApplication(name, self.ip, amount, send_rate)
         self.send_rate   = send_rate
 
-    # TODO redo sending? or atleast make it in network as well
     def send_packet(self, destination: str) -> str:
         """
         Leverages the Application to send a Packet
@@ -247,19 +256,26 @@ class Host(Node):
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
             route: Route = self.get_best_route(destination)
+            if route is None:
+                print(f"Can't send packet to {destination}, dropping it.")
+                return None
             for interface in self.interfaces:
                 if route.interface == interface.name:
                     print(f"Sent packet from {self.name}")
                     interface.put_to_link(packet)
                     return route.gateway
 
-    def receive_packet(self, interface: Interface) -> None:
+    def receive_packet(self, name: str) -> None:
         """
         Handles an incoming Packet accordingly - consumes it in this case
 
         Parameters:
-        interface (Interface): The Interface the Packet came from
+        name (str): The Interface's name the Packet came from
         """
+        interface: Interface = self.get_interface(name)
+        if interface is None:
+            print(f"No interface present on the Host with name {name}.")
+            return
         packet: Packet = interface.receive_from_link()
         if packet is not None:
             print(f"Received packet on {self.name}")
@@ -270,7 +286,7 @@ class Host(Node):
         Receives all Packets on all Interfaces by going through all of them
         """
         for interface in self.interfaces:
-            self.receive_packet(interface)
+            self.receive_packet(interface.name)
 
     def handle_feedback(self, feedback: int) -> None:
         """
@@ -389,7 +405,7 @@ class Router(Node):
                     return route.gateway
         return None
 
-    def receive_packet(self, interface: Interface) -> None:
+    def receive_packet(self, name: str) -> None:
         """
         Handles an incoming Packet accordingly
         Puts it in the buffer, or throws it away, since this is the step that
@@ -397,8 +413,12 @@ class Router(Node):
         Also sends a feedback to the source of the Packet
 
         Parameters:
-        interface (Interface): The Interface the Packet came from
+        name (str): The Interface's the Packet came from
         """
+        interface: Interface = self.get_interface(name)
+        if interface is None:
+            print(f"No interface present on Router with name {name}")
+            return
         packet: Packet = interface.receive_from_link()
         if packet is not None:
             print(f"Received packet on {self.name}")
@@ -424,7 +444,7 @@ class Router(Node):
         Receives all Packets on all Interfaces by going through all of them
         """
         for interface in self.interfaces:
-            self.receive_packet(interface)
+            self.receive_packet(interface.name)
 
     def send_feedback(self, packet_source: str, feedback: int) -> None:
         """

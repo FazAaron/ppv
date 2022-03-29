@@ -69,11 +69,12 @@ class Network:
 
     def set_application(self, 
                         host: Host, 
-                        name: str, 
+                        name: str,
                         amount: int, 
-                        send_rate: int
+                        send_rate: int,
+                        app_type: str
                         ) -> None:
-        host.set_application(name, amount, send_rate)        
+        host.set_application(name, amount, send_rate, app_type)        
 
     def connect_node_interfaces(self, 
                                 node: Node, 
