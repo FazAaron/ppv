@@ -11,17 +11,20 @@ class Application:
     amount    (int): Total Packets to send
     send_rate (int): How many Packets to send per second
     curr_sent (int): Total number of Packets sent since initialization
+    app_type  (str): The type of the application (AIMD, CONST)
     """
     def __init__(self,
                  name: str,
                  ip: str,
                  amount: int,
-                 send_rate: int
+                 send_rate: int,
+                 app_type: str
                  ) -> None:
         self.name:      str = name
         self.ip:        str = ip
         self.amount:    int = amount
         self.send_rate: int = send_rate
+        self.app_type:  str = app_type
         self.curr_sent: int = 0
 
     def can_send(self) -> bool:
@@ -58,40 +61,6 @@ class Application:
         print(f"Received packet on {self.name}:\n{packet}")
 
     def __str__(self) -> str:
-        return (f"APP {self.name} - {self.ip}:\n"
-                f"Sent packets: {self.curr_sent} / {self.amount}\n"
-                f"Send rate: {self.send_rate}")
-
-class ConstantApplication(Application):
-    """
-    Abstract implementation of an Application running on a Host machine\n
-    This is needed due to separate sending behaviour on Host
-
-    Data members:
-    name      (str): Name of the Application
-    ip        (str): IP address of the Application (matches the Host's)
-    amount    (int): Total Packets to send
-    send_rate (int): How many Packets to send per second
-    curr_sent (int): Total number of Packets sent since initialization
-    """
-    def __str__(self) -> str:
-        return (f"CONST_APP {self.name} - {self.ip}:\n"
-                f"Sent packets: {self.curr_sent} / {self.amount}\n"
-                f"Send rate: {self.send_rate}")
-
-class AIMDApplication(Application):
-    """
-    Abstract implementation of an Application running on a Host machine\n
-    This is needed due to separate sending behaviour on Host
-
-    Data members:
-    name      (str): Name of the Application
-    ip        (str): IP address of the Application (matches the Host's)
-    amount    (int): Total Packets to send
-    send_rate (int): How many Packets to send per second
-    curr_sent (int): Total number of Packets sent since initialization
-    """
-    def __str__(self) -> str:
-        return (f"AIMD_APP {self.name} - {self.ip}:\n"
+        return (f"{self.app_type}_APP_{self.name} - {self.ip}:\n"
                 f"Sent packets: {self.curr_sent} / {self.amount}\n"
                 f"Send rate: {self.send_rate}")

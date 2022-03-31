@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from typing import List, Tuple
 
-from application import Application, AIMDApplication, ConstantApplication
+from application import Application
 from interface import Interface
 from link import Link
 from packet import Packet
@@ -234,12 +234,12 @@ class Host(Node):
         send_rate (int): Send rate of the Application
         app_type   (str): Type of the Application - AIMD or CONST
         """
-        if app_type == "AIMD":
+        if app_type == "CONST" or app_type == "AIMD":
             self.application = \
-                AIMDApplication(name, self.ip, amount, send_rate)
-        elif app_type == "CONST":
+                Application(name, self.ip, amount, send_rate, app_type)
+        else:
             self.application = \
-                ConstantApplication(name, self.ip, amount, send_rate)
+                Application(name, self.ip, amount, send_rate, "CONST")
         self.send_rate   = send_rate
 
     def send_packet(self, destination: str) -> str:
@@ -311,7 +311,7 @@ class Host(Node):
         packet_source (str): This Node's IP address
         feedback      (int): The feedback data being sent back
         """
-        if isinstance(self.application, AIMDApplication):
+        if self.application.app_type == "AIMD":
             if packet_source == self.ip:
                 self.handle_feedback(feedback)
             else:
@@ -331,19 +331,19 @@ class Host(Node):
         """
         Prints details of the Host, listing every attribute of it
         """
-        print(f"\nNODE {self.name} - {self.ip}:\n"
+        print(f"\nHOST {self.name} - {self.ip}:\n"
               f"Send rate: {self.send_rate} packets / s\n"
               f"Running application:\n{self.application}")
         self.routing_table.list_routes()
         print("---\nAvailable Interfaces on Node:")
         if len(self.interfaces) == 0:
-            print("None")
+            print("There are no interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 print(interface)
         print("---\nAvailable connections to other Nodes:")
         if len(self.connections) == 0:
-            print("None")
+            print("There are no connections to other Nodes.")
         else:
             for same_node, other_node in self.connections:
                 print(f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n")
@@ -473,19 +473,19 @@ class Router(Node):
         """
         Prints details of the Router, listing every attribute of it
         """
-        print(f"\nNODE {self.name} - {self.ip}:\n"
+        print(f"\nROUTER {self.name} - {self.ip}:\n"
               f"Send rate: {self.send_rate} packets / s\n"
               f"Buffer: {len(self.buffer)} / {self.buffer_size}")
         self.routing_table.list_routes()
         print("---\nAvailable Interfaces on Node:")
         if len(self.interfaces) == 0:
-            print("None")
+            print("There are no interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 print(interface)
         print("---\nAvailable connections to other Nodes:")
         if len(self.connections) == 0:
-            print("None")
+            print("There are no connections to other Nodes.")
         else:
             for same_node, other_node in self.connections:
                 print(f"\n{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}")
