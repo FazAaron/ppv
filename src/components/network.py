@@ -71,6 +71,9 @@ class Network:
         self.update_routing_tables()
 
     def add_interface(self, node: Node, interface_name: str) -> None:
+        for interface in node.interfaces:
+            if interface.name == interface_name:
+                return
         node.add_interface(interface_name)
 
     def delete_interface(self, node: Node, interface_name: str) -> None:
@@ -104,9 +107,21 @@ class Network:
         node.disconnect_interface(node_interface)
         self.update_routing_tables()
 
+    # TODO
+    def send_packet(self) -> None:
+        pass
+    
     def print_node(self, node: Node) -> None:
         node.print_details()
 
-    # TODO
-    def send_packet(self) -> None:
+    def print_hosts(self) -> None:
+        pass
+
+    def print_routers(self) -> None:
+        pass
+
+    def print_connections(self) -> None:
+        pass
+
+    def print_applications(self) -> None:
         pass
