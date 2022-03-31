@@ -1,4 +1,3 @@
-import uuid
 from typing import List
 
 from packet import Packet
@@ -55,15 +54,13 @@ class Link:
     different Node objects.
 
     Data members:
-    uuid    (str): Unique ID that helps distinguish Links
     speed   (int): How many Packets / second can go through the Link
     metrics (int): Abstract immutable metric number set upon creation    
     """
 
     def __init__(self, speed: int, metrics: int):
-        self.uuid:     str           = uuid.uuid4()
         self.channels: List[Channel] = \
             [Channel(speed, metrics), Channel(speed, metrics)]
 
     def __str__(self) -> str:
-        return f"Link UUID: {self.uuid}\n{self.channels[0]}"
+        return f"Link:\n---\n{self.channels[0]}"

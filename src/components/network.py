@@ -48,7 +48,14 @@ class Network:
             for interface in host.interfaces:
                 pass
 
-    def create_host(self, name: str, ip: str, send_rate: int,) -> None:
+    def is_duplicate_ip(self, ip: str) -> bool:
+        for node in self.get_nodes():
+            if node.ip == ip:
+                return True
+
+    def create_host(self, name: str, ip: str, send_rate: int) -> None:
+        if (self.is_duplicate_ip(ip)):
+            return
         self.hosts.append(Host(name, ip, send_rate))
         self.update_routing_tables()
         
@@ -58,6 +65,8 @@ class Network:
                       send_rate: int,
                       buffer_size: int
                       ) -> None:
+        if (self.is_duplicate_ip(ip)):
+            return
         self.routers.append(Router(name, ip, send_rate, buffer_size))
         self.update_routing_tables()
 

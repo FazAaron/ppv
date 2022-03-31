@@ -1,5 +1,3 @@
-import uuid
-
 from link import Channel, Link
 from packet import Packet
 
@@ -9,7 +7,6 @@ class Interface:
     Abstract implementation of a Node interface.
 
     Data members:
-    uuid                (str): Unique ID that helps distinguish Interfaces
     name                (str): String-based name given to the Interface
     link               (Link): Link connected to the Interface
     send_channel    (Channel): Sending Channel of the Link
@@ -17,7 +14,6 @@ class Interface:
     """
 
     def __init__(self, name: str) -> None:
-        self.uuid:            str     = uuid.uuid4().hex
         self.name:            str     = name
         self.link:            Link    = None
         self.send_channel:    Channel = None
@@ -71,5 +67,5 @@ class Interface:
         self.send_channel.fill_payload(packet)
 
     def __str__(self) -> str:
-        return (f"Interface name: {self.name}\nInterface UUID: {self.uuid}\n"
+        return (f"Interface name: {self.name}\n"
                 f"Connected link:\n{self.link}")
