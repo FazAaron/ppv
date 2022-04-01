@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Tuple, Any
 
 from application import Application
 from interface import Interface
@@ -25,103 +25,148 @@ class Network:
 
     def get_interfaces(self) -> List[Interface]:
         interfaces: List[Interface] = []
-        for host in self.hosts:
-            interfaces += host.interfaces
-        for router in self.routers:
-            interfaces += router.interfaces
+        for node in self.get_nodes():
+            interfaces += node.interfaces
         return interfaces
 
-    def get_links(self) -> Set[Link]:
-        links: Set[Link] = set()
-        interfaces: List[Interface] = self.get_interfaces()
-        for interface in interfaces:
-            links.add(interface.link)
-        return links
+    def get_connections(self, node: Node) -> Any:
+        connections: List[Tuple(Node, Link, Node)] = []
+        for node in self.get_nodes():
+            node_1: Node = node.connections[0][1]
+            link: Link = node.connections[0][0].link
+            node_2: Node = node.connections[1][1]
+            to_add: Tuple(Node, Link, Node) = (node_1, link, node_2)
+            connections.append(to_add)
+        return connections
 
     # TODO
     def update_routing_tables(self) -> None:
         pass
 
-    # TODO helper for dijkstra + dijkstra
-    def create_graph(self) -> str:
-        for host in self.hosts:
-            for interface in host.interfaces:
-                pass
-
-    def is_duplicate_ip(self, ip: str) -> bool:
+    def is_duplicate_node(self, name: str, ip: str) -> bool:
         for node in self.get_nodes():
-            if node.ip == ip:
+            if node.ip == ip or node.name == name:
                 return True
 
+    def get_host(self, name: str) -> Host:
+        for host in self.hosts:
+            if host.name == name:
+                return host
+        return None
+
     def create_host(self, name: str, ip: str, send_rate: int) -> None:
-        if (self.is_duplicate_ip(ip)):
+        if (self.is_duplicate_node(name, ip)):
             return
         self.hosts.append(Host(name, ip, send_rate))
         self.update_routing_tables()
-        
+
+    def delete_host(self, name: str) -> None:
+        for host in self.hosts:
+            if host.name == name:
+                self.hosts.remove(host)
+
+    def get_router(self, name: str) -> Router:
+        for router in self.routers:
+            if router.name == name:
+                return router
+        return None
+    
     def create_router(self, 
                       name: str, 
                       ip: str, 
                       send_rate: int,
                       buffer_size: int
                       ) -> None:
-        if (self.is_duplicate_ip(ip)):
+        if (self.is_duplicate_node(name, ip)):
             return
         self.routers.append(Router(name, ip, send_rate, buffer_size))
         self.update_routing_tables()
+                
+    def delete_router(self, name: str) -> None:
+        for router in self.routers:
+            if router.name == name:
+                self.routers.remove(router)
 
-    def add_interface(self, node: Node, interface_name: str) -> None:
+    def add_interface(self, node_name: str, interface_name: str) -> None:
+        node: Node = self.get_host(node_name) or self.get_router(node_name)
+        if node is None:
+            return
         for interface in node.interfaces:
             if interface.name == interface_name:
                 return
         node.add_interface(interface_name)
 
-    def delete_interface(self, node: Node, interface_name: str) -> None:
-        node.delete_interface(node.get_interface(interface_name))
+    def delete_interface(self, node_name: str, interface_name: str) -> None:
+        node: Node = self.get_host(node_name) or self.get_router(node_name)
+        if node is None:
+            return
+        node.delete_interface(interface_name)
 
     def set_application(self, 
-                        host: Host, 
+                        host_name: str, 
                         name: str,
                         amount: int, 
                         send_rate: int,
                         app_type: str
                         ) -> None:
+        host: Host = self.get_host(host_name)
+        if host is None:
+            return
         host.set_application(name, amount, send_rate, app_type)        
 
     def connect_node_interfaces(self, 
-                                node: Node, 
-                                o_node: Node, 
-                                node_interface: Interface, 
-                                o_interface: Interface, 
+                                node_name: str, 
+                                o_node_name: str, 
+                                interface_name: str, 
+                                o_interface_name: str, 
                                 speed: int, 
                                 metrics: int
                                 ) -> None:
-        node.connect_to_interface(o_node, node_interface, 
-                                  o_interface, speed, metrics)
+        first_node: Node = self.get_host(node_name) or \
+                           self.get_router(node_name)
+        snd_node: Node = self.get_host(o_node_name) or \
+                         self.get_router(o_node_name)
+        if (first_node and snd_node) is None:
+            return
+        first_node.connect_to_interface(snd_node, interface_name, 
+                                        o_interface_name, speed, metrics)
         self.update_routing_tables()
 
     def disconnect_node_interfaces(self,
-                                   node: Node,
+                                   node_name: str,
                                    node_interface: Interface
                                    ) -> None:
+        node: Node = self.get_host(node_name) or self.get_router(node_name)
         node.disconnect_interface(node_interface)
         self.update_routing_tables()
 
-    # TODO
+    # TODO returns (next_node, target_node), so that the event handler can handle future events
     def send_packet(self) -> None:
+        pass
+
+    # TODO 
+    def receive_packet(self) -> None:
         pass
     
     def print_node(self, node: Node) -> None:
         node.print_details()
 
+    def print_nodes(self) -> None:
+        for node in self.get_nodes():
+            self.print_node(node)
+
     def print_hosts(self) -> None:
-        pass
+        for host in self.hosts:
+            self.print_node(host)
 
     def print_routers(self) -> None:
-        pass
+        for router in self.routers:
+            self.print_node(router)
 
     def print_connections(self) -> None:
-        pass
+        for connection in self.get_connections():
+            print(f"{connection[0]}\n{connection[1]}\n{connection[2]}\n---")
 
     def print_applications(self) -> None:
-        pass
+        for host in self.hosts:
+            print(host.application)
