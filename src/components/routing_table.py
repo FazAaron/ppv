@@ -80,7 +80,7 @@ class RoutingTable:
             print(route)
             curr_line += 1
 
-    def set_route(self, to_set: Route) -> bool:
+    def set_route(self, to_set: Route) -> None:
         """
         Overrides the corresponding Route with the one passed as an argument\n
         The Route with the same destination and interface is going to be the
@@ -90,20 +90,16 @@ class RoutingTable:
 
         Parameters:
         to_set (Route): New Route to add or set
-
-        Returns:
-        bool: Whether the new Route was added / set or not
         """
         for route in self.routes:
             if to_set == route:
-                return False
+                return
             elif to_set.destination == route.destination and\
                     to_set.interface == route.interface:
                 self.routes.remove(route)
                 self.routes.append(to_set)
-                return True
+                return
         self.routes.append(to_set)
-        return True
 
     def del_route(self, to_delete: Route) -> None:
         """
