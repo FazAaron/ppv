@@ -240,7 +240,7 @@ class Host(Node):
         else:
             self.application = \
                 Application(name, self.ip, amount, send_rate, "CONST")
-        self.send_rate   = send_rate
+        self.send_rate = send_rate
 
     def send_packet(self, destination: str) -> Tuple[str, str]:
         """
