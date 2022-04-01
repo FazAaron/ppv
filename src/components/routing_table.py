@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 from typing import List
 
 
@@ -99,7 +98,7 @@ class RoutingTable:
             if to_set == route:
                 return False
             elif to_set.destination == route.destination and\
-                 to_set.interface   == route.interface:
+                    to_set.interface == route.interface:
                 self.routes.remove(route)
                 self.routes.append(to_set)
                 return True

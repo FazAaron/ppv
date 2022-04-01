@@ -1,8 +1,10 @@
+# Built-in modules
 from __future__ import annotations
 
 import random
 from typing import List, Tuple
 
+# Self-written modules
 from application import Application
 from interface import Interface
 from link import Link
@@ -13,7 +15,7 @@ from routing_table import Route, RoutingTable
 class Node:
     """
     Abstract implementation of a Node in a Network\n
-    This being the main component, handles most of the logic
+    This being the main component, handles most of the logic\n
     Base class for Host and Router
 
     Data members:
@@ -25,12 +27,13 @@ class Node:
                       (Interface, Node)]): Node - Node connections
     routing_table          (RoutingTable): Routing table on the Node
     """
+
     def __init__(self, name: str, ip: str, send_rate: int) -> None:
         self.name:          str                     = name
         self.ip:            str                     = ip
         self.send_rate:     int                     = send_rate
         self.interfaces:    List[Interface]         = []
-        self.connections:   List[(Interface, Node), 
+        self.connections:   List[(Interface, Node),
                                  (Interface, Node)] = []
         self.routing_table: RoutingTable            = RoutingTable()
 
@@ -49,7 +52,7 @@ class Node:
 
         Parameters:
         destination (str): The IP address of the destination Node
-        
+
         Returns:
         Route: The best route that matches the destination IP address or None
         """
@@ -107,7 +110,7 @@ class Node:
                 self.disconnect_interface(name)
                 self.interfaces.remove(interface)
                 return
-            
+
     def connect_to_interface(self,
                              __o: Node,
                              self_name: str,
@@ -137,7 +140,7 @@ class Node:
         for connection in self.connections:
             if connection[0][0] is self_interface and \
                connection[1][0] is other_interface:
-                   self.disconnect_interface(connection[0][0])
+                self.disconnect_interface(connection[0][0])
         connection: Link = Link(speed, metrics)
         self_interface.connect_link(connection,
                                     connection.channels[0],
@@ -147,9 +150,9 @@ class Node:
                                      connection.channels[0])
         self_connection:  Tuple(Interface, Node) = (self_interface, self)
         other_connection: Tuple(Interface, Node) = (other_interface, __o)
-        self.connections.append((self_connection, 
+        self.connections.append((self_connection,
                                  other_connection))
-        __o.connections.append((other_connection, 
+        __o.connections.append((other_connection,
                                 self_connection))
 
     def disconnect_interface(self, name: str) -> None:
@@ -166,7 +169,7 @@ class Node:
         for item in self.connections:
             if item[0][0] is self_interface:
                 other_interface: Interface = item[1][0]
-                other_node:      Node      = item[1][1]
+                other_node:      Node = item[1][1]
                 self_interface.disconnect_link()
                 self.connections.remove(item)
                 other_interface.disconnect_link()
@@ -199,8 +202,9 @@ class Node:
 
 class Host(Node):
     """
-    Abstract Host in the Network
-    These are the Nodes in the Network that handle sending and setting PPV
+    Abstract Host in the Network\n
+    These are the Nodes in the Network that handle creating Packets and 
+    setting PPV
 
     Data members:
     name                            (str): Name of the Host
@@ -212,6 +216,7 @@ class Host(Node):
     routing_table          (RoutingTable): Routing table on the Host
     application             (Application): The Application on the Host
     """
+
     def __init__(self,
                  name: str,
                  ip: str,
@@ -220,9 +225,9 @@ class Host(Node):
         super().__init__(name, ip, send_rate)
         self.application: Application = None
 
-    def set_application(self, 
-                        name: str, 
-                        amount: int, 
+    def set_application(self,
+                        name: str,
+                        amount: int,
                         send_rate: int,
                         app_type: str) -> None:
         """
@@ -316,7 +321,7 @@ class Host(Node):
                 self.handle_feedback(feedback)
             else:
                 print("Something went wrong during routing.")
-                                
+
     # TODO make it so that packages' PPV are not randomly generated
     def calculate_ppv(self) -> int:
         """
@@ -351,7 +356,7 @@ class Host(Node):
 
 class Router(Node):
     """
-    Abstract Routes in the Network
+    Abstract Routes in the Network\n
     These are the Nodes in the Network that handle Packets marked with PPV
 
     Data members:
@@ -365,6 +370,7 @@ class Router(Node):
     buffer                 (List[Packet]): Buffer for Packets to send out
     buffer_size                     (int): Maximum buffer size available
     """
+
     def __init__(self,
                  name: str,
                  ip: str,
@@ -407,9 +413,9 @@ class Router(Node):
 
     def receive_packet(self, name: str) -> None:
         """
-        Handles an incoming Packet accordingly
+        Handles an incoming Packet accordingly\n
         Puts it in the buffer, or throws it away, since this is the step that
-        compares PPV in Packets (lowest_buffer_ppv vs. incoming_ppv)
+        compares PPV in Packets (lowest_buffer_ppv vs. incoming_ppv)\n
         Also sends a feedback to the source of the Packet
 
         Parameters:

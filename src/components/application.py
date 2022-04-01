@@ -13,6 +13,7 @@ class Application:
     curr_sent (int): Total number of Packets sent since initialization
     app_type  (str): The type of the application (AIMD, CONST)
     """
+
     def __init__(self,
                  name: str,
                  ip: str,

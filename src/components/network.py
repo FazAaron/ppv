@@ -1,5 +1,7 @@
+# Built-in modules
 from typing import List, Tuple
 
+# Self written modules
 from application import Application
 from interface import Interface
 from link import Link
@@ -15,6 +17,7 @@ class Network:
     routers: List[Router]: Routers available in the Network
     graph:          Graph: A Graph built up of the Nodes in the Network
     """
+
     def __init__(self) -> None:
         self.hosts:   List[Host]   = []
         self.routers: List[Router] = []
@@ -151,10 +154,10 @@ class Network:
             if router.name == router_name:
                 return router
         return None
-    
-    def create_router(self, 
-                      router_name: str, 
-                      ip: str, 
+
+    def create_router(self,
+                      router_name: str,
+                      ip: str,
                       send_rate: int,
                       buffer_size: int
                       ) -> None:
@@ -170,7 +173,7 @@ class Network:
             return
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
         self.update_routing_tables()
-                
+
     def delete_router(self, router_name: str) -> None:
         """
         Deletes a Router from the Network
@@ -220,10 +223,10 @@ class Network:
             return
         node.delete_interface(interface_name)
 
-    def set_application(self, 
-                        host_name: str, 
+    def set_application(self,
+                        host_name: str,
                         app_name: str,
-                        amount: int, 
+                        amount: int,
                         send_rate: int,
                         app_type: str
                         ) -> None:
@@ -241,14 +244,14 @@ class Network:
         host: Host = self.get_host(host_name)
         if host is None:
             return
-        host.set_application(app_name, amount, send_rate, app_type)        
+        host.set_application(app_name, amount, send_rate, app_type)
 
-    def connect_node_interfaces(self, 
-                                node_name: str, 
-                                o_node_name: str, 
-                                interface_name: str, 
-                                o_interface_name: str, 
-                                speed: int, 
+    def connect_node_interfaces(self,
+                                node_name: str,
+                                o_node_name: str,
+                                interface_name: str,
+                                o_interface_name: str,
+                                speed: int,
                                 metrics: int
                                 ) -> None:
         """
@@ -263,19 +266,19 @@ class Network:
         metrics          (int): The metrics of the Link between the nodes
         """
         first_node: Node = self.get_host(node_name) or \
-                           self.get_router(node_name)
+            self.get_router(node_name)
         snd_node: Node = self.get_host(o_node_name) or \
-                         self.get_router(o_node_name)
+            self.get_router(o_node_name)
         if (first_node and snd_node) is None:
             return
-        first_node.connect_to_interface(snd_node, interface_name, 
+        first_node.connect_to_interface(snd_node, interface_name,
                                         o_interface_name, speed, metrics)
         self.update_routing_tables()
 
     def disconnect_node_interface(self,
-                                   node_name: str,
-                                   interface_name: str
-                                   ) -> None:
+                                  node_name: str,
+                                  interface_name: str
+                                  ) -> None:
         """
         Disconnects a Node's interface from any connection\n
         This also disconnects the other Node which the Interface was connected
@@ -289,8 +292,8 @@ class Network:
         node.disconnect_interface(interface_name)
         self.update_routing_tables()
 
-    def send_packet(self, 
-                    node_name: str, 
+    def send_packet(self,
+                    node_name: str,
                     destination: str
                     ) -> Tuple[str, str, str]:
         """
@@ -306,7 +309,7 @@ class Network:
         Parameters:
         node_name   (str): The Node to send the Packet from
         destination (str): The IP address of the goal Node
-        
+
         Returns:
         Tuple[str, str, str]: A (gateway, receiver_interface, destination) trio
         """
@@ -317,7 +320,7 @@ class Network:
             next_hop: Tuple[str, str] = node.send_packet(destination)
         else:
             next_hop: Tuple[str, str] = node.send_packet()
-        return (next_hop[0], next_hop[1] , destination)
+        return (next_hop[0], next_hop[1], destination)
 
     def receive_packet(self, node_name: str, interface_name: str) -> None:
         """
@@ -338,7 +341,7 @@ class Network:
         router: Router = self.get_router(node_name)
         node: Node = host or router
         node.receive_packet(interface_name)
-    
+
     def print_node(self, node: Node) -> None:
         """
         Prints a Node's configuration

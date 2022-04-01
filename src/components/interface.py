@@ -59,7 +59,7 @@ class Interface:
     def put_to_link(self, packet: Packet) -> None:
         """
         Puts a packet onto the sending Channel
-        
+
         Parameters:
         packet (Packet): The Packet to send through the sending Channel
         """

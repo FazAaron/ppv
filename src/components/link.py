@@ -1,5 +1,7 @@
+# Built-in modules
 from typing import List
 
+# Self-written modules
 from packet import Packet
 
 
@@ -12,7 +14,7 @@ class Channel:
     metrics         (int): Abstract immutable metric number set upon creation
     payload: List[Packet]: Packets currently traveling through the Channel
     """
-    
+
     def __init__(self,
                  speed: int,
                  metrics: int
@@ -33,7 +35,7 @@ class Channel:
     def pop_payload(self) -> Packet:
         """
         Removes and returns the first element from the payload
-        
+
         Returns:
         Packet: The Packet added first or None if the payload is empty
         """
