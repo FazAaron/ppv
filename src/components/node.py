@@ -242,7 +242,7 @@ class Host(Node):
                 Application(name, self.ip, amount, send_rate, "CONST")
         self.send_rate   = send_rate
 
-    def send_packet(self, destination: str) -> str:
+    def send_packet(self, destination: str) -> Tuple[str, str]:
         """
         Leverages the Application to send a Packet
 
@@ -263,7 +263,7 @@ class Host(Node):
                 if route.interface == interface.name:
                     print(f"Sent packet from {self.name}")
                     interface.put_to_link(packet)
-                    return route.gateway
+                    return route.gateway, route.interface
 
     def receive_packet(self, name: str) -> None:
         """
@@ -388,7 +388,7 @@ class Router(Node):
                 min_packet = packet
         return min_packet
 
-    def send_packet(self) -> str:
+    def send_packet(self) -> Tuple[str, str]:
         """
         Takes a Packet from the buffer, or nothing
 
@@ -402,7 +402,7 @@ class Router(Node):
             for interface in self.interfaces:
                 if route.interface == interface.name:
                     interface.put_to_link(packet)
-                    return route.gateway
+                    return route.gateway, route.interface
         return None
 
     def receive_packet(self, name: str) -> None:
@@ -413,7 +413,7 @@ class Router(Node):
         Also sends a feedback to the source of the Packet
 
         Parameters:
-        name (str): The Interface's the Packet came from
+        name (str): The Interface's name the Packet came from
         """
         interface: Interface = self.get_interface(name)
         if interface is None:

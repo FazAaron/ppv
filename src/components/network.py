@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any
+from typing import List, Tuple
 
 from application import Application
 from interface import Interface
@@ -29,8 +29,8 @@ class Network:
             interfaces += node.interfaces
         return interfaces
 
-    def get_connections(self, node: Node) -> Any:
-        connections: List[Tuple(Node, Link, Node)] = []
+    def get_connections(self, node: Node) -> List[Tuple[Node, Link, Node]]:
+        connections: List[Tuple[Node, Link, Node]] = []
         for node in self.get_nodes():
             node_1: Node = node.connections[0][1]
             link: Link = node.connections[0][0].link
@@ -140,13 +140,24 @@ class Network:
         node.disconnect_interface(node_interface)
         self.update_routing_tables()
 
-    # TODO returns (next_node, target_node), so that the event handler can handle future events
-    def send_packet(self) -> None:
-        pass
+    def send_packet(self, 
+                    node_name: str, 
+                    destination: str
+                    ) -> Tuple[str, str, str]:
+        host: Host = self.get_host(node_name)
+        router: Router = self.get_router(node_name)
+        node: Node = host or router
+        if router is None:
+            next_hop: Tuple[str, str] = node.send_packet(destination)
+        else:
+            next_hop: Tuple[str, str] = node.send_packet()
+        return (next_hop[0], next_hop[1] , destination)
 
-    # TODO 
-    def receive_packet(self) -> None:
-        pass
+    def receive_packet(self, node_name: str, interface_name: str) -> None:
+        host: Host = self.get_host(node_name)
+        router: Router = self.get_router(node_name)
+        node: Node = host or router
+        node.receive_packet(interface_name)
     
     def print_node(self, node: Node) -> None:
         node.print_details()
