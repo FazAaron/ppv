@@ -137,10 +137,8 @@ class Node:
         other_interface: Interface = __o.get_interface(other_name)
         if self_interface is None or other_interface is None:
             return
-        for connection in self.connections:
-            if connection[0][0] is self_interface and \
-               connection[1][0] is other_interface:
-                self.disconnect_interface(connection[0][0])
+        self.disconnect_interface(self_name)
+        __o.disconnect_interface(other_name)
         connection: Link = Link(speed, metrics)
         self_interface.connect_link(connection,
                                     connection.channels[0],
