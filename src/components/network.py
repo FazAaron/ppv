@@ -113,7 +113,7 @@ class Network:
                 return host
         return None
 
-    def create_host(self, host_name: str, ip: str, send_rate: int) -> None:
+    def create_host(self, host_name: str, ip: str, send_rate: int) -> bool:
         """
         Creates a Host in the Network
 
@@ -121,18 +121,25 @@ class Network:
         host_name (str): The name of the new Host
         ip        (str): The IP of the new Host
         send_rate (int): The sending rate of the new Host
+
+        Returns:
+        bool: Whether the creation was a success or not
         """
         if (self.is_duplicate_node(host_name, ip)):
-            return
+            return False
         self.hosts.append(Host(host_name, ip, send_rate))
         self.update_routing_tables()
+        return True
 
-    def delete_host(self, host_name_or_ip: str) -> None:
+    def delete_host(self, host_name_or_ip: str) -> bool:
         """
         Deletes a Host from the Network
 
         Parameters:
         host_name_or_ip (str): The name or IP of the Host to delete
+
+        Returns:
+        bool: Whether the deletion was a success or not
         """
         for host in self.hosts:
             if host.name == host_name_or_ip or host.ip == host_name_or_ip:
@@ -140,7 +147,8 @@ class Network:
                     host.disconnect_interface(interface.name)
                 self.hosts.remove(host)
                 self.update_routing_tables()
-                return
+                return True
+        return False
 
     def get_router(self, router_name_or_ip: str) -> Router:
         """
@@ -163,7 +171,7 @@ class Network:
                       ip: str,
                       send_rate: int,
                       buffer_size: int
-                      ) -> None:
+                      ) -> bool:
         """
         Creates a Router in the Network
 
@@ -171,18 +179,25 @@ class Network:
         Router_name (str): The name of the new Router
         ip          (str): The IP of the new Router
         send_rate   (int): The sending rate of the new Router
+
+        Returns:
+        bool: Whether the creation was a success or not
         """
         if (self.is_duplicate_node(router_name, ip)):
-            return
+            return False
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
         self.update_routing_tables()
+        return True
 
-    def delete_router(self, router_name_or_ip: str) -> None:
+    def delete_router(self, router_name_or_ip: str) -> bool:
         """
         Deletes a Router from the Network
 
         Parameters:
         router_name_or_ip (str): The name or IP of the Router to delete
+
+        Returns:
+        bool: Whether the deletion was a success or not
         """
         for router in self.routers:
             if router.name == router_name_or_ip or \
@@ -191,9 +206,10 @@ class Network:
                     router.disconnect_interface(interface.name)
                 self.routers.remove(router)
                 self.update_routing_tables()
-                return
+                return True
+        return False
 
-    def add_interface(self, node_name_or_ip: str, interface_name: str) -> None:
+    def add_interface(self, node_name_or_ip: str, interface_name: str) -> bool:
         """
         Adds an Interface to an existing Node in the Network\n
         If that Interface is already present on the Node, this does not do
@@ -203,20 +219,20 @@ class Network:
         Parameters:
         node_name_or_ip (str): The name or IP of the Node
         interface_name  (str): The name of the Interface to add to the Node
+
+        Returns:
+        bool: Whether adding the Interface was a success or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
                      self.get_router(node_name_or_ip)
         if node is None:
-            return
-        for interface in node.interfaces:
-            if interface.name == interface_name:
-                return
-        node.add_interface(interface_name)
+            return False
+        return node.add_interface(interface_name)
 
     def delete_interface(self,
                          node_name_or_ip: str,
                          interface_name: str
-                         ) -> None:
+                         ) -> bool:
         """
         Deletes an existing Interface from an existing Node\n
         If the Interface does not exist, this does not do anything\n
@@ -225,13 +241,18 @@ class Network:
         Parameters:
         node_name_or_ip (str): The name or IP of the Node to delete from
         interface_name  (str): The Interface's name to delete from the Node
+
+        Returns:
+        bool: Whether the deletion of the Interface was a success or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
                      self.get_router(node_name_or_ip)
         if node is None:
-            return
-        node.delete_interface(interface_name)
-        self.update_routing_tables()
+            return False
+        success: bool = node.delete_interface(interface_name)
+        if success:
+            self.update_routing_tables()
+        return success
 
     def set_application(self,
                         host_name_or_ip: str,
@@ -239,7 +260,7 @@ class Network:
                         amount: int,
                         send_rate: int,
                         app_type: str
-                        ) -> None:
+                        ) -> bool:
         """
         Sets the Application on a Host type Node\n
         If the Host does not exist, this does not do anything
@@ -250,11 +271,15 @@ class Network:
         amount          (int): Packet amount to send from the Application
         send_rate       (int): The sending rate of the application
         app_type        (str): The type of the Application - AIMD, or CONST
+
+        Returns:
+        bool: Whether setting the Application was a success or not
         """
         host: Host = self.get_host(host_name_or_ip)
         if host is None:
-            return
+            return False
         host.set_application(app_name, amount, send_rate, app_type)
+        return True
 
     def connect_node_interfaces(self,
                                 node_name_or_ip: str,
@@ -263,7 +288,7 @@ class Network:
                                 o_interface_name: str,
                                 speed: int,
                                 metrics: int
-                                ) -> None:
+                                ) -> bool:
         """
         Connects two Nodes on the given Interfaces
 
@@ -274,21 +299,29 @@ class Network:
         o_interface_name  (str): The name of the Interface on the second Node
         speed             (int): The speed of the Link between the Nodes
         metrics           (int): The metrics of the Link between the nodes
+
+        Returns:
+        bool: Whether the creation of the connection was a success or not
         """
         first_node: Node = self.get_host(node_name_or_ip) or \
                            self.get_router(node_name_or_ip)
-        snd_node: Node = self.get_host(o_node_name_or_ip) or \
-                         self.get_router(o_node_name_or_ip)
+        snd_node:   Node = self.get_host(o_node_name_or_ip) or \
+                           self.get_router(o_node_name_or_ip)
         if (first_node and snd_node) is None:
-            return
-        first_node.connect_to_interface(snd_node, interface_name,
-                                        o_interface_name, speed, metrics)
-        self.update_routing_tables()
+            return False
+        success: bool = first_node.connect_to_interface(snd_node,
+                                                        interface_name,
+                                                        o_interface_name,
+                                                        speed,
+                                                        metrics)
+        if success:
+            self.update_routing_tables()
+        return success
 
     def disconnect_node_interface(self,
                                   node_name_or_ip: str,
                                   interface_name: str
-                                  ) -> None:
+                                  ) -> bool:
         """
         Disconnects a Node's interface from any connection\n
         This also disconnects the other Node which the Interface was connected
@@ -297,11 +330,18 @@ class Network:
         Parameters:
         node_name_or_ip (str): The Node's name or IP to disconnect from
         node_interface  (str): The Interface's name to disconnect the Link from
+
+        Returns:
+        bool: Whether the Interface was disconnected or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
                      self.get_router(node_name_or_ip)
-        node.disconnect_interface(interface_name)
-        self.update_routing_tables()
+        if node is None:
+            return False
+        success: bool = node.disconnect_interface(interface_name)
+        if success:
+            self.update_routing_tables()
+        return success
 
     def send_packet(self,
                     node_name_or_ip: str,
@@ -324,13 +364,15 @@ class Network:
         Returns:
         Tuple[str, str, str]: A (gateway, receiver_interface, destination) trio
         """
-        host:           Host = self.get_host(node_name_or_ip)
-        router:         Router = self.get_router(node_name_or_ip)
-        node:           Node = host or router
-        destination_ip: str = (self.get_host(destination_name_or_ip) or
-                               self.get_router(destination_name_or_ip)).ip
+        host:             Host = self.get_host(node_name_or_ip)
+        router:           Router = self.get_router(node_name_or_ip)
+        node:             Node = host or router
+        destination_node: Node = self.get_host(destination_name_or_ip) or \
+                                 self.get_router(destination_name_or_ip)
+        if (node and destination_node) is None:
+            return None
         if router is None:
-            next_hop: Tuple[str, str] = node.send_packet(destination_ip)
+            next_hop: Tuple[str, str] = node.send_packet(destination_node.ip)
         else:
             next_hop: Tuple[str, str] = node.send_packet()
         return (next_hop[0], next_hop[1], destination_name_or_ip)
@@ -338,7 +380,7 @@ class Network:
     def receive_packet(self,
                        node_name_or_ip: str,
                        interface_name: str
-                       ) -> None:
+                       ) -> bool:
         """
         Receives a Packet on the Node on the given Interface\n
         If the Node is a Host, it consumes the Packet, because they are by
@@ -352,19 +394,30 @@ class Network:
         Parameters:
         node_name_or_ip (str): The name or IP of the Node receiving a Packet
         interface_name  (str): The name of the Interface the Packet goes to
+
+        Returns:
+        bool: Whether the Packet could be received or not
         """
         node: Node = (self.get_host(node_name_or_ip) or
                       self.get_router(node_name_or_ip))
-        node.receive_packet(interface_name)
+        if node is None:
+            return False
+        return node.receive_packet(interface_name)
 
-    def print_node(self, node: Node) -> None:
+    def print_node(self, node: Node) -> bool:
         """
         Prints a Node's configuration
 
         Parameters:
         node (Node): The Node to print the configuration of
+
+        Returns:
+        bool: Whether the Node's details could be printed or not
         """
+        if node is None:
+            return False
         node.print_details()
+        return True
 
     def print_nodes(self) -> None:
         """

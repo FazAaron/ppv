@@ -80,20 +80,24 @@ class Node:
                 return interface
         return None
 
-    def add_interface(self, name: str) -> None:
+    def add_interface(self, name: str) -> bool:
         """
         Adds an Interface to the Node if it does not match an already existing
         Interface's name
 
         Parameters:
         name (str): The name of the new Interface to add
+
+        Returns:
+        bool: Whether adding the Interface was successful or not
         """
         for interface in self.interfaces:
             if interface.name == name:
-                return
+                return False
         self.interfaces.append(Interface(name))
+        return True
 
-    def delete_interface(self, name: str) -> None:
+    def delete_interface(self, name: str) -> bool:
         """
         Deletes an Interface on the Node\n
         Before deletion, the Interface is disconnected and is removed from all
@@ -101,15 +105,19 @@ class Node:
 
         Parameters:
         name (str): The Interface's name to delete
+
+        Returns:
+        bool: Whether deleting the interface was successful or not
         """
         interface: Interface = self.get_interface(name)
         if interface is None:
-            return
+            return False
         for connection in self.connections:
             if connection[0][0] == interface:
                 self.disconnect_interface(name)
                 self.interfaces.remove(interface)
-                return
+                return True
+        return False
 
     def connect_to_interface(self,
                              __o: Node,
@@ -117,7 +125,7 @@ class Node:
                              other_name: str,
                              speed: int,
                              metrics: int
-                             ) -> None:
+                             ) -> bool:
         """
         Connects an Interface of the Node to another Node's Interface\n
         This creates a Link between the two Interfaces\n
@@ -130,13 +138,16 @@ class Node:
         other_name            (str): Other Node's Interface's name to connect
         speed                 (int): Speed of the Link between the Interfaces
         metrics               (int): Metrics of Link between the Interfaces
+
+        Returns:
+        bool: Whether creating the connection was successful or not
         """
         if self is __o:
-            return
+            return False
         self_interface:  Interface = self.get_interface(self_name)
         other_interface: Interface = __o.get_interface(other_name)
-        if self_interface is None or other_interface is None:
-            return
+        if (self_interface and other_interface) is None:
+            return False
         self.disconnect_interface(self_name)
         __o.disconnect_interface(other_name)
         connection: Link = Link(speed, metrics)
@@ -152,29 +163,34 @@ class Node:
                                  other_connection))
         __o.connections.append((other_connection,
                                 self_connection))
+        return True
 
-    def disconnect_interface(self, name: str) -> None:
+    def disconnect_interface(self, name: str) -> bool:
         """
         Disconnects an Interface and also disconnects the corresponding
         Interface on the other Node
 
         Parameters:
         name (str): The Interface's name to disconnect
+
+        Returns:
+        bool: Whether disconnecting the Interface was successful or not
         """
         self_interface: Interface = self.get_interface(name)
         if self_interface is None:
-            return
+            return False
         for item in self.connections:
             if item[0][0] is self_interface:
                 other_interface: Interface = item[1][0]
-                other_node:      Node = item[1][1]
+                other_node:      Node      = item[1][1]
                 self_interface.disconnect_link()
                 self.connections.remove(item)
                 other_interface.disconnect_link()
                 for connection in other_node.connections:
                     if connection[0][0] is other_interface:
                         other_node.connections.remove(connection)
-                        return
+                        return True
+        return False
 
     def send_feedback(self) -> None:
         """
@@ -268,28 +284,24 @@ class Host(Node):
                     interface.put_to_link(packet)
                     return route.gateway, route.interface
 
-    def receive_packet(self, name: str) -> None:
+    def receive_packet(self, name: str) -> bool:
         """
         Handles an incoming Packet accordingly - consumes it in this case
 
         Parameters:
         name (str): The Interface's name the Packet came from
+
+        Returns:
+        bool: Whether receiving the Packet was a success or not
         """
         interface: Interface = self.get_interface(name)
         if interface is None:
-            print(f"No interface present on the Host with name {name}.")
-            return
+            return False
         packet: Packet = interface.receive_from_link()
         if packet is not None:
-            print(f"Received packet on {self.name}")
             self.application.receive(packet)
-
-    def receive_all_packets(self) -> None:
-        """
-        Receives all Packets on all Interfaces by going through all of them
-        """
-        for interface in self.interfaces:
-            self.receive_packet(interface.name)
+            return True
+        return False
 
     def handle_feedback(self, feedback: int) -> None:
         """
@@ -409,7 +421,7 @@ class Router(Node):
                     return route.gateway, route.interface
         return None
 
-    def receive_packet(self, name: str) -> None:
+    def receive_packet(self, name: str) -> bool:
         """
         Handles an incoming Packet accordingly\n
         Puts it in the buffer, or throws it away, since this is the step that
@@ -418,21 +430,19 @@ class Router(Node):
 
         Parameters:
         name (str): The Interface's name the Packet came from
+
+        Returns:
+        bool: Whether receiving the Packet was a success or not
         """
         interface: Interface = self.get_interface(name)
         if interface is None:
-            print(f"No interface present on Router with name {name}")
-            return
+            return False
         packet: Packet = interface.receive_from_link()
         if packet is not None:
-            print(f"Received packet on {self.name}")
             if len(self.buffer) < self.buffer_size:
                 self.buffer.append(packet)
-                ratio: float = len(self.buffer) / self.buffer_size
-                if ratio < 0.45:
-                    self.send_feedback(packet.source_ip, 1)
-                else:
-                    self.send_feedback(packet.source_ip, 0)
+                self.send_feedback(packet.source_ip, 1)
+                return True
             elif self.buffer_size != 0:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
                 if buffer_packet.ppv < packet.ppv:
@@ -442,6 +452,8 @@ class Router(Node):
                 else:
                     print(f"Dropped incoming packet:\n{packet}.")
                 self.send_feedback(packet.source_ip, -1)
+                return True
+        return False
 
     def receive_all_packets(self) -> None:
         """
