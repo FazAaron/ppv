@@ -324,11 +324,11 @@ class Network:
         Returns:
         Tuple[str, str, str]: A (gateway, receiver_interface, destination) trio
         """
-        host:           Host   = self.get_host(node_name_or_ip)
+        host:           Host = self.get_host(node_name_or_ip)
         router:         Router = self.get_router(node_name_or_ip)
-        node:           Node   = host or router
-        destination_ip: str    = (self.get_host(destination_name_or_ip) or \
-                                  self.get_router(destination_name_or_ip)).ip
+        node:           Node = host or router
+        destination_ip: str = (self.get_host(destination_name_or_ip) or
+                               self.get_router(destination_name_or_ip)).ip
         if router is None:
             next_hop: Tuple[str, str] = node.send_packet(destination_ip)
         else:
@@ -353,7 +353,7 @@ class Network:
         node_name_or_ip (str): The name or IP of the Node receiving a Packet
         interface_name  (str): The name of the Interface the Packet goes to
         """
-        node: Node = (self.get_host(node_name_or_ip) or \
+        node: Node = (self.get_host(node_name_or_ip) or
                       self.get_router(node_name_or_ip))
         node.receive_packet(interface_name)
 
