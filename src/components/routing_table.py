@@ -95,20 +95,8 @@ class RoutingTable:
             if to_set == route:
                 return
             elif to_set.destination == route.destination and\
-                    to_set.interface == route.interface:
+                 to_set.interface   == route.interface:
                 self.routes.remove(route)
                 self.routes.append(to_set)
                 return
         self.routes.append(to_set)
-
-    def del_route(self, to_delete: Route) -> None:
-        """
-        Deletes a route from the RoutingTable
-
-        Parameters:
-        to_delete (Route): The Route object to delete from the RoutingTable
-        """
-        try:
-            self.routes.remove(to_delete)
-        except ValueError:
-            print("The given route was not found during deletion.")
