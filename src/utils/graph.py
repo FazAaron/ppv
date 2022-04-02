@@ -1,4 +1,6 @@
 # Built-in modules
+from collections import deque
+from math import inf
 from typing import List
 
 # Self-written modules
@@ -16,11 +18,12 @@ class Graph:
         self.vertices = []
         self.edges    = []
         for node in nodes:
-            self.vertices.append(node)
+            self.vertices.append(node.ip)
             for connection in node.connections:
-                self.edges.append((connection[0][1], connection[0][0], \
-                                   connection[1][1], connection[1][0], \
+                self.edges.append((connection[0][1].ip, connection[0][0].name,
+                                   connection[1][1].ip, connection[1][0].name,
                                    connection[0][0].link.channels[0].metrics))
 
-    def dijkstra(self) -> None:
-        pass
+    def dijkstra(self, source_ip: str, destination_ip: str) -> None:
+        if not source_ip in self.vertices:
+            pass
