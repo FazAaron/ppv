@@ -4,6 +4,7 @@ from src.components.packet import Packet
 from src.components.network import Network
 from src.components.link import Link
 from src.components.application import Application
+from src.utils.logger import Logger
 
 #node1: Host = Host("sender", "192.168.1.1", 5)
 #node1.set_application("sender-app", 2, node1.send_rate, "CONST")

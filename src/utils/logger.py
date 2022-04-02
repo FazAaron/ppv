@@ -13,8 +13,8 @@ class Logger:
                        The log file's name contains the initialization time,
                        along with the configured name
     """
-    def __init__(self) -> None:
-        conf_file:     TextIO = open("conf/logger_config.json")
+    def __init__(self, config_file_path: str) -> None:
+        conf_file:     TextIO = open(config_file_path)
         json_data:     Dict   = json.load(conf_file)
         path:          str    = json_data["logfile_path"]
         name:          str    = json_data["logfile_name"]
