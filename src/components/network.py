@@ -2,11 +2,11 @@
 from typing import List, Tuple
 
 # Self written modules
-from application import Application
-from interface import Interface
-from link import Link
-from node import Host, Node, Router
-from utils.graph import Graph
+from src.components.application import Application
+from src.components.interface import Interface
+from src.components.link import Link
+from src.components.node import Host, Node, Router
+from src.utils.graph import Graph
 
 
 class Network:

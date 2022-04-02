@@ -2,7 +2,7 @@
 from typing import List
 
 # Self-written modules
-from packet import Packet
+from src.components.packet import Packet
 
 
 class Channel:

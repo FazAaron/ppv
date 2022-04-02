@@ -1,5 +1,5 @@
-from link import Channel, Link
-from packet import Packet
+from src.components.link import Channel, Link
+from src.components.packet import Packet
 
 
 class Interface:

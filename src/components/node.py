@@ -5,11 +5,11 @@ import random
 from typing import List, Tuple
 
 # Self-written modules
-from application import Application
-from interface import Interface
-from link import Link
-from packet import Packet
-from routing_table import Route, RoutingTable
+from src.components.application import Application
+from src.components.interface import Interface
+from src.components.link import Link
+from src.components.packet import Packet
+from src.components.routing_table import Route, RoutingTable
 
 
 class Node:

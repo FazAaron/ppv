@@ -1,4 +1,4 @@
-from packet import Packet
+from src.components.packet import Packet
 
 
 class Application:
