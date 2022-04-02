@@ -13,11 +13,13 @@ class Graph:
         self.edges:    List[(Node, Interface, Node, Interface, int)] = []
 
     def update_graph(self, nodes: List[Node]) -> None:
+        self.vertices = []
+        self.edges    = []
         for node in nodes:
             self.vertices.append(node)
             for connection in node.connections:
                 self.edges.append((connection[0][1], connection[0][0], \
-                                   connection[1][1], connection[0][1], \
+                                   connection[1][1], connection[1][0], \
                                    connection[0][0].link.channels[0].metrics))
 
     def dijkstra(self) -> None:
