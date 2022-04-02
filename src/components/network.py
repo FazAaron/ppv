@@ -6,6 +6,7 @@ from application import Application
 from interface import Interface
 from link import Link
 from node import Host, Node, Router
+from utils.graph import Graph
 
 
 class Network:
@@ -21,6 +22,7 @@ class Network:
     def __init__(self) -> None:
         self.hosts:   List[Host]   = []
         self.routers: List[Router] = []
+        self.graph:   Graph        = Graph()
 
     def get_nodes(self) -> List[Node]:
         """
@@ -78,7 +80,7 @@ class Network:
         Updates the RoutingTable of every single Node in the Network with the
         help of a Graph object
         """
-        pass
+        self.graph.update_graph(self.get_nodes())
 
     def is_duplicate_node(self, node_name: str, ip: str) -> bool:
         """
@@ -222,6 +224,7 @@ class Network:
         if node is None:
             return
         node.delete_interface(interface_name)
+        self.update_routing_tables()
 
     def set_application(self,
                         host_name: str,
