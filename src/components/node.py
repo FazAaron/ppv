@@ -288,6 +288,7 @@ class Host(Node):
                     for connection in self.connections:
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
+                            break
                     print(f"Sent packet from {self.name}")
                     interface.put_to_link(packet)
                     return route.gateway, receiver_interface
@@ -429,6 +430,7 @@ class Router(Node):
                     for connection in self.connections:
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
+                            break
                     interface.put_to_link(packet)
                     return route.gateway, receiver_interface
         return None
