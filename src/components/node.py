@@ -65,6 +65,9 @@ class Node:
                     best_route = route
         return best_route
 
+    def reset_routes(self):
+        self.routing_table.reset_routes()
+
     def get_interface(self, name: str) -> Interface:
         """
         Get an interface based on it's name or nothing
@@ -269,8 +272,10 @@ class Host(Node):
         destination (str): IP address of the destination Node
 
         Returns:
-        str: The next hop in the Route
+        Tuple(str, str): The next hop in the Route and the receiving Interface
         """
+        if destination == self.ip:
+            return None
         if self.application.can_send():
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
@@ -280,9 +285,13 @@ class Host(Node):
                 return None
             for interface in self.interfaces:
                 if route.interface == interface.name:
+                    for connection in self.connections:
+                        if connection[0][0].name == interface.name:
+                            receiver_interface = connection[1][0].name
                     print(f"Sent packet from {self.name}")
                     interface.put_to_link(packet)
-                    return route.gateway, route.interface
+                    return route.gateway, receiver_interface
+        return None
 
     def receive_packet(self, name: str) -> bool:
         """
@@ -417,8 +426,11 @@ class Router(Node):
             route: Route = self.get_best_route(packet.target_ip)
             for interface in self.interfaces:
                 if route.interface == interface.name:
+                    for connection in self.connections:
+                        if connection[0][0].name == interface.name:
+                            receiver_interface = connection[1][0].name
                     interface.put_to_link(packet)
-                    return route.gateway, route.interface
+                    return route.gateway, receiver_interface
         return None
 
     def receive_packet(self, name: str) -> bool:

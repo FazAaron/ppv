@@ -100,3 +100,9 @@ class RoutingTable:
                 self.routes.append(to_set)
                 return
         self.routes.append(to_set)
+
+    def reset_routes(self) -> None:
+        """
+        Resets the RoutingTable to a default state
+        """
+        self.routes = []

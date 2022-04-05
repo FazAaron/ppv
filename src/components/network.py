@@ -6,6 +6,7 @@ from src.components.application import Application
 from src.components.interface import Interface
 from src.components.link import Link
 from src.components.node import Host, Node, Router
+from src.components.routing_table import Route
 from src.utils.graph import Graph
 
 
@@ -74,13 +75,29 @@ class Network:
             connections.append(to_add)
         return connections
 
-    # TODO pass Routes to Nodes
-    def update_routing_tables(self) -> None:
+    def update_routing_tables(self) -> bool:
         """
         Updates the RoutingTable of every single Node in the Network with the
         help of a Graph object
+
+        Returns:
+        bool: Whether the updating was successful or not
         """
-        self.graph.update_graph(self.get_nodes())
+        nodes: List[Node] = self.get_nodes()
+        self.graph.update_graph(nodes)
+        for source in nodes:
+            source.reset_routes()
+            for destination in nodes:
+                if source.ip != destination.ip:
+                        route_tuple: Tuple[str, str, str, int] = \
+                                        self.graph.dijkstra(source.ip, 
+                                                            destination.ip)
+                        if route_tuple is not None:
+                            source.add_route(Route(route_tuple[0],
+                                                   route_tuple[1],
+                                                   route_tuple[2],
+                                                   route_tuple[3]))
+        return True
 
     def is_duplicate_node(self, node_name: str, ip: str) -> bool:
         """
@@ -128,8 +145,7 @@ class Network:
         if (self.is_duplicate_node(host_name, ip)):
             return False
         self.hosts.append(Host(host_name, ip, send_rate))
-        self.update_routing_tables()
-        return True
+        return self.update_routing_tables()
 
     def delete_host(self, host_name_or_ip: str) -> bool:
         """
@@ -146,8 +162,7 @@ class Network:
                 for interface in host.interfaces:
                     host.disconnect_interface(interface.name)
                 self.hosts.remove(host)
-                self.update_routing_tables()
-                return True
+                return self.update_routing_tables()
         return False
 
     def get_router(self, router_name_or_ip: str) -> Router:
@@ -186,8 +201,7 @@ class Network:
         if (self.is_duplicate_node(router_name, ip)):
             return False
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
-        self.update_routing_tables()
-        return True
+        return self.update_routing_tables()
 
     def delete_router(self, router_name_or_ip: str) -> bool:
         """
@@ -205,8 +219,7 @@ class Network:
                 for interface in router.interfaces:
                     router.disconnect_interface(interface.name)
                 self.routers.remove(router)
-                self.update_routing_tables()
-                return True
+                return self.update_routing_tables()
         return False
 
     def add_interface(self, node_name_or_ip: str, interface_name: str) -> bool:
@@ -251,7 +264,7 @@ class Network:
             return False
         success: bool = node.delete_interface(interface_name)
         if success:
-            self.update_routing_tables()
+            return self.update_routing_tables()
         return success
 
     def set_application(self,
@@ -315,7 +328,7 @@ class Network:
                                                         speed,
                                                         metrics)
         if success:
-            self.update_routing_tables()
+            return self.update_routing_tables()
         return success
 
     def disconnect_node_interface(self,
@@ -340,7 +353,7 @@ class Network:
             return False
         success: bool = node.disconnect_interface(interface_name)
         if success:
-            self.update_routing_tables()
+            return self.update_routing_tables()
         return success
 
     def send_packet(self,
@@ -375,6 +388,8 @@ class Network:
             next_hop: Tuple[str, str] = node.send_packet(destination_node.ip)
         else:
             next_hop: Tuple[str, str] = node.send_packet()
+        if next_hop is None:
+            return None
         return (next_hop[0], next_hop[1], destination_name_or_ip)
 
     def receive_packet(self,
