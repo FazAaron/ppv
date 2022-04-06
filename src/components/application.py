@@ -1,3 +1,6 @@
+"""
+This module makes Application objects available for use when imported
+"""
 from src.components.packet import Packet
 
 

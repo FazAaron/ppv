@@ -1,13 +1,23 @@
+"""
+This module makes Graph objects available for use when imported
+"""
+
 # Built-in modules
 from math import inf
 from typing import List, Tuple, Dict
 
 # Self-written modules
-from src.components.interface import Interface
 from src.components.node import Node
 
 
 class Graph:
+    """
+    A Graph representation of Network nodes and their connections
+
+    Data members:
+    vertices                       (List[str]): The vertices of the Graph
+    edges    (List[(str, str, str, str, int)]): The edges of the Graph
+    """
 
     def __init__(self) -> None:
         self.vertices: List[str]                       = []
@@ -77,7 +87,7 @@ class Graph:
                     curr_val = value
                     next_hop = key
                     if curr_val is None:
-                       break
+                        break
                     while curr_val != source_ip:
                         next_hop = curr_val
                         curr_val = previous[curr_val]
@@ -87,6 +97,6 @@ class Graph:
             for neighbour in neighbours[source_ip]:
                 if neighbour[0] == next_hop:
                     interface = neighbour[1]
-                    return (destination_ip, next_hop, 
+                    return (destination_ip, next_hop,
                             interface, dist[destination_ip])
             return None

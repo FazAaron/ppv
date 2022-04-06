@@ -1,3 +1,7 @@
+"""
+This module makes Packet objects available for use when imported
+"""
+
 class Packet:
     """
     A simplified network packet representation
@@ -6,7 +10,7 @@ class Packet:
     source_ip (str): What Node IP the Packet was created at
     target_ip (str): What is the Node destination IP of the Packet
     ppv       (int): Per-packet value, used by aggregate points in the Network
-                     Used by the proposed algorithm's logic to handle Packets                 
+                     Used by the proposed algorithm's logic to handle Packets
     """
 
     def __init__(self,

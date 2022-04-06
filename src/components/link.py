@@ -1,3 +1,6 @@
+"""
+This module makes Channel and Link objects available for use when imported
+"""
 # Built-in modules
 from typing import List
 
@@ -52,12 +55,12 @@ class Channel:
 
 class Link:
     """
-    Abstract representation of a duplex link in the network, connecting 
+    Abstract representation of a duplex link in the network, connecting
     different Node objects.
 
     Data members:
     speed   (int): How many Packets / second can go through the Link
-    metrics (int): Abstract immutable metric number set upon creation    
+    metrics (int): Abstract immutable metric number set upon creation
     """
 
     def __init__(self, speed: int, metrics: int):

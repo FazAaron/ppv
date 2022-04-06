@@ -1,3 +1,7 @@
+"""
+This module makes Node, Host and Router objects available for use when imported
+"""
+
 # Built-in modules
 from __future__ import annotations
 
@@ -23,7 +27,7 @@ class Node:
     ip                              (str): IP address of the Node
     send_rate                       (int): Sending rate (Packets / second)
     interfaces          (List[Interface]): Interfaces available on the Node
-    connections (List[(Interface, Node), \
+    connections  (List[(Interface, Node), \
                       (Interface, Node)]): Node - Node connections
     routing_table          (RoutingTable): Routing table on the Node
     """
@@ -66,6 +70,9 @@ class Node:
         return best_route
 
     def reset_routes(self):
+        """
+        Resets the Node's RoutingTable to a default state - making it empty
+        """
         self.routing_table.reset_routes()
 
     def get_interface(self, name: str) -> Interface:
@@ -195,16 +202,16 @@ class Node:
                         return True
         return False
 
-    def send_feedback(self) -> None:
+    def send_feedback(self, packet_source: str, feedback: int) -> None:
         """
-        Sends feedback - should not be called, only used because of 
+        Sends feedback - should not be called, only used because of
         polymorphism's sake
         """
         raise NotImplementedError("Base class method call.")
 
-    def receive_feedback(self) -> None:
+    def receive_feedback(self, packet_source: str, feedback: int) -> None:
         """
-        Receives feedback - should not be called, only used 
+        Receives feedback - should not be called, only used
         because of polymorphism's sake
         """
         raise NotImplementedError("Base class method call.")
@@ -220,7 +227,7 @@ class Node:
 class Host(Node):
     """
     Abstract Host in the Network\n
-    These are the Nodes in the Network that handle creating Packets and 
+    These are the Nodes in the Network that handle creating Packets and
     setting PPV
 
     Data members:
@@ -256,7 +263,7 @@ class Host(Node):
         send_rate (int): Send rate of the Application
         app_type   (str): Type of the Application - AIMD or CONST
         """
-        if app_type == "CONST" or app_type == "AIMD":
+        if app_type in ("CONST", "AIMD"):
             self.application = \
                 Application(name, self.ip, amount, send_rate, app_type)
         else:
@@ -457,7 +464,7 @@ class Router(Node):
                 self.buffer.append(packet)
                 self.send_feedback(packet.source_ip, 1)
                 return True
-            elif self.buffer_size != 0:
+            if self.buffer_size != 0:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
                 if buffer_packet.ppv < packet.ppv:
                     self.buffer.remove(buffer_packet)

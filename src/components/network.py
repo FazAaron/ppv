@@ -1,3 +1,10 @@
+"""
+This module serves as a way to interact with the components through an
+API-like interface by allowing the users to create Network objects when
+importing it, thus only being able to communicate with components in the
+intended way
+"""
+
 # Built-in modules
 from typing import List, Tuple
 
@@ -89,14 +96,14 @@ class Network:
             source.reset_routes()
             for destination in nodes:
                 if source.ip != destination.ip:
-                        route_tuple: Tuple[str, str, str, int] = \
-                                        self.graph.dijkstra(source.ip, 
-                                                            destination.ip)
-                        if route_tuple is not None:
-                            source.add_route(Route(route_tuple[0],
-                                                   route_tuple[1],
-                                                   route_tuple[2],
-                                                   route_tuple[3]))
+                    route_tuple: Tuple[str, str, str, int] = \
+                                    self.graph.dijkstra(source.ip,
+                                                        destination.ip)
+                    if route_tuple is not None:
+                        source.add_route(Route(route_tuple[0],
+                                                route_tuple[1],
+                                                route_tuple[2],
+                                                route_tuple[3]))
         return True
 
     def is_duplicate_node(self, node_name: str, ip: str) -> bool:
@@ -114,6 +121,7 @@ class Network:
         for node in self.get_nodes():
             if node.ip == ip or node.name == node_name:
                 return True
+        return False
 
     def get_host(self, host_name_or_ip: str) -> Host:
         """
@@ -126,7 +134,7 @@ class Network:
         Host: The Host corresponding to the name or None
         """
         for host in self.hosts:
-            if host.name == host_name_or_ip or host.ip == host_name_or_ip:
+            if host_name_or_ip in (host.name, host.ip):
                 return host
         return None
 
@@ -142,7 +150,7 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
-        if (self.is_duplicate_node(host_name, ip)):
+        if self.is_duplicate_node(host_name, ip):
             return False
         self.hosts.append(Host(host_name, ip, send_rate))
         return self.update_routing_tables()
@@ -158,7 +166,7 @@ class Network:
         bool: Whether the deletion was a success or not
         """
         for host in self.hosts:
-            if host.name == host_name_or_ip or host.ip == host_name_or_ip:
+            if host_name_or_ip in (host.name, host.ip):
                 for interface in host.interfaces:
                     host.disconnect_interface(interface.name)
                 self.hosts.remove(host)
@@ -176,8 +184,7 @@ class Network:
         Router: The Router corresponding to the name or None
         """
         for router in self.routers:
-            if router.name == router_name_or_ip or \
-               router.ip   == router_name_or_ip:
+            if router_name_or_ip in (router.name, router.ip):
                 return router
         return None
 
@@ -198,7 +205,7 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
-        if (self.is_duplicate_node(router_name, ip)):
+        if self.is_duplicate_node(router_name, ip):
             return False
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
         return self.update_routing_tables()
@@ -214,8 +221,7 @@ class Network:
         bool: Whether the deletion was a success or not
         """
         for router in self.routers:
-            if router.name == router_name_or_ip or \
-               router.ip   == router_name_or_ip:
+            if router_name_or_ip in (router.name, router.ip):
                 for interface in router.interfaces:
                     router.disconnect_interface(interface.name)
                 self.routers.remove(router)
@@ -400,7 +406,7 @@ class Network:
         Receives a Packet on the Node on the given Interface\n
         If the Node is a Host, it consumes the Packet, because they are by
         default not set up to handle forwarding Packets\n
-        If the Node is a Router, it puts the incoming Packet into it's 
+        If the Node is a Router, it puts the incoming Packet into it's
         buffer.\n
         This describes one step of the sending process, so calling this method
         multiple times, until the current Node's IP is equal to the destination

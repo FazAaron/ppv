@@ -1,3 +1,6 @@
+"""
+This module makes Route and RoutingTable objects available for use when imported
+"""
 from typing import List
 
 
@@ -94,8 +97,8 @@ class RoutingTable:
         for route in self.routes:
             if to_set == route:
                 return
-            elif to_set.destination == route.destination and\
-                 to_set.interface   == route.interface:
+            if to_set.destination == route.destination and\
+               to_set.interface   == route.interface:
                 self.routes.remove(route)
                 self.routes.append(to_set)
                 return

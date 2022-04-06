@@ -1,3 +1,6 @@
+"""
+This module makes Interface objects available for use when imported
+"""
 from src.components.link import Channel, Link
 from src.components.packet import Packet
 
