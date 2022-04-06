@@ -20,7 +20,7 @@ class Packet:
                  ) -> None:
         self.source_ip: str = source_ip
         self.target_ip: str = target_ip
-        self.ppv:       int = ppv
+        self.ppv:       int = ppv if ppv > 0 else 1
 
     def __str__(self) -> str:
         return (f"Source IP: {self.source_ip}\nTarget IP: {self.target_ip}\n"

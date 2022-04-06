@@ -1,1 +1,1 @@
-import pytest
+from src.components.application import Application
