@@ -17,8 +17,8 @@ class Interface:
     """
 
     def __init__(self, name: str) -> None:
-        self.name:            str     = name
-        self.link:            Link    = None
+        self.name:            str = name
+        self.link:            Link = None
         self.send_channel:    Channel = None
         self.receive_channel: Channel = None
 
@@ -35,16 +35,16 @@ class Interface:
         send_channel    (Channel): The Channel to set as the sending Channel
         receive_channel (Channel): The Channel to set as the receiving Channel
         """
-        self.link            = link
-        self.send_channel    = send_channel
+        self.link = link
+        self.send_channel = send_channel
         self.receive_channel = receive_channel
 
     def disconnect_link(self) -> None:
         """
         Disconnects from the Link and sets the Channels into a default state
         """
-        self.link            = None
-        self.send_channel    = None
+        self.link = None
+        self.send_channel = None
         self.receive_channel = None
 
     def receive_from_link(self) -> Packet:

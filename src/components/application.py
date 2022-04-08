@@ -26,9 +26,9 @@ class Application:
                  ) -> None:
         self.name:      str = name
         self.ip:        str = ip
-        self.amount:    int = amount
+        self.amount:    int = 0 if amount < 0 else amount
         self.send_rate: int = send_rate
-        self.app_type:  str = app_type
+        self.app_type:  str = "AIMD" if app_type == "AIMD" else "CONST"
         self.curr_sent: int = 0
 
     def can_send(self) -> bool:
@@ -42,18 +42,21 @@ class Application:
 
     def send(self, target_ip: str, ppv: int) -> Packet:
         """
-        Creates a Packet that will be sent through the Network
+        Creates a Packet that will be sent through the Network if the
+        Application can send
 
         Parameters:
         target_ip (str): Destination to send the Packet to
         ppv       (int): The PPV to set (how valuable the Packet is)
 
         Returns:
-        Packet: The Packet to send through the Network
+        Packet: The Packet to send through the Network or None
         """
-        self.curr_sent += 1
-        packet: Packet = Packet(self.ip, target_ip, ppv)
-        return packet
+        if self.can_send():
+            self.curr_sent += 1
+            packet: Packet = Packet(self.ip, target_ip, ppv)
+            return packet
+        return None
 
     def receive(self, packet: Packet) -> None:
         """

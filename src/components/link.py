@@ -22,8 +22,8 @@ class Channel:
                  speed: int,
                  metrics: int
                  ) -> None:
-        self.speed:   int          = speed
-        self.metrics: int          = metrics
+        self.speed:   int = speed if speed > 0 else 1
+        self.metrics: int = metrics if metrics > 0 else 1
         self.payload: List[Packet] = []
 
     def fill_payload(self, packet: Packet) -> None:

@@ -33,13 +33,13 @@ class Node:
     """
 
     def __init__(self, name: str, ip: str, send_rate: int) -> None:
-        self.name:          str                     = name
-        self.ip:            str                     = ip
-        self.send_rate:     int                     = send_rate
-        self.interfaces:    List[Interface]         = []
+        self.name:          str = name
+        self.ip:            str = ip
+        self.send_rate:     int = send_rate
+        self.interfaces:    List[Interface] = []
         self.connections:   List[(Interface, Node),
                                  (Interface, Node)] = []
-        self.routing_table: RoutingTable            = RoutingTable()
+        self.routing_table: RoutingTable = RoutingTable()
 
     def add_route(self, route: Route) -> None:
         """
@@ -192,7 +192,7 @@ class Node:
         for item in self.connections:
             if item[0][0] is self_interface:
                 other_interface: Interface = item[1][0]
-                other_node:      Node      = item[1][1]
+                other_node:      Node = item[1][1]
                 self_interface.disconnect_link()
                 self.connections.remove(item)
                 other_interface.disconnect_link()
@@ -261,14 +261,10 @@ class Host(Node):
         name      (str): Name of the Application
         amount    (int): Amount of Packets to send
         send_rate (int): Send rate of the Application
-        app_type   (str): Type of the Application - AIMD or CONST
+        app_type  (str): Type of the Application - AIMD or CONST
         """
-        if app_type in ("CONST", "AIMD"):
-            self.application = \
-                Application(name, self.ip, amount, send_rate, app_type)
-        else:
-            self.application = \
-                Application(name, self.ip, amount, send_rate, "CONST")
+        self.application = \
+            Application(name, self.ip, amount, send_rate, app_type)
         self.send_rate = send_rate
 
     def send_packet(self, destination: str) -> Tuple[str, str]:
@@ -406,7 +402,7 @@ class Router(Node):
                  ) -> None:
         super().__init__(name, ip, send_rate)
         self.buffer:      List[Packet] = []
-        self.buffer_size: int          = buffer_size
+        self.buffer_size: int = buffer_size
 
     def lowest_buffer_ppv(self) -> Packet:
         """

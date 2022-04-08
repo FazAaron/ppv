@@ -1,26 +1,49 @@
+import pytest
+from pylint import lint
+
 from src.components.packet import Packet
 
-def test_proper_init():
+
+def test_init():
     """
-    Creation of a Packet with proper parameters
+    Test default init behaviour with proper parameters
     """
-    source_ip: str    = "192.168.1.1"
-    target_ip: str    = "192.168.0.1"
-    ppv:       int    = 10
-    p:         Packet = Packet(source_ip, target_ip, ppv)
+    source_ip = "192.168.1.1"
+    target_ip = "192.168.0.1"
+    ppv = 10
+    p = Packet(source_ip, target_ip, ppv)
     assert p.source_ip == source_ip and \
-           p.target_ip == target_ip and \
-           p.ppv       == ppv, "packet field mismatch during initialization"
+        p.target_ip == target_ip and \
+        p.ppv == ppv, "Packet field mismatch during initialization"
+
 
 def test_negative_ppv_init():
     """
+    Test default init behaviour with negative PPV given
     PPV is set to 1 if the value given is below zero or is zero
     """
-    source_ip: str    = "192.168.1.1"
-    target_ip: str    = "192.168.0.1"
-    ppv:       int    = -10
-    p:         Packet = Packet(source_ip, target_ip, ppv)
+    source_ip = "192.168.1.1"
+    target_ip = "192.168.0.1"
+    ppv = -10
+    p = Packet(source_ip, target_ip, ppv)
     assert p.source_ip == source_ip and \
-           p.target_ip == target_ip and \
-           p.ppv       == 1, \
-           "packet field mismatch during negative PPV initialization"
+        p.target_ip == target_ip and \
+        p.ppv != ppv and \
+        p.ppv == 1, \
+        "Packet field mismatch during negative PPV initialization"
+
+
+def test_zero_ppv_init():
+    """
+    Test default init behaviour with negative PPV given
+    PPV is set to 1 if the value given is below zero or is zero
+    """
+    source_ip = "192.168.1.1"
+    target_ip = "192.168.0.1"
+    ppv = 0
+    p = Packet(source_ip, target_ip, ppv)
+    assert p.source_ip == source_ip and \
+        p.target_ip == target_ip and \
+        p.ppv != ppv and \
+        p.ppv == 1, \
+        "Packet field mismatch during zero PPV initialization"

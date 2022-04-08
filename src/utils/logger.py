@@ -4,6 +4,7 @@ This module makes Logger objects available for use when imported.
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, TextIO
 
 
@@ -19,12 +20,13 @@ class Logger:
     """
 
     def __init__(self, config_file_path: str) -> None:
-        with open(config_file_path, encoding = "utf-8") as conf_file:
+        Path("./logs").mkdir(parents=True, exist_ok=True)
+        with open(config_file_path, encoding="utf-8") as conf_file:
             json_data: Dict = json.load(conf_file)
-        path:          str    = json_data["logfile_path"]
-        name:          str    = json_data["logfile_name"]
-        self.log_file: str    = path + f"{datetime.now()}_" + name
-        self.opened:   bool   = False
+        path:          str = json_data["logfile_path"]
+        name:          str = json_data["logfile_name"]
+        self.log_file: str = path + f"{datetime.now()}_" + name
+        self.opened:   bool = False
 
     def write(self, message: str, severity: str) -> bool:
         """
@@ -40,7 +42,7 @@ class Logger:
         if self.opened:
             return False
         self.opened = True
-        log_to: TextIO = open(self.log_file, "a", encoding = "utf-8")
+        log_to: TextIO = open(self.log_file, "a", encoding="utf-8")
         to_log: str = (f"severity: {severity}\n"
                        f"message: {message}\n"
                        f"time: {datetime.now()}")

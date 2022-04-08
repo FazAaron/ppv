@@ -28,9 +28,9 @@ class Network:
     """
 
     def __init__(self) -> None:
-        self.hosts:   List[Host]   = []
+        self.hosts:   List[Host] = []
         self.routers: List[Router] = []
-        self.graph:   Graph        = Graph()
+        self.graph:   Graph = Graph()
 
     def get_nodes(self) -> List[Node]:
         """
@@ -97,13 +97,13 @@ class Network:
             for destination in nodes:
                 if source.ip != destination.ip:
                     route_tuple: Tuple[str, str, str, int] = \
-                                    self.graph.dijkstra(source.ip,
-                                                        destination.ip)
+                        self.graph.dijkstra(source.ip,
+                                            destination.ip)
                     if route_tuple is not None:
                         source.add_route(Route(route_tuple[0],
-                                                route_tuple[1],
-                                                route_tuple[2],
-                                                route_tuple[3]))
+                                               route_tuple[1],
+                                               route_tuple[2],
+                                               route_tuple[3]))
         return True
 
     def is_duplicate_node(self, node_name: str, ip: str) -> bool:
@@ -243,7 +243,7 @@ class Network:
         bool: Whether adding the Interface was a success or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
-                     self.get_router(node_name_or_ip)
+            self.get_router(node_name_or_ip)
         if node is None:
             return False
         return node.add_interface(interface_name)
@@ -265,7 +265,7 @@ class Network:
         bool: Whether the deletion of the Interface was a success or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
-                     self.get_router(node_name_or_ip)
+            self.get_router(node_name_or_ip)
         if node is None:
             return False
         success: bool = node.delete_interface(interface_name)
@@ -323,9 +323,9 @@ class Network:
         bool: Whether the creation of the connection was a success or not
         """
         first_node: Node = self.get_host(node_name_or_ip) or \
-                           self.get_router(node_name_or_ip)
+            self.get_router(node_name_or_ip)
         snd_node:   Node = self.get_host(o_node_name_or_ip) or \
-                           self.get_router(o_node_name_or_ip)
+            self.get_router(o_node_name_or_ip)
         if (first_node and snd_node) is None:
             return False
         success: bool = first_node.connect_to_interface(snd_node,
@@ -354,7 +354,7 @@ class Network:
         bool: Whether the Interface was disconnected or not
         """
         node: Node = self.get_host(node_name_or_ip) or \
-                     self.get_router(node_name_or_ip)
+            self.get_router(node_name_or_ip)
         if node is None:
             return False
         success: bool = node.disconnect_interface(interface_name)
@@ -387,7 +387,7 @@ class Network:
         router:           Router = self.get_router(node_name_or_ip)
         node:             Node = host or router
         destination_node: Node = self.get_host(destination_name_or_ip) or \
-                                 self.get_router(destination_name_or_ip)
+            self.get_router(destination_name_or_ip)
         if (node and destination_node) is None:
             return None
         if router is None:

@@ -2,6 +2,7 @@
 This module makes Packet objects available for use when imported
 """
 
+
 class Packet:
     """
     A simplified network packet representation

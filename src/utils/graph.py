@@ -20,7 +20,7 @@ class Graph:
     """
 
     def __init__(self) -> None:
-        self.vertices: List[str]                       = []
+        self.vertices: List[str] = []
         self.edges:    List[(str, str, str, str, int)] = []
 
     def update_graph(self, nodes: List[Node]) -> None:
@@ -31,7 +31,7 @@ class Graph:
         nodes (List[Node]): The list of Nodes used to create the Graph
         """
         self.vertices = []
-        self.edges    = []
+        self.edges = []
         for node in nodes:
             self.vertices.append(node.ip)
             for connection in node.connections:
@@ -61,10 +61,10 @@ class Graph:
             # Dijkstra's algorithm
             dist: Dict[str, int] = {vertex: inf for vertex in self.vertices}
             previous: Dict[str, int] = \
-                      {vertex: None for vertex in self.vertices}
+                {vertex: None for vertex in self.vertices}
             dist[source_ip] = 0
             neighbours: Dict[str, set] = \
-                        {vertex: set() for vertex in self.vertices}
+                {vertex: set() for vertex in self.vertices}
             for start, s_interface, end, e_interface, cost in self.edges:
                 neighbours[start].add((end, s_interface, cost))
                 neighbours[end].add((start, e_interface, cost))
