@@ -2,18 +2,13 @@ from pylint import lint
 from pathlib import Path
 
 
-def lint_file(options=[], lint_log_file=""):
+def lint_file(options=[]):
     if len(options) > 0:
         file_name = options[len(options) - 1]
         print(f"Linting: {file_name}")
-        if lint_log_file != "":
-            Path("./logs").mkdir(parents=True, exist_ok=True)
-            with open(lint_log_file, "w"):
-                pass
-            options = [
+        options = [
                 "--msg-template='{msg_id}:{line:3d},{column}: {obj}: {msg}'"
             ] + options
-            options = [f"--output-format=json:{lint_log_file}"] + options
         lint.Run(options, do_exit=False)
 
 
@@ -42,7 +37,4 @@ options = [["--disable=C0103", "--disable=R0913", "src/components/application.py
             "src/utils/logger.py"]]
 
 for option in options:
-    # Split by /, get the file name from the path,
-    # then split by . and get file name without extension
-    file_name = option[len(option) - 1].split("/")[2].split(".")[0]
-    lint_file(option, f"logs/{file_name}.json")
+    lint_file(option)
