@@ -1,6 +1,7 @@
-# Manual testing and progress tracking components
+# Manual testing and progress tracking components, logs
 TODO.txt
 testing.py
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
