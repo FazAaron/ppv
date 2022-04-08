@@ -20,7 +20,7 @@ jobs:
         python-version: "3.8.10"
     - name: Setup environment
       run: |
-        export PYTHONPATH=${PYTHONPATH}:.
+        export PYTHONPATH=${PYTHONPATH}:/home/runner/work/ppv/ppv
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
