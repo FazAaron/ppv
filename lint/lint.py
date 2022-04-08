@@ -1,4 +1,5 @@
 from pylint import lint
+from pathlib import Path
 
 
 def lint_file(options=[], lint_log_file=""):
@@ -6,6 +7,7 @@ def lint_file(options=[], lint_log_file=""):
         file_name = options[len(options) - 1]
         print(f"Linting: {file_name}")
         if lint_log_file != "":
+            Path("./logs").mkdir(parents=True, exist_ok=True)
             with open(lint_log_file, "w"):
                 pass
             options = [
