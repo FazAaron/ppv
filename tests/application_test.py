@@ -42,7 +42,7 @@ def test_application_const_app_type_init():
 
 def test_application_other_app_type_init():
     """
-    Test default init behaviour with any app_type other than AIMD and CONST
+    Test default init behaviour with any app_type other than AIMD and CONST\n
     The Application's type will be set to CONST in this case
     """
     name = "test_app"
@@ -63,7 +63,7 @@ def test_application_other_app_type_init():
 
 def test_application_negative_amount_init():
     """
-    Test default init behaviour with negative amount given
+    Test default init behaviour with negative amount given\n
     The Application's amount will be set to 0 in this case
     """
     name = "test_app"
@@ -84,8 +84,8 @@ def test_application_negative_amount_init():
 
 def test_application_send():
     """
-    Test the send() method of the Application
-    Every call to send increases curr_sent by 1
+    Test the send() method of the Application\n
+    Every call to send increases curr_sent by 1\n
     Returns None if the can_send() returns False
     """
     name = "test_app"
@@ -104,7 +104,7 @@ def test_application_send():
 
 def test_application_can_send():
     """
-    Test the can_send() method of the Application
+    Test the can_send() method of the Application\n
     Returns True if the curr_sent is lower than the amount
     """
     name = "test_app"
@@ -121,7 +121,7 @@ def test_application_can_send():
 
 def test_application_cant_send():
     """
-    Test the can_send() method of the Application
+    Test the can_send() method of the Application\n
     Returns False if the curr_sent is equal or greater than the amount
     """
     name = "test_app"

@@ -1,7 +1,7 @@
 from src.components.packet import Packet
 
 
-def test_init():
+def test_packet_init():
     """
     Test default init behaviour with proper parameters
     """
@@ -14,9 +14,9 @@ def test_init():
         p.ppv == ppv, "Packet field mismatch during initialization"
 
 
-def test_negative_ppv_init():
+def test_packet_negative_ppv_init():
     """
-    Test default init behaviour with negative PPV given
+    Test default init behaviour with negative PPV given\n
     PPV is set to 1 if the value given is below zero or is zero
     """
     source_ip = "192.168.1.1"
@@ -30,9 +30,9 @@ def test_negative_ppv_init():
         "Packet field mismatch during negative PPV initialization"
 
 
-def test_zero_ppv_init():
+def test_packet_zero_ppv_init():
     """
-    Test default init behaviour with negative PPV given
+    Test default init behaviour with negative PPV given\n
     PPV is set to 1 if the value given is below zero or is zero
     """
     source_ip = "192.168.1.1"

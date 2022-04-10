@@ -26,7 +26,7 @@ class Interface:
                      link: Link,
                      send_channel: Channel,
                      receive_channel: Channel
-                     ) -> None:
+                     ) -> bool:
         """
         Connects the Interface to a Link, and setting up sending and receiving
 
@@ -35,9 +35,14 @@ class Interface:
         send_channel    (Channel): The Channel to set as the sending Channel
         receive_channel (Channel): The Channel to set as the receiving Channel
         """
+        if (link and send_channel and receive_channel) is None:
+            print("Failed to connect link")
+            return False
         self.link = link
         self.send_channel = send_channel
         self.receive_channel = receive_channel
+        print("Successfully connected Link")
+        return True
 
     def disconnect_link(self) -> None:
         """
@@ -66,7 +71,7 @@ class Interface:
         Parameters:
         packet (Packet): The Packet to send through the sending Channel
         """
-        print("Put packet on link")
+        print("Put Packet on Link")
         self.send_channel.fill_payload(packet)
 
     def __str__(self) -> str:

@@ -161,19 +161,21 @@ class Node:
         self.disconnect_interface(self_name)
         __o.disconnect_interface(other_name)
         connection: Link = Link(speed, metrics)
-        self_interface.connect_link(connection,
-                                    connection.channels[0],
-                                    connection.channels[1])
-        other_interface.connect_link(connection,
-                                     connection.channels[1],
-                                     connection.channels[0])
-        self_connection:  Tuple(Interface, Node) = (self_interface, self)
-        other_connection: Tuple(Interface, Node) = (other_interface, __o)
-        self.connections.append((self_connection,
-                                 other_connection))
-        __o.connections.append((other_connection,
-                                self_connection))
-        return True
+        self_success: bool = self_interface.connect_link(connection,
+                                                         connection.channels[0],
+                                                         connection.channels[1])
+        other_success: bool = other_interface.connect_link(connection,
+                                                           connection.channels[1],
+                                                           connection.channels[0])
+        if (self_success and other_success):
+            self_connection:  Tuple(Interface, Node) = (self_interface, self)
+            other_connection: Tuple(Interface, Node) = (other_interface, __o)
+            self.connections.append((self_connection,
+                                    other_connection))
+            __o.connections.append((other_connection,
+                                    self_connection))
+            return True
+        return False
 
     def disconnect_interface(self, name: str) -> bool:
         """
@@ -283,7 +285,7 @@ class Host(Node):
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
             route: Route = self.get_best_route(destination)
-            if route is None:
+            if (route and packet) is None:
                 print(f"Can't send packet to {destination}, dropping it.")
                 return None
             for interface in self.interfaces:
@@ -292,8 +294,9 @@ class Host(Node):
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
-                    print(f"Sent packet from {self.name}")
+                    # Redundant
                     interface.put_to_link(packet)
+                    print(f"Sent packet from {self.name}")
                     return route.gateway, receiver_interface
         return None
 
@@ -425,16 +428,19 @@ class Router(Node):
         str: The next hop in the Route, or None
         """
         if len(self.buffer) > 0:
-            print(f"Sent packet from {self.name}")
             packet: Packet = self.buffer.pop()
             route: Route = self.get_best_route(packet.target_ip)
+            if (route and packet) is None:
+                return None
             for interface in self.interfaces:
                 if route.interface == interface.name:
                     for connection in self.connections:
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
+                    # Redundant
                     interface.put_to_link(packet)
+                    print(f"Sent packet from {self.name}")
                     return route.gateway, receiver_interface
         return None
 

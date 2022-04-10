@@ -15,7 +15,8 @@ def test_channel_init():
     channel = Channel(speed, metrics)
     assert channel.speed == speed and \
         channel.metrics == metrics and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel field mismatch during initialization"
 
 
 def test_channel_negative_speed_init():
@@ -27,7 +28,8 @@ def test_channel_negative_speed_init():
     channel = Channel(speed, metrics)
     assert channel.speed == 1 and \
         channel.metrics == metrics and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel field mismatch during negative speed initialization"
 
 
 def test_channel_zero_speed_init():
@@ -39,7 +41,8 @@ def test_channel_zero_speed_init():
     channel = Channel(speed, metrics)
     assert channel.speed == 1 and \
         channel.metrics == metrics and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel field mismatch during zero speed initialization"
 
 
 def test_channel_negative_metrics_init():
@@ -51,7 +54,8 @@ def test_channel_negative_metrics_init():
     channel = Channel(speed, metrics)
     assert channel.speed == speed and \
         channel.metrics == 1 and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel field mismatch during negative metrics initialization"
 
 
 def test_channel_zero_metrics_init():
@@ -63,7 +67,8 @@ def test_channel_zero_metrics_init():
     channel = Channel(speed, metrics)
     assert channel.speed == speed and \
         channel.metrics == 1 and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel field mismatch during zero metrics initialization"
 
 
 def test_channel_fill_payload():
@@ -78,7 +83,8 @@ def test_channel_fill_payload():
     channel.fill_payload(p)
     assert channel.payload[0] == p and \
         len(channel.payload) != previous_len and \
-        len(channel.payload) == 1
+        len(channel.payload) == 1, \
+        "Channel.fill_payload() failure"
 
 
 def test_channel_pop_payload_non_empty():
@@ -97,7 +103,8 @@ def test_channel_pop_payload_non_empty():
     assert first_added_item == p and \
         channel.payload[0] == p_1 and \
         len(channel.payload) != previous_len and \
-        len(channel.payload) == 1
+        len(channel.payload) == 1, \
+        "Channel.pop_payload() failure"
 
 
 def test_channel_pop_payload_empty():
@@ -111,7 +118,8 @@ def test_channel_pop_payload_empty():
     p = channel.pop_payload()
     assert p is None and \
         len(channel.payload) == previous_len and \
-        len(channel.payload) == 0
+        len(channel.payload) == 0, \
+        "Channel.pop_payload() failure"
 
 
 #------------------------------------------------#
@@ -130,4 +138,5 @@ def test_link_init():
         link.channels[0].metrics == link.channels[1].metrics and \
         link.channels[0].speed == speed and \
         link.channels[0].metrics == metrics and \
-        link.channels[0] != link.channels[1]
+        link.channels[0] != link.channels[1], \
+        "Link field mismatch during initialization"
