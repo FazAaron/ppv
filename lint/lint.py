@@ -1,14 +1,14 @@
 from pylint import lint
-from pathlib import Path
 
 
 def lint_file(options=[]):
     if len(options) > 0:
         file_name = options[len(options) - 1]
         print(f"Linting: {file_name}")
+        options = ["--disable=E0401"] + options
         options = [
-                "--msg-template='{msg_id}:{line:3d},{column}: {obj}: {msg}'"
-            ] + options
+            "--msg-template='{msg_id}:{line:3d},{column}: {obj}: {msg}'"
+        ] + options
         lint.Run(options, do_exit=False)
 
 
