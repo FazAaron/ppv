@@ -13,7 +13,9 @@ def lint_file(options=[]):
 
 
 # Lint options
-options = [["--disable=C0103", "--disable=R0913", "src/components/application.py"],
+options = [["--disable=C0103",
+            "--disable=R0913",
+            "src/components/application.py"],
            ["src/components/interface.py"],
            ["--disable=R0903", "src/components/link.py"],
            ["--disable=C0103",
@@ -28,12 +30,12 @@ options = [["--disable=C0103", "--disable=R0913", "src/components/application.py
            ["--disable=R0903", "src/components/packet.py"],
            ["src/components/routing_table.py"],
            ["--disable=R0914",
-           "--disable=C0103",
+            "--disable=C0103",
             "--disable=R1710",
             "--disable=R0912",
             "src/utils/graph.py"],
            ["--disable=R1732",
-           "--disable=R0903",
+            "--disable=R0903",
             "src/utils/logger.py"]]
 
 for option in options:
