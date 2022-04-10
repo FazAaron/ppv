@@ -478,13 +478,6 @@ class Router(Node):
                 return True
         return False
 
-    def receive_all_packets(self) -> None:
-        """
-        Receives all Packets on all Interfaces by going through all of them
-        """
-        for interface in self.interfaces:
-            self.receive_packet(interface.name)
-
     def send_feedback(self, packet_source: str, feedback: int) -> None:
         """
         Sends feedback data to the Node the Packet was received from
