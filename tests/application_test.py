@@ -1,6 +1,3 @@
-import pytest
-from pylint import lint
-
 from src.components.application import Application
 from src.components.packet import Packet
 

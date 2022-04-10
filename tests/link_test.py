@@ -1,6 +1,3 @@
-import pytest
-from pylint import lint
-
 from src.components.link import Channel, Link
 from src.components.packet import Packet
 
@@ -120,6 +117,7 @@ def test_channel_pop_payload_empty():
 #------------------------------------------------#
 # LINK TESTS
 #------------------------------------------------#
+
 
 def test_link_init():
     """
