@@ -75,21 +75,6 @@ class Node:
         """
         self.routing_table.reset_routes()
 
-    def get_interface(self, name: str) -> Interface:
-        """
-        Get an interface based on it's name or nothing
-
-        Parameters:
-        name (str): The name of the interface to find
-
-        Returns:
-        Interface: The corresponding interface or None (if not present)
-        """
-        for interface in self.interfaces:
-            if interface.name == name:
-                return interface
-        return None
-
     def add_interface(self, name: str) -> bool:
         """
         Adds an Interface to the Node if it does not match an already existing
@@ -106,6 +91,21 @@ class Node:
                 return False
         self.interfaces.append(Interface(name))
         return True
+
+    def get_interface(self, name: str) -> Interface:
+        """
+        Get an interface based on it's name or nothing
+
+        Parameters:
+        name (str): The name of the interface to find
+
+        Returns:
+        Interface: The corresponding interface or None (if not present)
+        """
+        for interface in self.interfaces:
+            if interface.name == name:
+                return interface
+        return None
 
     def delete_interface(self, name: str) -> bool:
         """
@@ -125,9 +125,9 @@ class Node:
         for connection in self.connections:
             if connection[0][0] == interface:
                 self.disconnect_interface(name)
-                self.interfaces.remove(interface)
-                return True
-        return False
+                break
+        self.interfaces.remove(interface)
+        return True
 
     def connect_to_interface(self,
                              __o: Node,
@@ -294,7 +294,6 @@ class Host(Node):
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
-                    # Redundant
                     interface.put_to_link(packet)
                     print(f"Sent packet from {self.name}")
                     return route.gateway, receiver_interface
@@ -438,7 +437,6 @@ class Router(Node):
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
-                    # Redundant
                     interface.put_to_link(packet)
                     print(f"Sent packet from {self.name}")
                     return route.gateway, receiver_interface
