@@ -404,7 +404,7 @@ class Router(Node):
                  ) -> None:
         super().__init__(name, ip, send_rate)
         self.buffer:      List[Packet] = []
-        self.buffer_size: int = buffer_size
+        self.buffer_size: int = 0 if buffer_size < 0 else buffer_size
 
     def lowest_buffer_ppv(self) -> Packet:
         """

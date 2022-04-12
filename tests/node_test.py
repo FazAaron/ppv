@@ -879,19 +879,117 @@ def test_host_something_ppv(): pass
 #------------------------------------------------#
 
 
-def test_router_init():
+def test_router_init_positive_buffer_size():
+    """
+    Test initialization with positive (>=0) buffer_size
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 5
+    router = Router(name, ip, send_rate, buffer_size)
+    assert router.name == name and \
+        router.ip == ip and \
+        router.send_rate == send_rate and \
+        router.buffer_size == buffer_size and \
+        len(router.buffer) == 0, \
+        "Router field mismatch during positive buffer_size initialization"
+
+
+def test_router_init_positive_buffer_size():
+    """
+    Test initialization with negative (<0) buffer_size
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = -1
+    router = Router(name, ip, send_rate, buffer_size)
+    assert router.name == name and \
+        router.ip == ip and \
+        router.send_rate == send_rate and \
+        router.buffer_size == 0 and \
+        len(router.buffer) == 0, \
+        "Router field mismatch during negative buffer_size initialization"
+
+
+def test_router_lowest_buffer_ppv_empty_buffer():
+    """
+    Test getting the lowest PPV Packet from the buffer while it is empty
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    packet = router.lowest_buffer_ppv()
+    assert packet is None and \
+        len(router.buffer) == 0, \
+        "Router.lowest_buffer_ppv() failure"
+
+
+def test_router_lowest_buffer_ppv_single_lowest():
+    """
+    Test getting the lowest PPV Packet with a single Packet having the lowest \
+    out of all of them
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    for _ in range(buffer_size - 1):
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
+    min_packet = Packet("192.167.1.1", "192.169.1.1", 5)
+    router.buffer.append(min_packet)
+    packet = router.lowest_buffer_ppv()
+    assert packet is min_packet and \
+        packet is router.buffer[buffer_size - 1] and \
+        len(router.buffer) == buffer_size, \
+        "Router.lowest_buffer_ppv() failure"
+
+
+def test_router_lowest_buffer_ppv_multiple_lowest():
+    """
+    Test getting the lowest PPV Packet with multiple Packets having the lowest \
+    out of all of them, essentially getting the first one with such PPV
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    for _ in range(buffer_size - 3):
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
+    for _ in range(3):
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 5))
+    packet = router.lowest_buffer_ppv()
+    assert packet is router.buffer[buffer_size - 3] and \
+        len(router.buffer) == buffer_size, \
+        "Router.lowest_buffer_ppv() failure"
+
+
+def test_router_send_packet_empty_buffer():
     pass
 
 
-def test_router_lowest_buffer_ppv():
+def test_router_send_packet_no_route():
     pass
 
 
-def test_router_send_packet():
+def test_router_send_packet_success():
     pass
 
 
-def test_router_receive_packet():
+def test_router_receive_packet_invalid_interface():
+    pass
+
+
+def test_router_receive_packet_no_packet():
+    pass
+
+
+def test_router_receive_packet_success():
     pass
 
 
