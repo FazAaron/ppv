@@ -1,5 +1,5 @@
-from src. components.application import Application
 from src.components.node import Host, Node, Router
+from src.components.packet import Packet
 from src.components.routing_table import Route
 
 #------------------------------------------------#
@@ -509,47 +509,368 @@ def test_host_set_application():
 
 
 def test_host_send_packet_self_ip():
-    # TODO
     """
     Test sending a Packet to the same IP as the Host
     """
-    name = "host"
+    name = "host_1"
     ip = "192.166.1.1"
     send_rate = 10
-    host = Host(name, ip, send_rate)
-    app_name = "host_app"
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
     amount = 15
     app_send_rate = 11
     app_type = "AIMD"
-    host.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
+    host_2.add_route(Route("192.166.1.1", "192.166.1.1", "eth2", 5))
+    return_val = host_1.send_packet(host_2.ip)
+    assert return_val is None and \
+        connected and \
+        len(host_1.routing_table.routes) != 0 and \
+        len(host_2.routing_table.routes) != 0, \
+        "Host.send_packet() failure"
 
 
 def test_host_send_packet_app_cant_send():
-    pass
+    """
+    Test sending a Packet to a Node in such a way that the Application can't \
+    send anymore
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 0
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
+    host_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 5))
+    return_val = host_1.send_packet(host_2.ip)
+    assert return_val is None and \
+        connected and \
+        len(host_1.routing_table.routes) != 0 and \
+        len(host_2.routing_table.routes) != 0 and \
+        not host_1.application.can_send(), \
+        "Host.send_packet() failure"
 
 
 def test_host_send_packet_no_route():
-    pass
+    """
+    Test sending a Packet to an other Node in such a way that there is no Route \
+    between the two
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    return_val = host_1.send_packet(host_2.ip)
+    assert return_val is None and \
+        connected and \
+        len(host_1.routing_table.routes) == 0 and \
+        len(host_2.routing_table.routes) == 0 and \
+        host_1.application.can_send(), \
+        "Host.send_packet() failure"
 
 
 def test_host_send_packet_success():
-    pass
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
+    host_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 5))
+    return_val = host_1.send_packet(host_2.ip)
+    assert return_val[0] == host_2.ip and \
+        return_val[1] == host_2.interfaces[0].name and \
+        connected, \
+        "Host.send_packet() failure"
 
 
-def test_host_receive_packet():
-    pass
+def test_host_receive_packet_invalid_interface():
+    """
+    Test receiving a Packet on an Interface that does not exist
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    p = Packet("192.166.1.1", "192.167.1.1", 10)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    for interface in host_1.interfaces:
+        interface.receive_channel.fill_payload(p)
+    received_packet = host_1.receive_packet("eth2")
+    assert not received_packet and \
+        host_1.get_interface("eth2") is None and \
+        len(host_1.interfaces) != 0 and \
+        connected, \
+        "Host.receive_packet() failure"
 
 
-def test_host_handle_feedback():
-    pass
+def test_host_receive_packet_no_packet():
+    """
+    Test trying to receive a Packet on an Interface that does not have any \
+    incoming packets
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    received_packet = host_1.receive_packet("eth1")
+    assert not received_packet and \
+        host_1.get_interface("eth1") is not None and \
+        len(host_1.interfaces) != 0 and \
+        connected, \
+        "Host.receive_packet() failure"
 
 
-def test_host_receive_feedback():
-    pass
+def test_host_receive_packet_success():
+    """
+    Test successfully receiving a packet
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+    app_name = "host_app_2"
+    amount = 15
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_2.set_application(app_name, amount, app_send_rate, app_type)
+    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+    p = Packet("192.166.1.1", "192.167.1.1", 10)
+    host_1.get_interface("eth1").receive_channel.fill_payload(p)
+    received_packet = host_1.receive_packet("eth1")
+    assert received_packet and \
+        host_1.get_interface("eth1") is not None and \
+        len(host_1.interfaces) != 0 and \
+        connected, \
+        "Host.receive_packet() failure"
+
+
+def test_host_handle_feedback_positive():
+    """
+    Test handling a postitive feedback value
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.handle_feedback(1)
+    assert host_1.send_rate == app_send_rate + 1 and \
+        host_1.application.send_rate == app_send_rate + 1, \
+        "Host.handle_feedback() failure"
+
+
+def test_host_handle_feedback_negative():
+    """
+    Test handling a negative feedback value
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.handle_feedback(-1)
+    assert host_1.send_rate == app_send_rate // 2 and \
+        host_1.application.send_rate == app_send_rate // 2, \
+        "Host.handle_feedback() failure"
+
+
+def test_host_receive_feedback_const_negative():
+    """
+    Test receiving a negative value feedback on a CONST app_type Host
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "CONST"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.receive_feedback("192.166.1.1", -1)
+    assert host_1.send_rate == app_send_rate and \
+        host_1.application.send_rate == app_send_rate, \
+        "Host.handle_feedback() failure"
+
+
+def test_host_receive_feedback_const_positive():
+    """
+    Test receiving a positive feedback value on a CONST app_type Host
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "CONST"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.receive_feedback("192.166.1.1", 1)
+    assert host_1.send_rate == app_send_rate and \
+        host_1.application.send_rate == app_send_rate, \
+        "Host.handle_feedback() failure"
+
+
+def test_host_receive_feedback_aimd_negative():
+    """
+    Test receiving a negative feedback value on an AIMD app_type Host
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.receive_feedback("192.167.1.1", -1)
+    assert host_1.send_rate == app_send_rate // 2 and \
+        host_1.application.send_rate == app_send_rate // 2, \
+        "Host.handle_feedback() failure"
+
+
+def test_host_receive_feedback_aimd_positive():
+    """
+    Test receiving a positive feedback value on an AIMD app_type Host
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.add_interface("eth1")
+    app_name = "host_app_1"
+    amount = 10
+    app_send_rate = 11
+    app_type = "AIMD"
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    host_1.receive_feedback("192.167.1.1", 1)
+    assert host_1.send_rate == app_send_rate + 1 and \
+        host_1.application.send_rate == app_send_rate + 1, \
+        "Host.handle_feedback() failure"
 
 # TODO: Test PPV generation properly
-
-
 def test_host_something_ppv(): pass
 
 
