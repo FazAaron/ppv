@@ -464,7 +464,7 @@ class Router(Node):
                 self.buffer.append(packet)
                 self.send_feedback(packet.source_ip, 1)
                 return True
-            if self.buffer_size != 0:
+            if len(self.buffer) == self.buffer_size:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
                 if buffer_packet.ppv < packet.ppv:
                     self.buffer.remove(buffer_packet)

@@ -871,6 +871,8 @@ def test_host_receive_feedback_aimd_positive():
         "Host.handle_feedback() failure"
 
 # TODO: Test PPV generation properly
+
+
 def test_host_something_ppv(): pass
 
 
@@ -970,32 +972,263 @@ def test_router_lowest_buffer_ppv_multiple_lowest():
 
 
 def test_router_send_packet_empty_buffer():
-    pass
+    """
+    Test sending a Packet (taking one out of the buffer) when the buffer itself \
+    is empty
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    next_hop = router.send_packet()
+    assert next_hop is None and \
+        len(router.buffer) == 0, \
+        "Router.send_packet() failure"
 
 
 def test_router_send_packet_no_route():
-    pass
+    """
+    Test sending a Packet when there is no Route to the target IP, dropping \
+    the Packet after taking it out of the buffer
+    """
+    name = "router"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    router.buffer.append(Packet("192.166.1.1", "192.167.1.1", 5))
+    prev_buffer_len = len(router.buffer)
+    next_hop = router.send_packet()
+    assert next_hop is None and \
+        prev_buffer_len != 0 and \
+        len(router.buffer) == 0
 
 
 def test_router_send_packet_success():
-    pass
+    """
+    Test sending a Packet whenever every prerequisite is present and succeeds
+    """
+    name = "router_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_1 = Router(name, ip, send_rate, buffer_size)
+    router_1.add_interface("eth1")
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+    router_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    router_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    packet = Packet("192.167.1.1", "192.168.1.1", 10)
+    router_1.buffer.append(packet)
+    next_hop = router_1.send_packet()
+    r1_send_channel = router_1.connections[0][0][0].send_channel
+    r2_receive_channel = router_2.connections[0][0][0].receive_channel
+    assert next_hop[0] == "192.168.1.1" and \
+        next_hop[1] == "eth2" and \
+        r1_send_channel.payload[0] == packet and \
+        r2_receive_channel.payload[0] == packet, \
+        "Router.send_packet() failure"
 
 
 def test_router_receive_packet_invalid_interface():
-    pass
+    """
+    Test receiving a Packet whenever the Interface given to receive on is an \
+    invalid name
+    """
+    name = "router"
+    ip = "192.167.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router = Router(name, ip, send_rate, buffer_size)
+    router.add_interface("eth1")
+    success = router.receive_packet("eth2")
+    assert not success and \
+        len(router.interfaces) != 0, \
+        "Router.receive_packet() failure"
 
 
 def test_router_receive_packet_no_packet():
-    pass
+    """
+    Test receiving a Packet whenever there are no Packets to receive on the \
+    given Interface
+    """
+    name = "router_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_1 = Router(name, ip, send_rate, buffer_size)
+    router_1.add_interface("eth1")
 
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+
+    router_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    
+    interface = router_1.get_interface("eth1")
+    success = router_1.receive_packet("eth1")
+    assert not success and \
+        interface is not None and \
+        len(interface.receive_channel.payload) == 0, \
+        "Router.receive_packet() failure"
+
+
+def test_router_receive_full_buffer_lower_incoming_ppv():
+    """
+    Test receiving a Packet whenever every prerequisite is present and succeeds, \
+    but the buffer is full, so PPV handling is needed
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.set_application("host_app", 10, 10, "CONST")
+    host_1.add_interface("eth1")
+
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 1
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 10))
+
+    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 8))
+    packet = Packet("192.167.1.1", "192.168.1.1", 7)
+    router_2.get_interface("eth2").receive_channel.fill_payload(packet)
+    success = router_2.receive_packet("eth2")
+    assert success and \
+        router_2.buffer[0] != packet and \
+        router_2.buffer[0].ppv == 10, \
+        "Router.receive_packet() failure"
+
+
+def test_router_receive_full_buffer_higher_incoming_ppv():
+    """
+    Test receiving a Packet whenever every prerequisite is present and succeeds, \
+    but the buffer is full, and PPV handling is needed
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.set_application("host_app", 10, 10, "CONST")
+    host_1.add_interface("eth1")
+
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 1
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 7))
+
+    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 8))
+    packet = Packet("192.167.1.1", "192.168.1.1", 9)
+    router_2.get_interface("eth2").receive_channel.fill_payload(packet)
+    success = router_2.receive_packet("eth2")
+    assert success and \
+        router_2.buffer[0] == packet and \
+        router_2.buffer[0].ppv == 9, \
+        "Router.receive_packet() failure"
 
 def test_router_receive_packet_success():
-    pass
+    """
+    Test receiving a Packet whenever every prerequisite is present and succeeds
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.set_application("host_app", 10, 10, "CONST")
+    host_1.add_interface("eth1")
+
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+
+    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
+    next_hop = host_1.send_packet("192.168.1.1")
+    success = router_2.receive_packet(next_hop[1])
+    assert success and \
+        len(router_2.buffer) != 0, \
+        "Router.receive_packet() failure"
 
 
 def test_router_send_feedback():
-    pass
+    """
+    Test sending a feedback value
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.set_application("host_app", 10, 10, "AIMD")
+    host_1.add_interface("eth1")
+
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
+
+    router_2.send_feedback("192.167.1.1", 1)
+    router_2.send_feedback("192.167.1.1", 1)
+    prev_send_rate = host_1.send_rate
+    router_2.send_feedback("192.167.1.1", -1)
+    final_send_rate = host_1.send_rate
+    assert final_send_rate == (send_rate + 2) // 2 and \
+        prev_send_rate == (send_rate + 2), \
+        "Router.send_feedback() failure"
 
 
 def test_router_receive_feedback():
-    pass
+    """
+    Test receiving a feedback value
+    """
+    name = "host_1"
+    ip = "192.167.1.1"
+    send_rate = 10
+    host_1 = Host(name, ip, send_rate)
+    host_1.set_application("host_app", 10, 10, "AIMD")
+    host_1.add_interface("eth1")
+
+    name = "router_2"
+    ip = "192.168.1.1"
+    send_rate = 10
+    buffer_size = 10
+    router_2 = Router(name, ip, send_rate, buffer_size)
+    router_2.add_interface("eth2")
+    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
+
+    router_2.receive_feedback("192.167.1.1", 1)
+    router_2.receive_feedback("192.167.1.1", 1)
+    prev_send_rate = host_1.send_rate
+    router_2.receive_feedback("192.167.1.1", -1)
+    final_send_rate = host_1.send_rate
+    assert final_send_rate == (send_rate + 2) // 2 and \
+        prev_send_rate == (send_rate + 2), \
+        "Router.send_feedback() failure"
