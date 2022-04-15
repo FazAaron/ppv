@@ -1072,7 +1072,7 @@ def test_router_receive_packet_no_packet():
     router_2.add_interface("eth2")
 
     router_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
-    
+
     interface = router_1.get_interface("eth1")
     success = router_1.receive_packet("eth1")
     assert not success and \
@@ -1143,6 +1143,7 @@ def test_router_receive_full_buffer_higher_incoming_ppv():
         router_2.buffer[0] == packet and \
         router_2.buffer[0].ppv == 9, \
         "Router.receive_packet() failure"
+
 
 def test_router_receive_packet_success():
     """
