@@ -578,7 +578,7 @@ def test_network_send_packet():
     # - the destination is same as the source
     # - there is no Route between the two Nodes
     app_cant_send_success = network.send_packet("host_2", "router_2")
-    same_ip_success = network.send_packet("192.168.1.1", "host_1")    
+    same_ip_success = network.send_packet("192.168.1.1", "host_1")
     no_route_success = network.send_packet("host_1", "192.171.1.1")
 
     # Send successfully
@@ -612,7 +612,6 @@ def test_network_receive_packet():
     # Set Application on Hosts
     network.set_application("host_1", "app_1", 10, 10, "AIMD")
     network.set_application("host_2", "app_2", 0, 10, "AIMD")
-    
 
     # Add Interfaces
     network.add_interface("host_1", "eth1_1")
