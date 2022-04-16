@@ -75,11 +75,12 @@ class Network:
         """
         connections: List[Tuple[Node, Link, Node]] = []
         for node in self.get_nodes():
-            node_1: Node = node.connections[0][1]
-            link: Link = node.connections[0][0].link
-            node_2: Node = node.connections[1][1]
-            to_add: Tuple(Node, Link, Node) = (node_1, link, node_2)
-            connections.append(to_add)
+            for connection in node.connections:
+                node_1: Node = connection[0][1]
+                link: Link = connection[0][0].link
+                node_2: Node = connection[1][1]
+                to_add: Tuple(Node, Link, Node) = (node_1, link, node_2)
+                connections.append(to_add)
         return connections
 
     def update_routing_tables(self) -> bool:
@@ -96,14 +97,17 @@ class Network:
             source.reset_routes()
             for destination in nodes:
                 if source.ip != destination.ip:
-                    route_tuple: Tuple[str, str, str, int] = \
-                        self.graph.dijkstra(source.ip,
-                                            destination.ip)
-                    if route_tuple is not None:
-                        source.add_route(Route(route_tuple[0],
-                                               route_tuple[1],
-                                               route_tuple[2],
-                                               route_tuple[3]))
+                    try:
+                        route_tuple: Tuple[str, str, str, int] = \
+                            self.graph.dijkstra(source.ip,
+                                                destination.ip)
+                        if route_tuple is not None:
+                            source.add_route(Route(route_tuple[0],
+                                                route_tuple[1],
+                                                route_tuple[2],
+                                                route_tuple[3]))
+                    except:
+                        return False
         return True
 
     def is_duplicate_node(self, node_name: str, ip: str) -> bool:
