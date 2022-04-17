@@ -7,7 +7,9 @@ def test_network_init():
     """
     Test default init behaviour
     """
+    # Setup the Network object
     network = Network()
+    
     assert len(network.hosts) == 0 and \
         len(network.routers) == 0 and \
         len(network.graph.vertices) == 0 and \
@@ -19,11 +21,19 @@ def test_network_get_nodes():
     """
     Test getting all the Nodes (Hosts and Routers combined)
     """
+    # Setup the Network object
     network = Network()
+
+    # Get the number of initial Nodes
     init_nodes = network.get_nodes()
+
+    # Add Nodes to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.routers.append(Router("router_1", "192.167.1.1", 10, 10))
+
+    # Get the number of final Nodes
     final_nodes = network.get_nodes()
+
     assert len(init_nodes) == 0 and \
         len(final_nodes) == len(network.hosts) + len(network.routers), \
         "Network.get_nodes() failure"
@@ -33,13 +43,23 @@ def test_network_get_applications():
     """
     Test getting all the Applications on Hosts
     """
+    # Setup the Network object
     network = Network()
+
+    # Get the number of initial Applications
     init_apps = network.get_applications()
+
+    # Add Hosts to the Network    
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.hosts.append(Host("host_2", "192.167.1.1", 10))
+
+    # Set the Application of the Hosts
     network.hosts[0].set_application("app_1", 10, 10, "CONST")
     network.hosts[1].set_application("app_2", 10, 10, "AIMD")
+
+    # Get the number of final Applications
     final_apps = network.get_applications()
+
     assert len(init_apps) == 0 and len(final_apps) == len(network.hosts), \
         "Network.get_applications() failure"
 
@@ -48,13 +68,23 @@ def test_network_get_interfaces():
     """
     Test getting all the Interfaces on Nodes
     """
+    # Setup the Network object
     network = Network()
+
+    # Get the number of initial Interfaces
     init_interfaces = network.get_interfaces()
+
+    # Add Nodes to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.routers.append(Router("router_1", "192.167.1.1", 10, 10))
+
+    # Add Interfaces to the Nodes
     network.hosts[0].add_interface("eth1")
     network.routers[0].add_interface("eth2")
+
+    # Get the number of final Interfaces
     final_interfaces = network.get_interfaces()
+
     assert len(init_interfaces) == 0 and \
         len(final_interfaces) == len(network.get_nodes()), \
         "Network.get_interfaces() failure"
@@ -64,15 +94,25 @@ def test_network_get_connections():
     """
     Test getting every connection between Nodes
     """
+    # Setup the Network object
     network = Network()
+
+    # Get initial connections in the empty Network
     init_connections = network.get_connections()
+
+    # Add Nodes to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.routers.append(Router("router_1", "192.167.1.1", 10, 10))
+
+    # Setup Interfaces and connections between Nodes
     network.hosts[0].add_interface("eth1")
     network.routers[0].add_interface("eth2")
     network.hosts[0].connect_to_interface(
         network.routers[0], "eth1", "eth2", 10, 10)
+
+    # Get connections after connecting Nodes
     final_connections = network.get_connections()
+
     assert len(init_connections) == 0 and len(final_connections) == 2, \
         "Network.get_connections() failure"
 
@@ -150,12 +190,22 @@ def test_network_is_duplicate_node():
     Test checking if the Node is a duplicate Node \
     (a Node already exists with the given name or IP)
     """
+    # Setup the Network object
     network = Network()
+
+    # Check for duplicate name / IP in an empty Network
     is_first_duplicate = network.is_duplicate_node("first_host", "192.168.1.1")
+
+    # Add Nodes to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.routers.append(Router("router_1", "192.167.1.1", 10, 10))
+
+    # Check duplicate the following way:
+    # - the IP is a duplicate
+    # - the name is a duplicate
     ip_duplicate = network.is_duplicate_node("host_2", "192.168.1.1")
     name_duplicate = network.is_duplicate_node("router_1", "192.169.1.1")
+
     assert not is_first_duplicate and ip_duplicate and name_duplicate, \
         "Network.is_duplicate_node() failure"
 
@@ -164,13 +214,23 @@ def test_network_get_host():
     """
     Test getting Hosts
     """
+    # Setup the Network object
     network = Network()
+
+    # Add Hosts to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.hosts.append(Host("host_2", "192.167.1.1", 10))
     network.hosts.append(Host("host_3", "192.169.1.1", 10))
+
+    # Get a Host the following way:
+    # - no Host with such name exists
+    # - no Host with such IP exists
     name_null_value = network.get_host("host_4")
     ip_null_value = network.get_host("192.170.1.1")
+
+    # Successfully get a Host
     host_value = network.get_host("192.168.1.1")
+
     assert len(network.hosts) == 3 and \
         name_null_value is None and \
         ip_null_value is None and \
@@ -182,9 +242,15 @@ def test_network_create_host():
     """
     Test creating a Host on the Network
     """
+    # Setup the Network object
     network = Network()
+
+    # Successfully create a Host
     empty_success = network.create_host("host_1", "192.168.1.1", 5)
+
+    # Create a Host with the same name / IP already present in the Network
     duplicate_success = network.create_host("host_1", "192.168.1.1", 4)
+
     assert empty_success and \
         not duplicate_success and \
         len(network.hosts) == 1, \
@@ -217,10 +283,13 @@ def test_network_delete_host():
     # Delete Hosts the following way:
     # - no such Host is present in the Network
     # - a Host's IP address matches the deletion parameter
-    # - a Host's name matches the deletion parameter
     not_present_success = network.delete_host("192.169.1.1")
     deletion_ip_success = network.delete_host("192.168.1.1")
+
+    # Successfully delete a Host
     deletion_name_success = network.delete_host("host_2")
+
+    # Get the number of Hosts and connections
     final_len = len(network.hosts)
     final_connections_len = len(router.connections)
 
@@ -241,13 +310,23 @@ def test_network_get_router():
     """
     Test getting Routers
     """
+    # Setup the Network object
     network = Network()
+
+    # Add Routers to the Network
     network.routers.append(Router("router_1", "192.168.1.1", 10, 8))
     network.routers.append(Router("router_2", "192.167.1.1", 10, 9))
     network.routers.append(Router("router_3", "192.169.1.1", 10, 7))
+
+    # Get routers the following way:
+    # - the Router with that name is not present in the Network
+    # - the Router with that IP is not present in the Network
     name_null_value = network.get_router("router_4")
     ip_null_value = network.get_router("192.170.1.1")
+
+    # Successfully getting a Router
     router_value = network.get_router("192.168.1.1")
+
     assert len(network.routers) == 3 and \
         name_null_value is None and \
         ip_null_value is None and \
@@ -259,9 +338,15 @@ def test_network_create_router():
     """
     Test creating a Router on the Network
     """
+    # Setup the Network object
     network = Network()
+
+    # Successfully create a Router
     empty_success = network.create_router("host_1", "192.168.1.1", 5, 20)
+
+    # Create a Router with the same name / IP already present in the Network
     duplicate_success = network.create_router("host_1", "192.168.1.1", 4, 30)
+
     assert empty_success and \
         not duplicate_success and \
         len(network.routers) == 1, \
@@ -293,13 +378,14 @@ def test_network_delete_router():
     router.connect_to_interface(network.routers[0], "eth2", "eth1", 10, 10)
     prev_connections_len = len(router.connections)
 
-    # Delete Routers the following way:
-    # - no such Router is present in the Network
-    # - a Router's IP address matches the deletion parameter
-    # - a Router's name matches the deletion parameter
+    # Delete a Router with a parameter that doesn't match any in the Network
     not_present_success = network.delete_router("192.169.1.1")
+
+    # Successfully delete a Router based on name / IP address
     deletion_ip_success = network.delete_router("192.168.1.1")
     deletion_name_success = network.delete_router("router_2")
+
+    # Get the number of Routers and connections
     final_len = len(network.routers)
     final_connections_len = len(router.connections)
 
@@ -334,6 +420,7 @@ def test_network_add_interface():
 
     # Add an Interface to a Node by specifying the Node's IP address
     add_by_ip_success = network.add_interface("192.167.1.1", "eth2")
+
     # Try adding a duplicate Interface
     already_existing_success = network.add_interface("router_123", "eth2")
 
@@ -381,10 +468,16 @@ def test_network_delete_interface():
     # Delete an Interface from a Node that is connected to an other Node
     network.hosts[0].connect_to_interface(
         network.routers[0], "eth2_1", "eth2_2", 10, 10)
+
+    # Get the connected Nodes' number of connections
     prev_connection_len_host = len(network.hosts[0].connections)
     prev_connection_len_router = len(network.routers[0].connections)
+
+    # Delete a connected Interface
     connected_interface_success = network.delete_interface(
         "router_123", "eth2_2")
+
+    # Get the disconnected Nodes' number of connections
     final_connection_len_host = len(network.hosts[0].connections)
     final_connection_len_router = len(network.routers[0].connections)
 
