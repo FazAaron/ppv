@@ -1,3 +1,4 @@
+from multiprocessing import connection
 from src.components.node import Host, Node, Router
 from src.components.packet import Packet
 from src.components.routing_table import Route
@@ -11,10 +12,12 @@ def test_node_init():
     """
     Test default init behaviour
     """
+    # Setup the Node object
     name = "node"
     ip = "192.168.1.1"
     send_rate = 10
     node = Node(name, ip, send_rate)
+
     assert node.name == name and \
         node.ip == ip and \
         node.send_rate == send_rate and \
@@ -24,444 +27,272 @@ def test_node_init():
         "Node field mismatch during initialization"
 
 
-def test_node_get_best_route_empty_routing_table():
+def test_node_get_best_route():
     """
-    Test getting the best route for a destination, but the RoutingTable is empty
+    Test the get_best_route() method of the Node
     """
+    # Setup the Node object
     name = "node"
     ip = "192.168.1.1"
     send_rate = 10
     node = Node(name, ip, send_rate)
-    route = node.get_best_route("192.167.1.1")
-    assert route is None and \
-        len(node.routing_table.routes) == 0, \
-        "Node.get_best_route() failure"
 
+    # Get the best Route for that IP address - getting no matches, since
+    # the RoutingTable is empty and get the number of Routes from it
+    best_route_1 = node.get_best_route("192.167.1.1")
+    routes_len_1 = len(node.routing_table.routes)
 
-def test_node_get_best_route_no_match():
-    """
-    Test getting the best route for a destination, but finding no match
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
+    # Add Routes to the Node
     route_1 = Route("192.168.1.1", "192.168.1.1", "eth1", 10)
     route_2 = Route("192.168.0.1", "192.168.1.1", "eth2", 10)
+    route_3 = Route("192.168.1.1", "192.168.0.1", "eth3", 8)
     node.add_route(route_1)
     node.add_route(route_2)
-    route = node.get_best_route("192.167.1.1")
-    assert route is None and \
-        len(node.routing_table.routes) != 0, \
+    node.add_route(route_3)
+
+    # Get the best Route for that IP address - getting no matches, since
+    # there is no such item in the RoutingTable and get the number of Routes from it
+    best_route_2 = node.get_best_route("192.167.1.1")
+    routes_len_2 = len(node.routing_table.routes)
+
+    # Get the best route for that IP address - getting a single match, and get
+    # the number of Routes in the RoutingTable
+    best_route_3 = node.get_best_route("192.168.0.1")
+    routes_len_3 = len(node.routing_table.routes)
+
+    # Get the best route for that IP address - getting multiple matches, and get
+    # the number of Routes in the RoutingTable
+    best_route_4 = node.get_best_route("192.168.1.1")
+    routes_len_4 = len(node.routing_table.routes)
+
+    assert best_route_1 is None and \
+        routes_len_1 == 0 and \
+        best_route_2 is None and \
+        routes_len_2 != 0 and \
+        best_route_3 is route_2 and \
+        routes_len_3 != 0 and \
+        best_route_4 is route_3 and \
+        routes_len_4 != 0, \
         "Node.get_best_route() failure"
 
 
-def test_node_get_best_route_single_match():
+def test_node_add_interface():
     """
-    Test getting the best route for a destination, but finding one match
+    Test the add_interface() method of the Node
     """
+    # Setup the Node object
     name = "node"
     ip = "192.168.1.1"
     send_rate = 10
     node = Node(name, ip, send_rate)
-    route_1 = Route("192.168.1.1", "192.168.1.1", "eth1", 10)
-    route_2 = Route("192.168.0.1", "192.168.1.1", "eth2", 10)
-    node.add_route(route_1)
-    node.add_route(route_2)
-    route = node.get_best_route("192.168.1.1")
-    assert route is route_1 and \
-        len(node.routing_table.routes) != 0, \
-        "Node.get_best_route() failure"
 
-
-def test_node_get_best_route_multiple_matches():
-    """
-    Test getting the best route for a destination, but finding multiple matches
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    route_1 = Route("192.168.1.1", "192.168.1.1", "eth1", 10)
-    route_2 = Route("192.168.1.1", "192.168.1.1", "eth2", 7)
-    node.add_route(route_1)
-    node.add_route(route_2)
-    route = node.get_best_route("192.168.1.1")
-    assert route is route_2 and \
-        len(node.routing_table.routes) != 0, \
-        "Node.get_best_route() failure"
-
-
-def test_node_add_interface_new_name():
-    """
-    Test adding a new Interface with a name that does not already exist
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
+    # Setup the Interface, and add it - first with success, secondly with failure
     interface_name = "eth1"
-    success = node.add_interface(interface_name)
+    success_1 = node.add_interface(interface_name)
+    success_2 = node.add_interface(interface_name)
+
     assert len(node.interfaces) == 1 and \
         node.interfaces[0].name == interface_name and \
-        success, \
+        success_1 and \
+        not success_2, \
         "Node.add_interface() failure"
 
 
-def test_node_add_interface_existing_name():
+def test_node_get_interface():
     """
-    Test adding a new Interface with a name that already exists on the Node\n
-    In this case the already existing will be kept
+    Test the get_interface() method of the Node
     """
+    # Setup the Node object
     name = "node"
     ip = "192.168.1.1"
     send_rate = 10
     node = Node(name, ip, send_rate)
-    interface_name = "eth1"
-    node.add_interface(interface_name)
-    success = node.add_interface(interface_name)
-    assert len(node.interfaces) == 1 and \
-        node.interfaces[0].name == interface_name and \
-        not success, \
-        "Node.add_interface() failure"
 
-
-def test_node_get_interface_no_interfaces():
-    """
-    Test getting a Node Interface based on name, but having no Interfaces on \
-    the Node
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
+    # Get an Interface, and get the number of Interfaces on the Node
+    # No match will be found, since there are no Interfaces on the Node
     to_find = "eth1"
-    found_interface = node.get_interface(to_find)
-    assert len(node.interfaces) == 0 and \
-        not found_interface, \
+    found_interface_1 = node.get_interface(to_find)
+    init_len = len(node.interfaces)
+
+    # Add an Interface
+    node.add_interface("eth2")
+
+    # Get an Interface, and get the number of Interfaces on the Node
+    # No match will be found, since there is no such Interface on the Node
+    found_interface_2 = node.get_interface(to_find)
+    new_len = len(node.interfaces)
+
+    # Get an Interface, and get the number of Interfaces on the Node
+    # A match will be found, since there is such an Interface on the Node
+    found_interface_3 = node.get_interface("eth2")
+
+    assert init_len == 0 and \
+        new_len != 0 and \
+        not found_interface_1 and \
+        not found_interface_2 and \
+        found_interface_3, \
         "Node.get_interface() failure"
 
 
-def test_node_get_interface_no_match():
+def test_node_connect_to_interface():
     """
-    Test getting a Node Interface based on name, but having no matching \
-    Interfaces on the Node
+    Test the connect_to_interface() method of the Node
     """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    interface_1 = "eth2"
-    interface_2 = "eth3"
-    node.add_interface(interface_1)
-    node.add_interface(interface_2)
-    to_find = "eth1"
-    found_interface = node.get_interface(to_find)
-    assert len(node.interfaces) != 0 and \
-        found_interface is None, \
-        "Node.get_interface() failure"
-
-
-def test_node_get_interface_found_match():
-    """
-    Test getting a Node Interface based on name, and having a matching \
-    Interface on the Node
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    interface_1 = "eth1"
-    interface_2 = "eth2"
-    node.add_interface(interface_1)
-    node.add_interface(interface_2)
-    to_find = "eth1"
-    found_interface = node.get_interface(to_find)
-    assert len(node.interfaces) != 0 and \
-        found_interface.name == to_find, \
-        "Node.get_interface() failure"
-
-
-def test_node_connect_to_interface_same_nodes():
-    """
-    Test connecting two Nodes' Interfaces, the two Nodes being the same object
-    """
+    # Setup the Node object
     name = "node1"
     ip = "192.168.1.1"
     send_rate = 10
     node = Node(name, ip, send_rate)
+
+    # Add an Interface to the Node
     node.add_interface("eth1")
-    success = node.connect_to_interface(node, "eth1", "eth1", 10, 10)
-    assert not success and \
-        len(node.connections) == 0, \
-        "Node.connect_to_interface() failure"
 
+    # Connect the Node to itself, failing
+    success_1 = node.connect_to_interface(node, "eth1", "eth1", 10, 10)
+    init_connections = len(node.connections)
 
-def test_node_connect_to_interface_invalid_interface_first():
-    """
-    Test connecting two Nodes' Interfaces, the two Nodes being different objects, \
-    but the first Interface's name is a name that is not present
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
+    # Setup a second Node object
     name = "node2"
     ip = "192.168.0.1"
-    send_rate = 10
+    send_rate = 3
     node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth2"
-    connect_2 = "eth1"
-    success = node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    assert not success and \
-        node_1.get_interface(connect_1) is None and \
-        node_2.get_interface(connect_2) is not None and \
-        len(node_1.connections) == 0 and \
-        len(node_2.connections) == 0, \
-        "Node.connect_to_interface() failure"
 
+    # Add an Interface to the Node
+    node_2.add_interface("eth2")
 
-def test_node_connect_to_interface_invalid_interface_second():
-    """
-    Test connecting two Nodes' Interfaces, the two Nodes being different objects, \
-    but the second Interface's name is a name that is not present
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    name = "node2"
-    ip = "192.168.0.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth1"
-    connect_2 = "eth2"
-    success = node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    assert not success and \
-        node_1.get_interface(connect_1) is not None and \
-        node_2.get_interface(connect_2) is None and \
-        len(node_1.connections) == 0 and \
-        len(node_2.connections) == 0, \
-        "Node.connect_to_interface() failure"
+    # Connect the Nodes the following way:
+    # - first Interface being invalid
+    # - the second Interface being invalid
+    # - both Interfaces being invalid
+    success_2 = node.connect_to_interface(node_2, "eth34", "eth2", 10, 10)
+    success_3 = node.connect_to_interface(node_2, "eth1", "eth24312", 10, 10)
+    success_4 = node.connect_to_interface(node_2, "eth34", "eth2432", 10, 10)
 
+    # Connect the Nodes successfully
+    success_5 = node.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
 
-def test_node_connect_to_interface_invalid_interface_both():
-    """
-    Test connecting two Nodes' Interfaces, the two Nodes being different objects, \
-    but both Interfaces' name is a name that is not present
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    name = "node2"
-    ip = "192.168.0.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth2"
-    connect_2 = "eth2"
-    success = node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    assert not success and \
-        node_1.get_interface(connect_1) is None and \
-        node_2.get_interface(connect_2) is None and \
-        len(node_1.connections) == 0 and \
-        len(node_2.connections) == 0, \
-        "Node.connect_to_interface() failure"
-
-
-def test_node_connect_to_interface_success():
-    """
-    Test connecting two Nodes' Interfaces and succeeding
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    name = "node2"
-    ip = "192.168.0.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth1"
-    connect_2 = "eth1"
-    success = node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    print(node_1.connections[0][0][1].name)
-    assert success and \
-        node_1.get_interface(connect_1).name == connect_1 and \
-        node_2.get_interface(connect_2).name == connect_2 and \
-        len(node_1.connections) != 0 and \
+    assert not success_1 and \
+        not success_2 and \
+        not success_3 and \
+        not success_4 and \
+        success_5 and \
+        init_connections == 0 and \
+        len(node.connections) != 0 and \
         len(node_2.connections) != 0 and \
-        node_1.connections[0][0][1] == node_2.connections[0][1][1] and \
-        node_1.connections[0][0][0] == node_2.connections[0][1][0] and \
-        node_1.connections[0][1][1] == node_2.connections[0][0][1] and \
-        node_1.connections[0][1][0] == node_2.connections[0][0][0], \
+        node.connections[0][0][1] == node_2.connections[0][1][1] and \
+        node.connections[0][0][0] == node_2.connections[0][1][0] and \
+        node.connections[0][1][1] == node_2.connections[0][0][1] and \
+        node.connections[0][1][0] == node_2.connections[0][0][0], \
         "Node.connect_to_interface() failure"
 
 
 def test_node_disconnect_interface_invalid_interface():
     """
-    Test disconnecting an Interface that is not present on the Node
+    Test the disconnect_interface() method of the Node
     """
+    # Setup the Node object
     name = "node1"
     ip = "192.168.1.1"
     send_rate = 10
     node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    name = "node2"
-    ip = "192.168.0.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth1"
-    connect_2 = "eth1"
-    node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    disconnect = "eth2"
-    success = node_1.disconnect_interface(disconnect)
-    assert not success and \
-        len(node_1.connections) != 0 and \
-        len(node_2.connections) != 0 and \
-        node_1.connections[0][0][1] == node_2.connections[0][1][1] and \
-        node_1.connections[0][0][0] == node_2.connections[0][1][0] and \
-        node_1.connections[0][1][1] == node_2.connections[0][0][1] and \
-        node_1.connections[0][1][0] == node_2.connections[0][0][0], \
-        "Node.disconnect_interface() failure"
 
-
-def test_node_disconnect_interface_not_connected_interface():
-    """
-    Test disconnecting an Interface that is not connected to anything on the Node
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
+    # Add an Interface to it
     node_1.add_interface("eth1")
     node_1.add_interface("eth2")
+
+    # Setup an other Node object
     name = "node2"
     ip = "192.168.0.1"
     send_rate = 10
     node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth1"
-    connect_2 = "eth1"
-    node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    disconnect = "eth2"
-    success = node_1.disconnect_interface(disconnect)
-    assert not success and \
-        len(node_1.connections) != 0 and \
-        len(node_2.connections) != 0 and \
-        node_1.connections[0][0][1] == node_2.connections[0][1][1] and \
+
+    # Add an Interface to it
+    node_2.add_interface("eth2")
+
+    # Connect the Nodes
+    node_1.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
+    init_connections = len(node_1.connections)
+    prev_connected = node_1.connections[0][0][1] == node_2.connections[0][1][1] and \
         node_1.connections[0][0][0] == node_2.connections[0][1][0] and \
         node_1.connections[0][1][1] == node_2.connections[0][0][1] and \
-        node_1.connections[0][1][0] == node_2.connections[0][0][0], \
-        "Node.disconnect_interface() failure"
+        node_1.connections[0][1][0] == node_2.connections[0][0][0]
 
+    # Disconnect an Interface the following ways:
+    # - the Interface is invalid
+    # - the Interface is not connected
+    success_1 = node_1.disconnect_interface("eth3")
+    success_2 = node_1.disconnect_interface("eth2")
 
-def test_node_disconnect_interface_success():
-    """
-    Test disconnecting an Interface successfully
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    node_1.add_interface("eth2")
-    name = "node2"
-    ip = "192.168.0.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_2.add_interface("eth1")
-    connect_1 = "eth1"
-    connect_2 = "eth1"
-    node_1.connect_to_interface(node_2, connect_1, connect_2, 10, 10)
-    disconnect = "eth1"
-    success = node_1.disconnect_interface(disconnect)
-    assert success and \
+    # Disconnect the Interface successfully
+    success_3 = node_1.disconnect_interface("eth1")
+
+    assert not success_1 and \
+        not success_2 and \
+        success_3 and \
+        init_connections != 0 and \
+        prev_connected and \
         len(node_1.connections) == 0 and \
-        len(node_2.connections) == 0, \
-        "Node.disconnect_interface() failure"
-
-
-def test_node_delete_interface_no_interfaces():
-    """
-    Test deleting a Node Interface based on name, and having no Interfaces \
-    on the Node
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    to_delete = "eth1"
-    success = node.delete_interface(to_delete)
-    assert len(node.interfaces) == 0 and \
-        not success, \
-        "Node.delete_interface() failure"
-
-
-def test_node_delete_interface_no_match():
-    """
-    Test deleting a Node Interface based on name, and having no matching \
-    Interfaces on the Node
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    node.add_interface("eth1")
-    to_delete = "eth2"
-    success = node.delete_interface(to_delete)
-    assert len(node.interfaces) != 0 and \
-        not success, \
-        "Node.delete_interface() failure"
-
-
-def test_node_delete_interface_not_connected_success():
-    """
-    Test deleting a Node Interface based on name, and succeeding at it
-    """
-    name = "node"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node = Node(name, ip, send_rate)
-    node.add_interface("eth1")
-    to_delete = "eth1"
-    success = node.delete_interface(to_delete)
-    assert len(node.interfaces) == 0 and \
-        success, \
-        "Node.delete_interface() failure"
-
-
-def test_node_delete_interface_connected_success():
-    """
-    Test deleting a Node Interface based on name which is connected to an other
-    Node's interface, and succeeding at it
-    """
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_1 = Node(name, ip, send_rate)
-    name = "node1"
-    ip = "192.168.1.1"
-    send_rate = 10
-    node_2 = Node(name, ip, send_rate)
-    node_1.add_interface("eth1")
-    node_2.add_interface("eth1")
-    node_1.connect_to_interface(node_2, "eth1", "eth1", 10, 10)
-    to_delete = "eth1"
-    success = node_1.delete_interface(to_delete)
-    assert len(node_1.interfaces) == 0 and \
-        len(node_1.connections) == 0 and \
-        len(node_2.interfaces) != 0 and \
         len(node_2.connections) == 0 and \
-        success, \
+        node_1.get_interface("eth1").link is None and \
+        node_2.get_interface("eth2").link is None, \
+        "Node.disconnect_interface() failure"
+
+
+def test_node_delete_interface():
+    """
+    Test the delete_interface() method
+    """
+    # Setup the Node object
+    name = "node"
+    ip = "192.168.1.1"
+    send_rate = 10
+    node = Node(name, ip, send_rate)
+
+    # Delete the Interface, failing, since there are no Interfaces on the Node
+    success_1 = node.delete_interface("eth1")
+    init_len = len(node.interfaces)
+
+    # Add an Interface to the Node
+    node.add_interface("eth1")
+
+    # Delete the Interface that is not present on the Node, failing
+    success_2 = node.delete_interface("eth2")
+    len_2 = len(node.interfaces)
+
+    # Delete the Interface, that is not connected
+    success_3 = node.delete_interface("eth1")
+    len_3 = len(node.interfaces)
+
+    # Add an Interface back
+    node.add_interface("eth1")
+
+    # Setup an other Node object
+    name = "node1"
+    ip = "192.168.0.1"
+    send_rate = 10
+    node_2 = Node(name, ip, send_rate)
+
+    # Add an Interface to the new Node
+    node_2.add_interface("eth2")
+
+    # Connect the Nodes
+    conn_succ = node.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
+
+    # Delete the Interface
+    success_4 = node.delete_interface("eth1")
+
+    assert not success_1 and \
+        not success_2 and \
+        success_3 and \
+        conn_succ and \
+        success_4 and \
+        init_len == 0 and \
+        len_2 != 0 and \
+        len_3 == 0 and \
+        len(node.interfaces) == 0 and \
+        len(node.connections) == 0 and \
+        len(node_2.interfaces) != 0 and \
+        len(node_2.connections) == 0, \
         "Node.delete_interface() failure"
 
 
@@ -474,10 +305,12 @@ def test_host_init():
     """
     Test default init behaviour
     """
+    # Setup the Host object
     name = "host"
     ip = "192.166.1.1"
     send_rate = 10
     host = Host(name, ip, send_rate)
+
     assert host.name == name and \
         host.ip == ip and \
         host.send_rate == send_rate and \
@@ -487,17 +320,23 @@ def test_host_init():
 
 def test_host_set_application():
     """
-    Test setting the Application, which changes the Host's send_rate as well
+    Test the set_application() method of the Host
     """
+    # Setup the Host object
     name = "host"
     ip = "192.166.1.1"
     send_rate = 10
     host = Host(name, ip, send_rate)
+
+    # Setup the Application object
     app_name = "host_app"
     amount = 15
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application
     host.set_application(app_name, amount, app_send_rate, app_type)
+
     assert host.application.name == app_name and \
         host.application.ip == host.ip and \
         host.application.amount == amount and \
@@ -510,369 +349,238 @@ def test_host_set_application():
 
 def test_host_send_packet_self_ip():
     """
-    Test sending a Packet to the same IP as the Host
+    Test the send_packet() method of the Host
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.166.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
     host_1.add_interface("eth1")
+
+    # Setup the Application object
     app_name = "host_app_1"
     amount = 15
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application
     host_1.set_application(app_name, amount, app_send_rate, app_type)
+
+    # Setup an other Host object
     name = "host_2"
-    ip = "192.166.1.1"
+    ip = "192.166.0.1"
     send_rate = 10
     host_2 = Host(name, ip, send_rate)
     host_2.add_interface("eth2")
+
+    # Setup an other Application object
     app_name = "host_app_2"
     amount = 15
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application on the other Host
     host_2.set_application(app_name, amount, app_send_rate, app_type)
+
+    # Connect the Hosts
     connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
+
+    # Send a Packet to the same IP address as the source, failing
+    success_1 = host_1.send_packet(host_1.ip)
+
+    # Send a Packet when the Application can't send, failing
+    host_1.set_application(app_name, 0, app_send_rate, app_type)
+    success_2 = host_1.send_packet(host_2.ip)
+
+    # Set the Application to the previous state
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+
+    # Send a Packet when there is no Route to the destination set
+    success_3 = host_1.send_packet(host_2.ip)
+
+    # Add Routes to the Hosts
+    host_1.add_route(Route("192.166.0.1", "192.166.0.1", "eth1", 5))
     host_2.add_route(Route("192.166.1.1", "192.166.1.1", "eth2", 5))
-    return_val = host_1.send_packet(host_2.ip)
-    assert return_val is None and \
+
+    # Send a Packet successfully
+    success_4 = host_1.send_packet(host_2.ip)
+
+    assert success_1 is None and \
+        success_2 is None and \
+        success_3 is None and \
+        success_4 and \
         connected and \
         len(host_1.routing_table.routes) != 0 and \
         len(host_2.routing_table.routes) != 0, \
         "Host.send_packet() failure"
 
 
-def test_host_send_packet_app_cant_send():
-    """
-    Test sending a Packet to a Node in such a way that the Application can't \
-    send anymore
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 0
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    name = "host_2"
-    ip = "192.166.1.1"
-    send_rate = 10
-    host_2 = Host(name, ip, send_rate)
-    host_2.add_interface("eth2")
-    app_name = "host_app_2"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_2.set_application(app_name, amount, app_send_rate, app_type)
-    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
-    host_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 5))
-    return_val = host_1.send_packet(host_2.ip)
-    assert return_val is None and \
-        connected and \
-        len(host_1.routing_table.routes) != 0 and \
-        len(host_2.routing_table.routes) != 0 and \
-        not host_1.application.can_send(), \
-        "Host.send_packet() failure"
-
-
-def test_host_send_packet_no_route():
-    """
-    Test sending a Packet to an other Node in such a way that there is no Route \
-    between the two
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    name = "host_2"
-    ip = "192.166.1.1"
-    send_rate = 10
-    host_2 = Host(name, ip, send_rate)
-    host_2.add_interface("eth2")
-    app_name = "host_app_2"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_2.set_application(app_name, amount, app_send_rate, app_type)
-    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    return_val = host_1.send_packet(host_2.ip)
-    assert return_val is None and \
-        connected and \
-        len(host_1.routing_table.routes) == 0 and \
-        len(host_2.routing_table.routes) == 0 and \
-        host_1.application.can_send(), \
-        "Host.send_packet() failure"
-
-
-def test_host_send_packet_success():
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    name = "host_2"
-    ip = "192.166.1.1"
-    send_rate = 10
-    host_2 = Host(name, ip, send_rate)
-    host_2.add_interface("eth2")
-    app_name = "host_app_2"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_2.set_application(app_name, amount, app_send_rate, app_type)
-    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    host_1.add_route(Route("192.166.1.1", "192.166.1.1", "eth1", 5))
-    host_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 5))
-    return_val = host_1.send_packet(host_2.ip)
-    assert return_val[0] == host_2.ip and \
-        return_val[1] == host_2.interfaces[0].name and \
-        connected, \
-        "Host.send_packet() failure"
-
-
 def test_host_receive_packet_invalid_interface():
     """
-    Test receiving a Packet on an Interface that does not exist
+    Test the receive_packet() method of the Host
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
     host_1.add_interface("eth1")
+
+    # Setup the Application object
     app_name = "host_app_1"
     amount = 10
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application
     host_1.set_application(app_name, amount, app_send_rate, app_type)
+
+    # Setup an other Host object
     name = "host_2"
     ip = "192.166.1.1"
     send_rate = 10
     host_2 = Host(name, ip, send_rate)
     host_2.add_interface("eth2")
+
+    # Setup an other Application object
     app_name = "host_app_2"
     amount = 15
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application
     host_2.set_application(app_name, amount, app_send_rate, app_type)
-    p = Packet("192.166.1.1", "192.167.1.1", 10)
+
+    # Connect the Hosts
     connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
+
+    # receive the Packet when there are no Packets to receive
+    received_packet_1 = host_1.receive_packet("eth1")
+
+    # Setup the Packet object
+    p = Packet("192.166.1.1", "192.167.1.1", 10)
+
+    # Fill the receiving channel of every single Interface
     for interface in host_1.interfaces:
         interface.receive_channel.fill_payload(p)
-    received_packet = host_1.receive_packet("eth2")
-    assert not received_packet and \
+
+    # Receive the Packet on an Interface that is not present on the Host
+    received_packet_2 = host_1.receive_packet("eth2")
+
+    # Receive the Packet sucessfully
+    received_packet_3 = host_1.receive_packet("eth1")
+
+    assert not received_packet_1 and \
+        not received_packet_2 and \
+        received_packet_3 and \
         host_1.get_interface("eth2") is None and \
         len(host_1.interfaces) != 0 and \
         connected, \
         "Host.receive_packet() failure"
 
 
-def test_host_receive_packet_no_packet():
+def test_host_handle_feedback():
     """
-    Test trying to receive a Packet on an Interface that does not have any \
-    incoming packets
+    Test the handle_feedback() method of the Host
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
     host_1.add_interface("eth1")
+
+    # Setup the Application object
     app_name = "host_app_1"
     amount = 10
     app_send_rate = 11
     app_type = "AIMD"
+
+    # Set the Application
     host_1.set_application(app_name, amount, app_send_rate, app_type)
-    name = "host_2"
-    ip = "192.166.1.1"
-    send_rate = 10
-    host_2 = Host(name, ip, send_rate)
-    host_2.add_interface("eth2")
-    app_name = "host_app_2"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_2.set_application(app_name, amount, app_send_rate, app_type)
-    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    received_packet = host_1.receive_packet("eth1")
-    assert not received_packet and \
-        host_1.get_interface("eth1") is not None and \
-        len(host_1.interfaces) != 0 and \
-        connected, \
-        "Host.receive_packet() failure"
 
-
-def test_host_receive_packet_success():
-    """
-    Test successfully receiving a packet
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    name = "host_2"
-    ip = "192.166.1.1"
-    send_rate = 10
-    host_2 = Host(name, ip, send_rate)
-    host_2.add_interface("eth2")
-    app_name = "host_app_2"
-    amount = 15
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_2.set_application(app_name, amount, app_send_rate, app_type)
-    connected = host_1.connect_to_interface(host_2, "eth1", "eth2", 10, 10)
-    p = Packet("192.166.1.1", "192.167.1.1", 10)
-    host_1.get_interface("eth1").receive_channel.fill_payload(p)
-    received_packet = host_1.receive_packet("eth1")
-    assert received_packet and \
-        host_1.get_interface("eth1") is not None and \
-        len(host_1.interfaces) != 0 and \
-        connected, \
-        "Host.receive_packet() failure"
-
-
-def test_host_handle_feedback_positive():
-    """
-    Test handling a postitive feedback value
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    # Handle a positive feedback and get the send rate of the Host and the
+    # Application
     host_1.handle_feedback(1)
-    assert host_1.send_rate == app_send_rate + 1 and \
-        host_1.application.send_rate == app_send_rate + 1, \
-        "Host.handle_feedback() failure"
+    send_rate_1 = host_1.send_rate
+    app_send_rate_1 = host_1.application.send_rate
 
-
-def test_host_handle_feedback_negative():
-    """
-    Test handling a negative feedback value
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    # Handle a negative feedback and get the send rate of the Host and the
+    # Application
     host_1.handle_feedback(-1)
-    assert host_1.send_rate == app_send_rate // 2 and \
-        host_1.application.send_rate == app_send_rate // 2, \
+    send_rate_2 = host_1.send_rate
+    app_send_rate_2 = host_1.application.send_rate
+
+    assert send_rate_1 == app_send_rate + 1 and \
+        app_send_rate_1 == app_send_rate + 1 and \
+        send_rate_2 == (app_send_rate + 1) // 2 and \
+        app_send_rate_2 == (app_send_rate + 1) // 2, \
         "Host.handle_feedback() failure"
 
 
-def test_host_receive_feedback_const_negative():
+def test_host_receive_feedback():
     """
-    Test receiving a negative value feedback on a CONST app_type Host
+    Test the receive_feedback() method of the Host
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
     host_1.add_interface("eth1")
+
+    # Setup the Application object
     app_name = "host_app_1"
     amount = 10
     app_send_rate = 11
     app_type = "CONST"
+
+    # Set the Application
     host_1.set_application(app_name, amount, app_send_rate, app_type)
-    host_1.receive_feedback("192.166.1.1", -1)
-    assert host_1.send_rate == app_send_rate and \
-        host_1.application.send_rate == app_send_rate, \
-        "Host.handle_feedback() failure"
 
-
-def test_host_receive_feedback_const_positive():
-    """
-    Test receiving a positive feedback value on a CONST app_type Host
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "CONST"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    host_1.receive_feedback("192.166.1.1", 1)
-    assert host_1.send_rate == app_send_rate and \
-        host_1.application.send_rate == app_send_rate, \
-        "Host.handle_feedback() failure"
-
-
-def test_host_receive_feedback_aimd_negative():
-    """
-    Test receiving a negative feedback value on an AIMD app_type Host
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
-    host_1.receive_feedback("192.167.1.1", -1)
-    assert host_1.send_rate == app_send_rate // 2 and \
-        host_1.application.send_rate == app_send_rate // 2, \
-        "Host.handle_feedback() failure"
-
-
-def test_host_receive_feedback_aimd_positive():
-    """
-    Test receiving a positive feedback value on an AIMD app_type Host
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.add_interface("eth1")
-    app_name = "host_app_1"
-    amount = 10
-    app_send_rate = 11
-    app_type = "AIMD"
-    host_1.set_application(app_name, amount, app_send_rate, app_type)
+    # Receive a positive feedback on a CONST type Application and get the send
+    # rates
     host_1.receive_feedback("192.167.1.1", 1)
-    assert host_1.send_rate == app_send_rate + 1 and \
-        host_1.application.send_rate == app_send_rate + 1, \
+    send_rate_1 = host_1.send_rate
+    app_send_rate_1 = host_1.application.send_rate
+
+    # Receive a negative feedback on a CONST type Application and get the send
+    # rates
+    host_1.receive_feedback("192.167.1.1", -1)
+    send_rate_2 = host_1.send_rate
+    app_send_rate_2 = host_1.application.send_rate
+
+    # Setup the Application object
+    app_type = "AIMD"
+
+    # Set the Application
+    host_1.set_application(app_name, amount, app_send_rate, app_type)
+
+    # Receive a poisitive feedback on an AIMD type Application and get the send
+    # rates
+    host_1.receive_feedback("192.167.1.1", 1)
+    send_rate_3 = host_1.send_rate
+    app_send_rate_3 = host_1.application.send_rate
+
+    # Receive a negative feedback on an AIMD type Application and get the send
+    # rates
+    host_1.receive_feedback("192.167.1.1", -1)
+    send_rate_4 = host_1.send_rate
+    app_send_rate_4 = host_1.application.send_rate
+
+    assert send_rate_1 == app_send_rate and \
+        app_send_rate_1 == app_send_rate and \
+        send_rate_2 == app_send_rate and \
+        app_send_rate_2 == app_send_rate and \
+        send_rate_3 == app_send_rate + 1 and \
+        app_send_rate_3 == app_send_rate + 1 and \
+        send_rate_4 == (app_send_rate + 1) // 2 and \
+        app_send_rate_4 == (app_send_rate + 1) // 2, \
         "Host.handle_feedback() failure"
+
 
 # TODO: Test PPV generation properly
-
-
 def test_host_something_ppv(): pass
 
 
@@ -881,324 +589,289 @@ def test_host_something_ppv(): pass
 #------------------------------------------------#
 
 
-def test_router_init_positive_buffer_size():
+def test_router_init():
     """
-    Test initialization with positive (>=0) buffer_size
+    Test the default init behaviour
     """
+    # Setup the Router object with positive buffer size
     name = "router"
     ip = "192.168.1.1"
     send_rate = 10
-    buffer_size = 5
-    router = Router(name, ip, send_rate, buffer_size)
-    assert router.name == name and \
-        router.ip == ip and \
-        router.send_rate == send_rate and \
-        router.buffer_size == buffer_size and \
-        len(router.buffer) == 0, \
-        "Router field mismatch during positive buffer_size initialization"
+    pos_buffer_size = 5
+    router_1 = Router(name, ip, send_rate, pos_buffer_size)
+
+    # Setup an other Router object with negative buffer size
+    neg_buffer_size = -1
+    router_2 = Router(name, ip, send_rate, neg_buffer_size)
+    assert router_1.name == name and \
+        router_1.ip == ip and \
+        router_1.send_rate == send_rate and \
+        router_1.buffer_size == pos_buffer_size and \
+        len(router_1.buffer) == 0 and \
+        router_2.name == name and \
+        router_2.ip == ip and \
+        router_2.send_rate == send_rate and \
+        router_2.buffer_size == 0 and \
+        len(router_2.buffer) == 0, \
+        "Router field mismatch during buffer_size initialization"
 
 
-def test_router_init_positive_buffer_size():
+def test_router_lowest_buffer_ppv():
     """
-    Test initialization with negative (<0) buffer_size
+    Test the lowest_buffer_ppv() method of the Router
     """
-    name = "router"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = -1
-    router = Router(name, ip, send_rate, buffer_size)
-    assert router.name == name and \
-        router.ip == ip and \
-        router.send_rate == send_rate and \
-        router.buffer_size == 0 and \
-        len(router.buffer) == 0, \
-        "Router field mismatch during negative buffer_size initialization"
-
-
-def test_router_lowest_buffer_ppv_empty_buffer():
-    """
-    Test getting the lowest PPV Packet from the buffer while it is empty
-    """
+    # Setup the Router object
     name = "router"
     ip = "192.168.1.1"
     send_rate = 10
     buffer_size = 10
     router = Router(name, ip, send_rate, buffer_size)
-    packet = router.lowest_buffer_ppv()
-    assert packet is None and \
-        len(router.buffer) == 0, \
-        "Router.lowest_buffer_ppv() failure"
 
+    # Get the Packet from an empty buffer, giving a None, and get the buffer
+    # length as well
+    packet_1 = router.lowest_buffer_ppv()
+    init_len = len(router.buffer)
 
-def test_router_lowest_buffer_ppv_single_lowest():
-    """
-    Test getting the lowest PPV Packet with a single Packet having the lowest \
-    out of all of them
-    """
-    name = "router"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 10
-    router = Router(name, ip, send_rate, buffer_size)
+    # Add Packets to the buffer
     for _ in range(buffer_size - 1):
         router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
     min_packet = Packet("192.167.1.1", "192.169.1.1", 5)
     router.buffer.append(min_packet)
-    packet = router.lowest_buffer_ppv()
-    assert packet is min_packet and \
-        packet is router.buffer[buffer_size - 1] and \
-        len(router.buffer) == buffer_size, \
-        "Router.lowest_buffer_ppv() failure"
 
+    # Get the lowest PPV Packet from the buffer, with a single match, and get
+    # the buffer length as well
+    packet_2 = router.lowest_buffer_ppv()
+    next_len_2 = len(router.buffer)
 
-def test_router_lowest_buffer_ppv_multiple_lowest():
-    """
-    Test getting the lowest PPV Packet with multiple Packets having the lowest \
-    out of all of them, essentially getting the first one with such PPV
-    """
-    name = "router"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 10
-    router = Router(name, ip, send_rate, buffer_size)
+    # Reset the buffer, and fill it with Packets, but with differently
+    # distributed PPV
+    router.buffer = []
     for _ in range(buffer_size - 3):
         router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
     for _ in range(3):
         router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 5))
-    packet = router.lowest_buffer_ppv()
-    assert packet is router.buffer[buffer_size - 3] and \
-        len(router.buffer) == buffer_size, \
+
+    # Get the lowest PPV packet from the buffer, with multiple matches,
+    # getting only the first one, and get the buffer length as well
+    packet_3 = router.lowest_buffer_ppv()
+    next_len_3 = len(router.buffer)
+
+    assert packet_1 is None and \
+        init_len == 0 and \
+        packet_2 is min_packet and \
+        next_len_2 != 0 and \
+        packet_3 is router.buffer[buffer_size - 3] and \
+        next_len_3 != 0, \
         "Router.lowest_buffer_ppv() failure"
 
 
-def test_router_send_packet_empty_buffer():
+def test_router_send_packet():
     """
-    Test sending a Packet (taking one out of the buffer) when the buffer itself \
-    is empty
+    Test the send_packet() method of the Router
     """
+    # Setup the Router object
     name = "router"
     ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 10
-    router = Router(name, ip, send_rate, buffer_size)
-    next_hop = router.send_packet()
-    assert next_hop is None and \
-        len(router.buffer) == 0, \
-        "Router.send_packet() failure"
-
-
-def test_router_send_packet_no_route():
-    """
-    Test sending a Packet when there is no Route to the target IP, dropping \
-    the Packet after taking it out of the buffer
-    """
-    name = "router"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 10
-    router = Router(name, ip, send_rate, buffer_size)
-    router.buffer.append(Packet("192.166.1.1", "192.167.1.1", 5))
-    prev_buffer_len = len(router.buffer)
-    next_hop = router.send_packet()
-    assert next_hop is None and \
-        prev_buffer_len != 0 and \
-        len(router.buffer) == 0
-
-
-def test_router_send_packet_success():
-    """
-    Test sending a Packet whenever every prerequisite is present and succeeds
-    """
-    name = "router_1"
-    ip = "192.167.1.1"
     send_rate = 10
     buffer_size = 10
     router_1 = Router(name, ip, send_rate, buffer_size)
-    router_1.add_interface("eth1")
+
+    # Send the Packet, getting the next hop - None, in this case, because the
+    # buffer is empty
+    next_hop_1 = router_1.send_packet()
+
+    # Add a Packet to the buffer
+    router_1.buffer.append(Packet("192.166.1.1", "192.167.1.1", 5))
+    prev_buffer_len = len(router_1.buffer)
+
+    # Send the Packet, getting the next hop - None, in this case, because the
+    # Route to the destination is not set
+    next_hop_2 = router_1.send_packet()
+    after_buffer_len = len(router_1.buffer)
+
+    # Setup an other Router object
     name = "router_2"
     ip = "192.168.1.1"
     send_rate = 10
     buffer_size = 10
     router_2 = Router(name, ip, send_rate, buffer_size)
+
+    # Setup the Interfaces on the Routers
+    router_1.add_interface("eth1")
     router_2.add_interface("eth2")
+
+    # Connect the Routers
     router_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+
+    # Add Route to be able to send the Packet
     router_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
+
+    # Add a Packet to the Router's buffer
     packet = Packet("192.167.1.1", "192.168.1.1", 10)
     router_1.buffer.append(packet)
-    next_hop = router_1.send_packet()
+
+    # Send the Packet, succeeding, and get the next hop and the sending and
+    # receiving channels of the corresponding Routers
+    next_hop_3 = router_1.send_packet()
     r1_send_channel = router_1.connections[0][0][0].send_channel
     r2_receive_channel = router_2.connections[0][0][0].receive_channel
-    assert next_hop[0] == "192.168.1.1" and \
-        next_hop[1] == "eth2" and \
+
+    assert next_hop_1 is None and \
+        next_hop_2 is None and \
+        next_hop_3[0] == "192.168.1.1" and \
+        next_hop_3[1] == "eth2" and \
         r1_send_channel.payload[0] == packet and \
-        r2_receive_channel.payload[0] == packet, \
+        r2_receive_channel.payload[0] == packet and \
+        prev_buffer_len != 0 and \
+        after_buffer_len == 0, \
         "Router.send_packet() failure"
 
 
-def test_router_receive_packet_invalid_interface():
+def test_router_receive_packet():
     """
-    Test receiving a Packet whenever the Interface given to receive on is an \
-    invalid name
+    Test the receive_packet() method of the Router
     """
+    # Setup the Router object
     name = "router"
     ip = "192.167.1.1"
     send_rate = 10
     buffer_size = 10
-    router = Router(name, ip, send_rate, buffer_size)
-    router.add_interface("eth1")
-    success = router.receive_packet("eth2")
-    assert not success and \
-        len(router.interfaces) != 0, \
-        "Router.receive_packet() failure"
-
-
-def test_router_receive_packet_no_packet():
-    """
-    Test receiving a Packet whenever there are no Packets to receive on the \
-    given Interface
-    """
-    name = "router_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    buffer_size = 10
     router_1 = Router(name, ip, send_rate, buffer_size)
+
+    # Add an Interface to the Router
     router_1.add_interface("eth1")
 
+    # Receive Packet on an invalid Interface name, failing
+    success_1 = router_1.receive_packet("eth2")
+
+    # Setup an other Router object
     name = "router_2"
     ip = "192.168.1.1"
     send_rate = 10
-    buffer_size = 10
+    buffer_size = 1
     router_2 = Router(name, ip, send_rate, buffer_size)
+
+    # Add an Interface to the other Router
     router_2.add_interface("eth2")
 
+    # Connect the Routers
     router_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
 
-    interface = router_1.get_interface("eth1")
-    success = router_1.receive_packet("eth1")
-    assert not success and \
-        interface is not None and \
-        len(interface.receive_channel.payload) == 0, \
-        "Router.receive_packet() failure"
+    # Receive a Packet whenever there is no Packet to receive, failing
+    success_2 = router_1.receive_packet("eth1")
 
-
-def test_router_receive_full_buffer_lower_incoming_ppv():
-    """
-    Test receiving a Packet whenever every prerequisite is present and succeeds, \
-    but the buffer is full, so PPV handling is needed
-    """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
+
+    # Set the Application of the Host
     host_1.set_application("host_app", 10, 10, "CONST")
+
+    # Add an Interface to the Host
     host_1.add_interface("eth1")
 
-    name = "router_2"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 1
-    router_2 = Router(name, ip, send_rate, buffer_size)
-    router_2.add_interface("eth2")
-    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 10))
+    # Add a Packet to the Router's buffer with maximum PPV
+    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 8))
 
+    # Connect the Host and the Router
     host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+
+    # Add Routes to the Host and the Router
     host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
     router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 8))
-    packet = Packet("192.167.1.1", "192.168.1.1", 7)
-    router_2.get_interface("eth2").receive_channel.fill_payload(packet)
-    success = router_2.receive_packet("eth2")
-    assert success and \
-        router_2.buffer[0] != packet and \
-        router_2.buffer[0].ppv == 10, \
-        "Router.receive_packet() failure"
 
+    # Put a Packet with lower PPV than the one in the buffer to the receiving
+    # Channel of the Router
+    packet_1 = Packet("192.167.1.1", "192.168.1.1", 7)
+    router_2.get_interface("eth2").receive_channel.fill_payload(packet_1)
 
-def test_router_receive_full_buffer_higher_incoming_ppv():
-    """
-    Test receiving a Packet whenever every prerequisite is present and succeeds, \
-    but the buffer is full, and PPV handling is needed
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.set_application("host_app", 10, 10, "CONST")
-    host_1.add_interface("eth1")
+    # Receive the Packet successfully, dropping the incoming Packet
+    success_3 = router_2.receive_packet("eth2")
 
-    name = "router_2"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 1
-    router_2 = Router(name, ip, send_rate, buffer_size)
-    router_2.add_interface("eth2")
-    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 7))
+    # Get the content of the buffer
+    pack_1 = router_2.buffer[0]
 
-    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
-    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
-    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 8))
-    packet = Packet("192.167.1.1", "192.168.1.1", 9)
-    router_2.get_interface("eth2").receive_channel.fill_payload(packet)
-    success = router_2.receive_packet("eth2")
-    assert success and \
-        router_2.buffer[0] == packet and \
-        router_2.buffer[0].ppv == 9, \
-        "Router.receive_packet() failure"
+    # Put a Packet with higher PPV than the one in the buffer to the receiving
+    # Channel of the Router
+    packet_2 = Packet("192.167.1.1", "192.168.1.1", 9)
+    router_2.get_interface("eth2").receive_channel.fill_payload(packet_2)
 
+    # Receive the Packet successfully, dropping the Packet from the Buffer
+    success_4 = router_2.receive_packet("eth2")
 
-def test_router_receive_packet_success():
-    """
-    Test receiving a Packet whenever every prerequisite is present and succeeds
-    """
-    name = "host_1"
-    ip = "192.167.1.1"
-    send_rate = 10
-    host_1 = Host(name, ip, send_rate)
-    host_1.set_application("host_app", 10, 10, "CONST")
-    host_1.add_interface("eth1")
+    # Get the content of the buffer
+    pack_2 = router_2.buffer[0]
 
-    name = "router_2"
-    ip = "192.168.1.1"
-    send_rate = 10
-    buffer_size = 10
-    router_2 = Router(name, ip, send_rate, buffer_size)
-    router_2.add_interface("eth2")
+    # Empty the buffer
+    router_2.buffer = []
 
-    host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
-    host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
-    router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
+    # Put a Packet to the receiving Channel of the Router
     next_hop = host_1.send_packet("192.168.1.1")
-    success = router_2.receive_packet(next_hop[1])
-    assert success and \
+
+    # Receive the Packet, succeeding
+    success_5 = router_2.receive_packet(next_hop[1])
+
+    assert not success_1 and \
+        not success_2 and \
+        success_3 and \
+        success_4 and \
+        success_5 and \
+        pack_1 != packet_1 and \
+        pack_1.ppv == 8 and \
+        pack_2 == packet_2 and \
+        pack_2.ppv == 9 and \
+        len(router_1.interfaces) != 0 and \
+        len(router_2.interfaces) != 0 and \
         len(router_2.buffer) != 0, \
         "Router.receive_packet() failure"
 
 
 def test_router_send_feedback():
     """
-    Test sending a feedback value
+    Test the send_feedback() method of the Router
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
+
+    # Set the Application of the Host
     host_1.set_application("host_app", 10, 10, "AIMD")
+
+    # Add an Interface to the Host
     host_1.add_interface("eth1")
 
+    # Setup the Router object
     name = "router_2"
     ip = "192.168.1.1"
     send_rate = 10
     buffer_size = 10
     router_2 = Router(name, ip, send_rate, buffer_size)
+
+    # Add an Interface to the Router
     router_2.add_interface("eth2")
+
+    # Connect the Host and the Router
     host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+
+    # Set Routes to enable sending between Nodes
     host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
     router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
 
+    # Send positive feedback from the Router to the Host and get the send rate
+    # of the Host
     router_2.send_feedback("192.167.1.1", 1)
     router_2.send_feedback("192.167.1.1", 1)
     prev_send_rate = host_1.send_rate
+
+    # Send negative feedback from the Router to the Host and get the send rate
+    # of the Host
     router_2.send_feedback("192.167.1.1", -1)
     final_send_rate = host_1.send_rate
+    
     assert final_send_rate == (send_rate + 2) // 2 and \
         prev_send_rate == (send_rate + 2), \
         "Router.send_feedback() failure"
@@ -1206,30 +879,48 @@ def test_router_send_feedback():
 
 def test_router_receive_feedback():
     """
-    Test receiving a feedback value
+    Test the receive_feedback() method of the Router
     """
+    # Setup the Host object
     name = "host_1"
     ip = "192.167.1.1"
     send_rate = 10
     host_1 = Host(name, ip, send_rate)
+
+    # Set the Application of the Host
     host_1.set_application("host_app", 10, 10, "AIMD")
+
+    # Add an Interface to the Host
     host_1.add_interface("eth1")
 
+    # Setup the Router object
     name = "router_2"
     ip = "192.168.1.1"
     send_rate = 10
     buffer_size = 10
     router_2 = Router(name, ip, send_rate, buffer_size)
+
+    # Add an Interface to the Host
     router_2.add_interface("eth2")
+
+    # Connect the Host and the Router
     host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
+
+    # Set Routes to enable sending between Nodes
     host_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
     router_2.add_route(Route("192.167.1.1", "192.167.1.1", "eth2", 10))
 
+    # Send positive feedback from the Router to the Host and get the send rate
+    # of the Host
     router_2.receive_feedback("192.167.1.1", 1)
     router_2.receive_feedback("192.167.1.1", 1)
     prev_send_rate = host_1.send_rate
+
+    # Send negative feedback from the Router to the Host and get the send rate
+    # of the Host
     router_2.receive_feedback("192.167.1.1", -1)
     final_send_rate = host_1.send_rate
+
     assert final_send_rate == (send_rate + 2) // 2 and \
         prev_send_rate == (send_rate + 2), \
         "Router.send_feedback() failure"
