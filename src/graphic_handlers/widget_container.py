@@ -2,7 +2,7 @@
 This module makes WidgetContainer objects available for use when imported
 """
 # Built-in modules
-from tkinter import *
+from tkinter import Tk
 from tkinter import ttk
 
 # Self-made modules
@@ -12,6 +12,9 @@ from src.graphic_handlers.statistics_frame import StatisticsFrame
 
 
 class WidgetContainer:
+    """
+    The main container inside the main window containing every other item
+    """
 
     def __init__(self, parent: Tk) -> None:
         self.content: ttk.Frame = ttk.Frame(parent)

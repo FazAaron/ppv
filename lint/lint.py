@@ -47,7 +47,9 @@ options = [["--disable=C0103",
            ["--disable=R0903",
             "src/graphic_handlers/object_frame.py"],
            ["--disable=R0903",
-            "src/graphic_handlers/statistics_frame.py"]]
+            "src/graphic_handlers/statistics_frame.py"],
+           ["--disable=R0903",
+            "src/graphic_handlers/widget_container.py"]]
 
 for option in options:
     lint_file(option)

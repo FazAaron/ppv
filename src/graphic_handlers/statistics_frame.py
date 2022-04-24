@@ -5,6 +5,10 @@ from tkinter import ttk
 
 
 class StatisticsFrame:
+    """
+    The window containing a statistics regarding the run, contained inside \
+    the main window's WidgetContainer
+    """
 
     def __init__(self, parent: ttk.Frame) -> None:
         self.statistics_frame: ttk.Frame = ttk.Frame(parent, relief="ridge")
