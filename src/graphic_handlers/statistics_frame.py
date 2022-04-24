@@ -1,0 +1,2 @@
+class StatisticsFrame:
+    pass

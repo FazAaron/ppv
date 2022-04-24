@@ -4,7 +4,7 @@ This module makes Channel and Link objects available for use when imported
 # Built-in modules
 from typing import List
 
-# Self-written modules
+# Self-made modules
 from src.components.packet import Packet
 
 

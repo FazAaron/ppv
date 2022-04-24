@@ -8,7 +8,7 @@ from __future__ import annotations
 import random
 from typing import List, Tuple
 
-# Self-written modules
+# Self-made modules
 from src.components.application import Application
 from src.components.interface import Interface
 from src.components.link import Link

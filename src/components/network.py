@@ -8,7 +8,7 @@ intended way
 # Built-in modules
 from typing import List, Tuple
 
-# Self written modules
+# Self-made modules
 from src.components.application import Application
 from src.components.interface import Interface
 from src.components.link import Link
