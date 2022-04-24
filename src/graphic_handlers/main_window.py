@@ -26,7 +26,7 @@ class MainWindow:
 
     def __config_main_window(self) -> None:
         """
-        A helper method serving as the main configuration point for the 
+        A helper method serving as the main configuration point for the
         top-level window of the GUI\n
         This sets the following attributes of the main window:
         - title

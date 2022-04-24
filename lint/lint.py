@@ -36,7 +36,18 @@ options = [["--disable=C0103",
             "src/utils/graph.py"],
            ["--disable=R1732",
             "--disable=R0903",
-            "src/utils/logger.py"]]
+            "src/utils/logger.py"],
+           ["src/utils/regex_checker.py"],
+           ["--disable=R0903",
+            "src/event_handlers/simulation.py"],
+           ["--disable=R0903",
+            "src/graphic_handlers/main_window.py"],
+           ["--disable=R0903",
+            "src/graphic_handlers/object_canvas.py"],
+           ["--disable=R0903",
+            "src/graphic_handlers/object_frame.py"],
+           ["--disable=R0903",
+            "src/graphic_handlers/statistics_frame.py"]]
 
 for option in options:
     lint_file(option)
