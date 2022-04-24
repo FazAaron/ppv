@@ -21,8 +21,11 @@ class Simulation:
         self.network: Network = Network()
         self.logger: Logger = Logger("conf/logger_config.json")
 
-    def start(self):
+    def start(self) -> None:
         """
         Starts the simulation, opening a new window
         """
         self.main_window.app.mainloop()
+
+    def __test(self) -> None:
+        self.main_window.content.canvas.bind()
