@@ -15,41 +15,9 @@ def test_channel_init():
     metrics_1 = 5
     channel_1 = Channel(speed_1, metrics_1)
 
-    # Setup a Channel object with negative speed parameter
-    speed_2 = -10
-    metrics_2 = 5
-    channel_2 = Channel(speed_2, metrics_2)
-
-    # Setup a Channel object with zero speed parameter
-    speed_3 = 0
-    metrics_3 = 5
-    channel_3 = Channel(speed_3, metrics_3)
-
-    # Setup a Channel object with negative metrics parameter
-    speed_4 = 10
-    metrics_4 = -5
-    channel_4 = Channel(speed_4, metrics_4)
-
-    # Setup a Channel object with zero metrics parameter
-    speed_5 = 10
-    metrics_5 = 0
-    channel_5 = Channel(speed_5, metrics_5)
-
     assert channel_1.speed == speed_1 and \
         channel_1.metrics == metrics_1 and \
         len(channel_1.payload) == 0 and \
-        channel_2.speed == 1 and \
-        channel_2.metrics == metrics_2 and \
-        len(channel_2.payload) == 0 and \
-        channel_3.speed == 1 and \
-        channel_3.metrics == metrics_3 and \
-        len(channel_3.payload) == 0 and \
-        channel_4.speed == speed_4 and \
-        channel_4.metrics == 1 and \
-        len(channel_4.payload) == 0 and \
-        channel_5.speed == speed_5 and \
-        channel_5.metrics == 1 and \
-        len(channel_5.payload) == 0, \
         "Channel field mismatch during initialization"
 
 

@@ -14,43 +14,12 @@ def test_application_init():
     app_type = "AIMD"
     app_1 = Application(name, ip, amount, send_rate, app_type)
 
-    # Setup a CONST type Application object
-    app_type = "CONST"
-    app_2 = Application(name, ip, amount, send_rate, app_type)
-
-    # Setup other type Application object
-    app_type = "OTHER"
-    app_3 = Application(name, ip, amount, send_rate, app_type)
-
-    # Setup negative Packet amount to send on the Application object
-    amount = -10
-    app_type = "CONST"
-    app_4 = Application(name, ip, amount, send_rate, app_type)
-
     assert app_1.name == "test_app" and \
         app_1.ip == "127.0.0.1" and \
         app_1.amount == 10 and \
         app_1.send_rate == 10 and \
         app_1.app_type == "AIMD" and \
         app_1.curr_sent == 0 and \
-        app_2.name == "test_app" and \
-        app_2.ip == "127.0.0.1" and \
-        app_2.amount == 10 and \
-        app_2.send_rate == 10 and \
-        app_2.app_type == "CONST" and \
-        app_2.curr_sent == 0 and \
-        app_3.name == "test_app" and \
-        app_3.ip == "127.0.0.1" and \
-        app_3.amount == 10 and \
-        app_3.send_rate == 10 and \
-        app_3.app_type == "CONST" and \
-        app_3.curr_sent == 0 and \
-        app_4.name == "test_app" and \
-        app_4.ip == "127.0.0.1" and \
-        app_4.amount == 0 and \
-        app_4.send_rate == 10 and \
-        app_4.app_type == "CONST" and \
-        app_4.curr_sent == 0, \
         "Application field mismatch during initialization"
 
 

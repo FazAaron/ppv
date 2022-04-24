@@ -26,9 +26,9 @@ class Application:
                  ) -> None:
         self.name:      str = name
         self.ip:        str = ip
-        self.amount:    int = 0 if amount < 0 else amount
+        self.amount:    int = amount
         self.send_rate: int = send_rate
-        self.app_type:  str = "AIMD" if app_type == "AIMD" else "CONST"
+        self.app_type:  str = app_type
         self.curr_sent: int = 0
 
     def can_send(self) -> bool:

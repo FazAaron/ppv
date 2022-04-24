@@ -509,7 +509,7 @@ def test_network_set_application():
     application_set_by_name_success = network.set_application(
         "host_123", "app_123", 11, 11, "AIMD")
     application_set_by_ip_success = network.set_application(
-        "192.168.1.1", "app_123", 12, 12, "OTHER_TYPE")
+        "192.168.1.1", "app_123", 12, 12, "CONST")
 
     assert not non_existant_success and \
         application_set_by_name_success and \
