@@ -18,13 +18,31 @@ class WidgetContainer:
 
     def __init__(self, parent: Tk) -> None:
         self.content: ttk.Frame = ttk.Frame(parent)
+        self.canvas: ObjectCanvas = ObjectCanvas(self.content)
+        self.object_frame: ObjectFrame = ObjectFrame(self.content)
+        self.statistics_frame: StatisticsFrame = StatisticsFrame(self.content)
+
         self.content.grid(column=0, row=0, sticky="nsew")
-
-        self.canvas = ObjectCanvas(self.content)
-        self.object_frame = ObjectFrame(self.content)
-        self.statistics_frame = StatisticsFrame(self.content)
-
         self.content.columnconfigure(0, weight=3)
         self.content.columnconfigure(1, weight=1)
         self.content.rowconfigure(0, weight=5)
         self.content.rowconfigure(1, weight=1)
+
+        self.canvas.bind("<Motion>", self.__motion_handler)
+        self.canvas.bind("<Button-1>", self.__left_click_handler)
+
+    def __motion_handler(self, event: str):
+        canvas_obj = self.canvas.canvas
+        canvas_obj.delete("all")
+        if self.canvas.placing:
+            x, y = event.x, event.y
+            self.canvas.draw_img(x, y, "HOST")
+
+    def __left_click_handler(self, event: str):
+        if not self.canvas.placing:
+            self.canvas.placing = True
+        else:
+            self.canvas.placing = False
+
+    def __right_click_handler(self, event: str):
+        pass

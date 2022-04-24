@@ -13,7 +13,8 @@ class MainWindow:
     The top-level window of the GUI, containing every single GUI element
 
     Data members:
-    app (Tk): The top-level containing window of the GUI
+    app     (Tk): The top-level containing window of the GUI
+    content (WidgetContainer): The content of the main window
     """
 
     def __init__(self) -> None:
