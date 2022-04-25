@@ -268,6 +268,7 @@ class Network:
         Returns:
         bool: Whether the deletion of the Interface was a success or not
         """
+        # TODO Check if it was connected, if yes, check if the link had any packets
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
         if node is None:
@@ -357,6 +358,7 @@ class Network:
         Returns:
         bool: Whether the Interface was disconnected or not
         """
+        # TODO check if the link between them had any Packets traveling
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
         if node is None:
