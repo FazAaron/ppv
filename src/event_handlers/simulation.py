@@ -25,7 +25,4 @@ class Simulation:
         """
         Starts the simulation, opening a new window
         """
-        self.main_window.app.mainloop()
-
-    def __test(self) -> None:
-        self.main_window.content.canvas.bind()
+        self.main_window.mainloop()

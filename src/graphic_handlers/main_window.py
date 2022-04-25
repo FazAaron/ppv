@@ -38,10 +38,8 @@ class MainWindow:
         icon: PhotoImage = PhotoImage(file="resources/packet.png")
         self.app.iconphoto(False, icon)
 
-        # Set the dimensions of the main window
-        screen_width: str = str(self.app.winfo_screenwidth())
-        screen_height: str = str(self.app.winfo_screenheight())
-        self.app.geometry(f"{screen_width}x{screen_height}")
+        # Set the application to fullscreen
+        self.app.attributes("-fullscreen", True)
 
         # Set the basic grid in the main window
         self.app.columnconfigure(0, weight=1)
@@ -49,3 +47,6 @@ class MainWindow:
 
         # Add the contents to the main window
         self.content: WidgetContainer = WidgetContainer(self.app)
+
+    def mainloop(self) -> None:
+        self.app.mainloop()
