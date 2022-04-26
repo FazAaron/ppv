@@ -1,10 +1,10 @@
 """
 This module makes ObjectFrame objects available for use when imported
 """
-from pickle import FALSE
-from tkinter import (END, SINGLE, Button, Entry, Label, Listbox, PhotoImage,
-                     Radiobutton, Text, ttk, Tk)
+from tkinter import (SINGLE, Button, Entry, Label, Listbox, PhotoImage,
+                     Radiobutton, Text, ttk, Tk, IntVar)
 from tkinter.messagebox import askyesno
+from turtle import bgcolor
 from unittest import case
 
 from idlelib.tooltip import Hovertip
@@ -31,25 +31,27 @@ class ObjectFrame:
 
         self.object_frame.columnconfigure((0, 1, 2), weight=1)
 
+        self.object_frame_width = self.object_frame.winfo_width()
+
         # Main menu
         self.network_information_button: Button = Button(
-            self.object_frame, text="Network Information", relief="ridge")
+            self.object_frame, text="Network Information", bd=0, highlightthickness=0, padx=0)
         self.manipulation_button: Button = Button(
-            self.object_frame, text="Component Manipulation", relief="ridge")
+            self.object_frame, text="Component Manipulation", bd=0, highlightthickness=0, padx=0)
+
+        # Main menu/Network information menu
+        self.hosts_button: Button = Button(
+            self.object_frame, text="Hosts", bd=0, highlightthickness=0, padx=0)
+        self.routers_button: Button = Button(
+            self.object_frame, text="Routers", bd=0, highlightthickness=0, padx=0)
+        self.information_box: Text = Text(
+            self.object_frame, bd=0, highlightthickness=0, padx=0)
 
         # Main menu/Component manipulation menu
         self.placement_button: Button = Button(
             self.object_frame, text="Component Placement", relief="ridge")
         self.config_button: Button = Button(
             self.object_frame, text="Component Configuration", relief="ridge")
-
-        # Main menu/Network information menu
-        self.hosts_button: Button = Button(
-            self.object_frame, text="Hosts", relief="ridge")
-        self.routers_button: Button = Button(
-            self.object_frame, text="Routers", relief="ridge")
-        self.information_box: Text = Text(
-            self.object_frame, bd=0, highlightthickness=0)
 
         # Main menu/Component manipulation menu/Component configuration menu
         self.item_list: Listbox = Listbox(
@@ -68,6 +70,12 @@ class ObjectFrame:
             self.object_frame, text="Connect to Node", relief="ridge")
         self.disconnect_button: Button = Button(
             self.object_frame, text="Disconnect Interface on Node", relief="ridge")
+
+        # Main menu/Component manipulation menu/Component placement menu
+        self.host_placement_button: Button = Button(
+            self.object_frame, text="Place Host", relief="ridge")
+        self.router_placement_button: Button = Button(
+            self.object_frame, text="Place Router", relief="ridge")
 
         # Main menu/Component manipulation menu/component configuration menu/set application menu
         self.app_name_label: Label = Label(
@@ -103,7 +111,6 @@ class ObjectFrame:
         self.delete_interface_name_label: Label = Label(
             self.object_frame, text="Interface name", relief="ridge")
         self.delete_interface_name_entry: Entry = Entry(self.object_frame)
-
         # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/CONNECT TO NODE BUTTON
         self.connect_name_or_ip_label: Label = Label(
             self.object_frame, text="Target Node name or IP", relief="ridge")
@@ -130,12 +137,6 @@ class ObjectFrame:
             self.object_frame, text="Interface name", relief="ridge")
         self.disconnect_interface_name_entry: Entry = Entry(self.object_frame)
 
-        # Main menu/Component manipulation menu/Component placement menu
-        self.host_placement_button: Button = Button(
-            self.object_frame, text="Place Host", relief="ridge")
-        self.router_placement_button: Button = Button(
-            self.object_frame, text="Place Router", relief="ridge")
-
         # Main menu/Component manipulation menu/Component placement menu/Host and Router placement button
         self.menu_information_label = Label(self.object_frame)
 
@@ -150,13 +151,13 @@ class ObjectFrame:
             self.object_frame, text="Buffer size", relief="ridge")
         self.buffer_size_entry = Entry(self.object_frame)
 
-        # Generic submit / cancel buttons
+        # Generic submit / cancel buttons for configuration
         self.submit: Button = Button(
             self.object_frame, text="Submit", bg="royalblue")
         self.cancel: Button = Button(
             self.object_frame, text="Cancel", bg="royalblue")
 
-        # Buttons for navigation
+        # Top buttons for navigation present in every single menu
         self.previous_menu_button: Button = Button(
             self.object_frame, image=self.arrow_button_image, state="disabled")
         self.previous_menu_button.grid(column=0, row=0, sticky="nsew")
@@ -176,91 +177,74 @@ class ObjectFrame:
         self.previous_menu = []
         self.curr_menu = "main_menu"
 
+        # Set the starting menu
         self.main_menu(False)
 
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU
     def main_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("main_menu", save_as_previous, state="disabled")
+
+        self.object_frame.rowconfigure(1, weight=1)
+        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
 
         self.menu_information_label.config(
             text="Main menu", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
-        self.object_frame.rowconfigure(1, weight=1)
-        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
-
         self.network_information_button.grid(
             column=0, row=2, columnspan=3, sticky="nsew")
         self.manipulation_button.grid(
             column=0, row=3, columnspan=3, sticky="nsew")
 
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU/NETWORK INFORMATION MENU
     def network_information_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("network_information_menu", save_as_previous)
+
+        self.object_frame.rowconfigure(1, weight=1)
+        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
 
         self.menu_information_label.config(
             text="Network information", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
-        self.object_frame.rowconfigure(1, weight=1)
-        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
-
         self.hosts_button.grid(column=0, row=2, columnspan=3, sticky="nsew")
         self.routers_button.grid(column=0, row=3, columnspan=3, sticky="nsew")
 
-    # MAIN MENU/NETWORK INFORMATION MENU/HOSTS MENU
     def hosts_information_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("hosts_information_menu", save_as_previous)
 
         self.object_frame.rowconfigure(1, weight=1)
-        self.object_frame.rowconfigure(2, weight=5)
+        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
 
         self.menu_information_label.config(
-            text="Host information in the Network", font=("Arial", 18))
+            text="Host information", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
+        self.information_box.config(width=20, height=10, padx=3)
         self.information_box.grid(column=0, row=2, columnspan=3, sticky="nsew")
-        # for _ in range(1, 100):
-        #self.information_box.insert(END, "multiline\ntest")
-        #self.information_box.insert(END, "\n---\n")
-        # self.information_box.config(state="disabled")
 
-    # MAIN MENU/NETWORK INFORMATION MENU/ROUTERS MENU
     def routers_information_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("routers_information_menu", save_as_previous)
 
         self.object_frame.rowconfigure(1, weight=1)
-        self.object_frame.rowconfigure(2, weight=5)
+        self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
 
         self.menu_information_label.config(
-            text="Router information in the Network", font=("Arial", 18))
+            text="Router information", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
-        self.object_frame.rowconfigure(1, weight=1)
+        self.information_box.config(width=20, height=10, padx=3)
         self.information_box.grid(column=0, row=2, columnspan=3, sticky="nsew")
-        # for _ in range(1, 100):
-        #self.information_box.insert(END, "multiline\ntest")
-        #self.information_box.insert(END, "\n---\n")
-        # self.information_box.config(state="disabled")
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU/COMPONENT MANIPULATION MENU
 
     def manipulation_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("manipulation_menu", save_as_previous)
 
         self.menu_information_label.config(
-            text="Manipulate Network components", font=("Arial", 18))
+            text="Manipulate Network components", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.object_frame.rowconfigure(1, weight=1)
         self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
@@ -270,9 +254,6 @@ class ObjectFrame:
         self.config_button.grid(
             column=0, row=3, columnspan=3, sticky="nsew")
 
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU/COMPONENT MANIPULATION MENU/PLACEMENT MENU
     def placement_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("placement_menu", save_as_previous)
 
@@ -280,9 +261,9 @@ class ObjectFrame:
         self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
 
         self.menu_information_label.config(
-            text="Place Network components", font=("Arial", 18))
+            text="Place Network components", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.host_placement_button.grid(
             column=0, row=2, columnspan=3, sticky="nsew")
@@ -295,9 +276,9 @@ class ObjectFrame:
         self.object_frame.rowconfigure((1, 2, 3, 4, 5), weight=1)
 
         self.menu_information_label.config(
-            text="Add a Host to the Network", font=("Arial", 18))
+            text="Add a Host to the Network", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.name_label.config(text="Host name")
         self.name_label.grid(column=0, row=2, sticky="nsew")
@@ -318,9 +299,9 @@ class ObjectFrame:
         self.object_frame.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
 
         self.menu_information_label.config(
-            text="Add a Router to the Network", font=("Arial", 18))
+            text="Add a Router to the Network", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.name_label.config(text="Router name")
         self.name_label.grid(column=0, row=2, sticky="nsew")
@@ -339,9 +320,6 @@ class ObjectFrame:
         self.submit.grid(column=0, row=6, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=6, sticky="se")
 
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU
     def config_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("config_menu", save_as_previous)
 
@@ -349,9 +327,9 @@ class ObjectFrame:
             (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=1)
 
         self.menu_information_label.config(
-            text="Configure Network components", font=("Arial", 18))
+            text="Configure Network components", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.item_list.grid(column=0, row=2, columnspan=3,
                             rowspan=4, sticky="nsew")
@@ -376,9 +354,9 @@ class ObjectFrame:
         self.object_frame.rowconfigure((1, 2, 3, 4, 5, 6, 7, 8), weight=1)
 
         self.menu_information_label.config(
-            text="Set the Application on the Host", font=("Arial", 18))
+            text="Set the Application on the Host", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.app_name_label.grid(column=0, row=2, sticky="nsew")
         self.app_name_entry.grid(column=1, row=2, columnspan=2, sticky="nsew")
@@ -405,9 +383,9 @@ class ObjectFrame:
         self.object_frame.rowconfigure(3, weight=40)
 
         self.menu_information_label.config(
-            text="Start sending to an other Host", font=("Arial", 18))
+            text="Start sending to an other Host", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.name_or_ip_label.grid(column=0, row=2, sticky="nsew")
         self.name_or_ip_entry.grid(
@@ -416,17 +394,16 @@ class ObjectFrame:
         self.submit.grid(column=0, row=3, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=3, sticky="se")
 
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/ADD INTERFACE BUTTON
     def add_interface_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("add_interface_menu", save_as_previous)
-        
+
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
 
         self.menu_information_label.config(
-            text="Add an Interface to the Node", font=("Arial", 18))
+            text="Add an Interface to the Node", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.add_interface_name_label.grid(column=0, row=2, sticky="nsew")
         self.add_interface_name_entry.grid(
@@ -435,16 +412,16 @@ class ObjectFrame:
         self.submit.grid(column=0, row=3, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=3, sticky="se")
 
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DELETE INTERFACE BUTTON
     def delete_interface_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("delete_interface_menu", save_as_previous)
+
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
 
         self.menu_information_label.config(
-            text="Delete an Interface from the Node", font=("Arial", 18))
+            text="Delete an Interface from the Node", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.delete_interface_name_label.grid(column=0, row=2, sticky="nsew")
         self.delete_interface_name_entry.grid(
@@ -453,16 +430,14 @@ class ObjectFrame:
         self.submit.grid(column=0, row=3, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=3, sticky="se")
 
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/CONNECT TO NODE BUTTON
     def connect_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("connect_menu", save_as_previous)
-        self.object_frame.rowconfigure(1, weight=1)
-        self.object_frame.rowconfigure((2, 3, 4, 5, 6, 7), weight=1)
+        self.object_frame.rowconfigure((1, 2, 3, 4, 5, 6, 7), weight=1)
 
         self.menu_information_label.config(
-            text="Connect to an other Node", font=("Arial", 18))
+            text="Connect to an other Node", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.connect_name_or_ip_label.grid(column=0, row=2, sticky="nsew")
         self.connect_name_or_ip_entry.grid(
@@ -485,7 +460,6 @@ class ObjectFrame:
         self.submit.grid(column=0, row=7, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=7, sticky="se")
 
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DISCONNECT INTERFACE BUTTON
     def disconnect_interface_menu(self, save_as_previous=True) -> None:
         self.__clear_frame("disconnect_interface_menu", save_as_previous)
 
@@ -493,30 +467,23 @@ class ObjectFrame:
         self.object_frame.rowconfigure(3, weight=40)
 
         self.menu_information_label.config(
-            text="Disconnect an Interface", font=("Arial", 18))
+            text="Disconnect an Interface", font=("Arial", 14))
         self.menu_information_label.grid(
-            column=0, row=1, columnspan=3, sticky="nsew")
+            column=0, row=1, columnspan=3, sticky="nse")
 
         self.disconnect_interface_name_label.grid(
             column=0, row=2, sticky="nsew")
         self.disconnect_interface_name_entry.grid(
             column=1, row=2, columnspan=2, sticky="nsew")
 
-        self.submit.grid(column=0, row=3, columnspan=2, sticky="sw")
+        self.submit.grid(column=0, row=3, sticky="sw")
         self.cancel.grid(column=2, row=3, sticky="se")
 
-    # _______________________________________________________________
-    # _______________________________________________________________
-
-    # _______________________________________________________________
-    # _______________________________________________________________
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DELETE BUTTON
     def disconnect_prompt(self) -> bool:
         answer: bool = askyesno(title="Disconnect interface",
                                 message="Are you sure you want to disconnect the interface?\nBoth sides of the connection will be disconnected.")
         return answer
 
-    # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DELETE COMPONENT AND INTERFACE BUTTON
     def deletion_prompt(self) -> bool:
         answer: bool = askyesno(title="Delete item",
                                 message="Are you sure you want to delete this item?")
@@ -540,6 +507,7 @@ class ObjectFrame:
                widget != self.exit_button and \
                widget != self.main_menu_button:
                 widget.grid_forget()
+        self.reset_grid_config()
         self.main_menu_button.config(state=state)
 
     def return_to_previous(self) -> None:
@@ -587,3 +555,8 @@ class ObjectFrame:
     def exit(self) -> None:
         if self.exit_prompt():
             self.root.destroy()
+
+    def reset_grid_config(self) -> None:
+        self.object_frame.rowconfigure(
+            (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15), weight=0)
+        self.object_frame.columnconfigure((0, 1, 2), weight=1)
