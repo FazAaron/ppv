@@ -1,10 +1,11 @@
 """
 This module makes ObjectFrame objects available for use when imported
 """
+from pickle import FALSE
 from tkinter import (END, SINGLE, Button, Entry, Label, Listbox, PhotoImage,
-                     Radiobutton, Text, ttk)
+                     Radiobutton, Text, ttk, Tk)
 from tkinter.messagebox import askyesno
-from turtle import left
+from unittest import case
 
 from idlelib.tooltip import Hovertip
 
@@ -15,8 +16,10 @@ class ObjectFrame:
     the main window's WidgetContainer
     """
 
-    def __init__(self, parent: ttk.Frame) -> None:
+    def __init__(self, parent: ttk.Frame, root: Tk) -> None:
+        self.root = root
         self.object_frame: ttk.Frame = ttk.Frame(parent)
+        self.parent: ttk.Frame = parent
         self.arrow_button_image: PhotoImage = PhotoImage(
             file="resources/left_arrow.png")
         self.exit_button_image: PhotoImage = PhotoImage(
@@ -123,7 +126,8 @@ class ObjectFrame:
         self.metrics_entry: Entry = Entry(self.object_frame)
 
         # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DISCONNECT INTERFACE BUTTON
-        self.disconnect_interface_name_label: Label = Label(self.object_frame, text="Interface name", relief="ridge")
+        self.disconnect_interface_name_label: Label = Label(
+            self.object_frame, text="Interface name", relief="ridge")
         self.disconnect_interface_name_entry: Entry = Entry(self.object_frame)
 
         # Main menu/Component manipulation menu/Component placement menu
@@ -154,17 +158,17 @@ class ObjectFrame:
 
         # Buttons for navigation
         self.previous_menu_button: Button = Button(
-            self.object_frame, bd=0, image=self.arrow_button_image, state="disabled")
+            self.object_frame, image=self.arrow_button_image, state="disabled")
         self.previous_menu_button.grid(column=0, row=0, sticky="nsew")
         Hovertip(self.previous_menu_button, "Return to the previous menu")
 
         self.main_menu_button: Button = Button(
-            self.object_frame, bd=0, image=self.home_button_image)
+            self.object_frame, image=self.home_button_image)
         self.main_menu_button.grid(column=1, row=0, sticky="nsew")
         Hovertip(self.main_menu_button, "Go to the main menu")
 
         self.exit_button: Button = Button(
-            self.object_frame, bd=0, image=self.exit_button_image)
+            self.object_frame, image=self.exit_button_image)
         self.exit_button.grid(column=2, row=0, sticky="nsew")
         Hovertip(self.exit_button, "Exit the application")
 
@@ -172,16 +176,16 @@ class ObjectFrame:
         self.previous_menu = []
         self.curr_menu = "main_menu"
 
-        self.disconnect_interface_menu()
+        self.main_menu(False)
 
     # _______________________________________________________________
     # _______________________________________________________________
     # MAIN MENU
-    def main_menu(self) -> None:
-        self.clear_frame("main_menu", state="disabled")
+    def main_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("main_menu", save_as_previous, state="disabled")
 
         self.menu_information_label.config(
-            text="Main menu", font=("Arial", 18))
+            text="Main menu", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
@@ -196,11 +200,11 @@ class ObjectFrame:
     # _______________________________________________________________
     # _______________________________________________________________
     # MAIN MENU/NETWORK INFORMATION MENU
-    def network_information_menu(self) -> None:
-        self.clear_frame("network_information_menu")
+    def network_information_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("network_information_menu", save_as_previous)
 
         self.menu_information_label.config(
-            text="Get information on Network components", font=("Arial", 18))
+            text="Network information", font=("Arial", 14))
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
@@ -211,8 +215,8 @@ class ObjectFrame:
         self.routers_button.grid(column=0, row=3, columnspan=3, sticky="nsew")
 
     # MAIN MENU/NETWORK INFORMATION MENU/HOSTS MENU
-    def hosts_information_menu(self) -> None:
-        self.clear_frame("hosts_information_menu")
+    def hosts_information_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("hosts_information_menu", save_as_previous)
 
         self.object_frame.rowconfigure(1, weight=1)
         self.object_frame.rowconfigure(2, weight=5)
@@ -229,8 +233,8 @@ class ObjectFrame:
         # self.information_box.config(state="disabled")
 
     # MAIN MENU/NETWORK INFORMATION MENU/ROUTERS MENU
-    def routers_information_menu(self) -> None:
-        self.clear_frame("routers_information_menu")
+    def routers_information_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("routers_information_menu", save_as_previous)
 
         self.object_frame.rowconfigure(1, weight=1)
         self.object_frame.rowconfigure(2, weight=5)
@@ -250,8 +254,8 @@ class ObjectFrame:
     # _______________________________________________________________
     # MAIN MENU/COMPONENT MANIPULATION MENU
 
-    def manipulation_menu(self) -> None:
-        self.clear_frame("manipulation_menu")
+    def manipulation_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("manipulation_menu", save_as_previous)
 
         self.menu_information_label.config(
             text="Manipulate Network components", font=("Arial", 18))
@@ -269,8 +273,8 @@ class ObjectFrame:
     # _______________________________________________________________
     # _______________________________________________________________
     # MAIN MENU/COMPONENT MANIPULATION MENU/PLACEMENT MENU
-    def placement_menu(self) -> None:
-        self.clear_frame("placement_menu")
+    def placement_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("placement_menu", save_as_previous)
 
         self.object_frame.rowconfigure(1, weight=1)
         self.object_frame.rowconfigure((2, 3, 4, 5, 6), weight=2)
@@ -285,8 +289,8 @@ class ObjectFrame:
         self.router_placement_button.grid(
             column=0, row=3, columnspan=3, sticky="nsew")
 
-    def host_placement_menu(self) -> None:
-        self.clear_frame("host_placement_menu")
+    def host_placement_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("host_placement_menu", save_as_previous)
 
         self.object_frame.rowconfigure((1, 2, 3, 4, 5), weight=1)
 
@@ -308,8 +312,8 @@ class ObjectFrame:
         self.submit.grid(column=0, row=5, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=5, sticky="se")
 
-    def router_placement_menu(self) -> None:
-        self.clear_frame("router_placement_menu")
+    def router_placement_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("router_placement_menu", save_as_previous)
 
         self.object_frame.rowconfigure((1, 2, 3, 4, 5, 6), weight=1)
 
@@ -338,8 +342,8 @@ class ObjectFrame:
     # _______________________________________________________________
     # _______________________________________________________________
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU
-    def config_menu(self) -> None:
-        self.clear_frame("config_menu")
+    def config_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("config_menu", save_as_previous)
 
         self.object_frame.rowconfigure(
             (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), weight=1)
@@ -366,8 +370,8 @@ class ObjectFrame:
             column=0, row=11, columnspan=3, sticky="nsew")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/SET APPLICATION BUTTON
-    def set_application_menu(self) -> None:
-        self.clear_frame("set_application_menu")
+    def set_application_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("set_application_menu", save_as_previous)
 
         self.object_frame.rowconfigure((1, 2, 3, 4, 5, 6, 7, 8), weight=1)
 
@@ -395,8 +399,8 @@ class ObjectFrame:
         self.cancel.grid(column=2, row=8, sticky="se")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/START SENDING BUTTON
-    def start_sending_menu(self) -> None:
-        self.clear_frame("start_sending_menu")
+    def start_sending_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("start_sending_menu", save_as_previous)
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
 
@@ -413,8 +417,9 @@ class ObjectFrame:
         self.cancel.grid(column=2, row=3, sticky="se")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/ADD INTERFACE BUTTON
-    def add_interface_menu(self) -> None:
-        self.clear_frame("add_interface_menu")
+    def add_interface_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("add_interface_menu", save_as_previous)
+        
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
 
@@ -431,8 +436,8 @@ class ObjectFrame:
         self.cancel.grid(column=2, row=3, sticky="se")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DELETE INTERFACE BUTTON
-    def delete_interface_menu(self) -> None:
-        self.clear_frame("delete_interface_menu")
+    def delete_interface_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("delete_interface_menu", save_as_previous)
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
 
@@ -449,8 +454,8 @@ class ObjectFrame:
         self.cancel.grid(column=2, row=3, sticky="se")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/CONNECT TO NODE BUTTON
-    def connect_menu(self) -> None:
-        self.clear_frame("connect_menu")
+    def connect_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("connect_menu", save_as_previous)
         self.object_frame.rowconfigure(1, weight=1)
         self.object_frame.rowconfigure((2, 3, 4, 5, 6, 7), weight=1)
 
@@ -481,8 +486,8 @@ class ObjectFrame:
         self.cancel.grid(column=2, row=7, sticky="se")
 
     # MAIN MENU/COMPONENT MANIPULATION MENU/CONFIG MENU/DISCONNECT INTERFACE BUTTON
-    def disconnect_interface_menu(self) -> None:
-        self.clear_frame("disconnect_interface_menu")
+    def disconnect_interface_menu(self, save_as_previous=True) -> None:
+        self.__clear_frame("disconnect_interface_menu", save_as_previous)
 
         self.object_frame.rowconfigure((1, 2), weight=1)
         self.object_frame.rowconfigure(3, weight=40)
@@ -492,13 +497,14 @@ class ObjectFrame:
         self.menu_information_label.grid(
             column=0, row=1, columnspan=3, sticky="nsew")
 
-        self.disconnect_interface_name_label.grid(column=0, row=2, sticky="nsew")
-        self.disconnect_interface_name_entry.grid(column=1, row=2, columnspan=2, sticky="nsew")
+        self.disconnect_interface_name_label.grid(
+            column=0, row=2, sticky="nsew")
+        self.disconnect_interface_name_entry.grid(
+            column=1, row=2, columnspan=2, sticky="nsew")
 
         self.submit.grid(column=0, row=3, columnspan=2, sticky="sw")
         self.cancel.grid(column=2, row=3, sticky="se")
 
-        
     # _______________________________________________________________
     # _______________________________________________________________
 
@@ -523,11 +529,12 @@ class ObjectFrame:
     # _______________________________________________________________
     # _______________________________________________________________
 
-    def clear_frame(self, curr_menu, state="normal") -> None:
+    def __clear_frame(self, curr_menu, save_as_previous, state="normal") -> None:
+        if save_as_previous:
+            self.previous_menu.append(self.curr_menu)
+        self.curr_menu = curr_menu
         if len(self.previous_menu) != 0:
             self.previous_menu_button.config(state="normal")
-        self.previous_menu.append(self.curr_menu)
-        self.curr_menu = curr_menu
         for widget in self.object_frame.winfo_children():
             if widget != self.previous_menu_button and \
                widget != self.exit_button and \
@@ -536,7 +543,47 @@ class ObjectFrame:
         self.main_menu_button.config(state=state)
 
     def return_to_previous(self) -> None:
-        pass
+        previous_item = self.previous_menu.pop()
+        if (len(self.previous_menu) == 0):
+            self.previous_menu_button.config(state="disabled")
+        if previous_item == "main_menu":
+            self.main_menu(False)
+        elif previous_item == "network_information_menu":
+            self.network_information_menu(False)
+        elif previous_item == "hosts_information_menu":
+            self.hosts_information_menu(False)
+        elif previous_item == "routers_information_menu":
+            self.routers_information_menu(False)
+        elif previous_item == "manipulation_menu":
+            self.manipulation_menu(False)
+        elif previous_item == "placement_menu":
+            self.placement_menu(False)
+        elif previous_item == "host_placement_menu":
+            self.host_placement_menu(False)
+        elif previous_item == "router_placement_menu":
+            self.router_placement_menu(False)
+        elif previous_item == "config_menu":
+            self.config_menu(False)
+        elif previous_item == "set_application_menu":
+            self.set_application_menu(False)
+        elif previous_item == "start_sending_menu":
+            self.start_sending_menu(False)
+        elif previous_item == "add_interface_menu":
+            self.add_interface_menu(False)
+        elif previous_item == "delete_interface_menu":
+            self.delete_interface_menu(False)
+        elif previous_item == "connect_menu":
+            self.connect_menu(False)
+        elif previous_item == "disconnect_interface_menu":
+            self.disconnect_interface_menu(False)
+        else:
+            self.main_menu(False)
 
     def return_to_main_menu(self) -> None:
-        pass
+        self.previous_menu = []
+        self.previous_menu_button.config(state="disabled")
+        self.main_menu(False)
+
+    def exit(self) -> None:
+        if self.exit_prompt():
+            self.root.destroy()

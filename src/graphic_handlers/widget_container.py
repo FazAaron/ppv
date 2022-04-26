@@ -17,9 +17,10 @@ class WidgetContainer:
     """
 
     def __init__(self, parent: Tk) -> None:
+        self.root: Tk = parent
         self.content: ttk.Frame = ttk.Frame(parent)
         self.canvas: ObjectCanvas = ObjectCanvas(self.content)
-        self.object_frame: ObjectFrame = ObjectFrame(self.content)
+        self.object_frame: ObjectFrame = ObjectFrame(self.content, parent)
         self.statistics_frame: StatisticsFrame = StatisticsFrame(self.content)
 
         self.content.grid(column=0, row=0, sticky="nsew")
