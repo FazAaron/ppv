@@ -29,8 +29,6 @@ class ObjectFrameHandler():
         Parameters:
         to_display (str): The string to display
         """
-        self.logger.write(
-            "ObjectFrame.display_text_label", f"displaying [{to_display}]", "INFORMATION")
         self.object_frame.display_text(to_display)
 
     def bind_to_exit(self, func=Callable) -> None:
