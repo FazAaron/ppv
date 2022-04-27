@@ -1,6 +1,11 @@
 """
 This module makes the Simulation object available for use when imported
 """
+# Built-in modules
+from tkinter.messagebox import askyesno
+
+# Self-made modules
+from src.event_handlers.statistics_frame_handler import StatisticsFrameHandler
 from src.event_handlers.object_frame_handler import ObjectFrameHandler
 from src.components.network import Network
 from src.graphic_handlers.main_window import MainWindow
@@ -20,8 +25,9 @@ class Simulation:
     def __init__(self) -> None:
         self.logger: Logger = Logger("conf/logger_config.json")
         self.main_window: MainWindow = MainWindow()
-        self.object_frame_handler: ObjectFrameHandler = ObjectFrameHandler(
-            self.main_window.content.object_frame, self.logger)
+        self.__setup_object_frame_handler()
+        self.statistics_frame_handler: StatisticsFrameHandler = StatisticsFrameHandler(
+            self.main_window.content.statistics_frame, self.logger)
         self.network: Network = Network()
 
     def start(self) -> None:
@@ -29,3 +35,25 @@ class Simulation:
         Starts the simulation, opening a new window
         """
         self.main_window.mainloop()
+
+    # Private methods
+    def __exit_prompt(self) -> bool:
+        """
+        Opens a pop-up prompt asking a yes/no question for the user, whether \
+        they want to exit or not
+
+        Returns:
+        bool: The answer of the user - yes or no choice (True / False)
+        """
+        answer: bool = askyesno(title="Exit application",
+                                message="Are you sure you want to quit the application?")
+        if answer:
+            self.main_window.exit()
+
+    def __setup_object_frame_handler(self) -> None:
+        """
+        Sets up the ObjectFrameHandler object
+        """
+        self.object_frame_handler: ObjectFrameHandler = ObjectFrameHandler(
+            self.main_window.content.object_frame, self.logger)
+        self.object_frame_handler.bind_to_exit(self.__exit_prompt)

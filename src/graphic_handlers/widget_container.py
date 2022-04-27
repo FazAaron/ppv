@@ -20,7 +20,7 @@ class WidgetContainer:
         self.root: Tk = parent
         self.content: ttk.Frame = ttk.Frame(parent)
         self.canvas: ObjectCanvas = ObjectCanvas(self.content)
-        self.object_frame: ObjectFrame = ObjectFrame(self.content, parent)
+        self.object_frame: ObjectFrame = ObjectFrame(self.content)
         self.statistics_frame: StatisticsFrame = StatisticsFrame(self.content)
 
         self.content.grid(column=0, row=0, sticky="nsew")

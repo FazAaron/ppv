@@ -49,4 +49,13 @@ class MainWindow:
         self.content: WidgetContainer = WidgetContainer(self.app)
 
     def mainloop(self) -> None:
+        """
+        Starts the drawing of the root window and it's corresponding components
+        """
         self.app.mainloop()
+
+    def exit(self) -> None:
+        """
+        Exits the application
+        """
+        self.app.destroy()
