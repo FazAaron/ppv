@@ -28,7 +28,7 @@ class Logger:
         self.log_file: str = path + f"{datetime.now()}_" + name
         self.opened:   bool = False
 
-    def write(self, message: str, severity: str) -> bool:
+    def write(self, component: str, message: str, severity: str) -> bool:
         """
         Opens and writes to the log file based on the message and severity
 
@@ -43,9 +43,10 @@ class Logger:
             return False
         self.opened = True
         log_to: TextIO = open(self.log_file, "a", encoding="utf-8")
-        to_log: str = (f"severity: {severity}\n"
-                       f"message: {message}\n"
-                       f"time: {datetime.now()}")
+        to_log: str = (f"Component: {component}\n"
+                       f"Severity: {severity}\n"
+                       f"Message: {message}\n"
+                       f"Time: {datetime.now()}")
         log_to.write(to_log + "\n" + "---\n")
         print(to_log)
         log_to.close()
