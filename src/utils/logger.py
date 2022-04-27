@@ -48,7 +48,6 @@ class Logger:
                        f"Message: {message}\n"
                        f"Time: {datetime.now()}")
         log_to.write(to_log + "\n" + "---\n")
-        print(to_log)
         log_to.close()
         self.opened = False
         return True

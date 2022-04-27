@@ -40,4 +40,6 @@ class ObjectFrameHandler():
         Parameters:
         func (Callable): The function to call on exit_button click
         """
+        self.logger.write(
+            "ObjectFrame.exit_button", f"binded function {func.__name__}", "INFORMATION")
         self.object_frame.exit_button.config(command=func)
