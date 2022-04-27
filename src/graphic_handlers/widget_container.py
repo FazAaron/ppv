@@ -2,8 +2,7 @@
 This module makes WidgetContainer objects available for use when imported
 """
 # Built-in modules
-from tkinter import Tk
-from tkinter import ttk
+from tkinter import Tk, ttk
 
 # Self-made modules
 from src.graphic_handlers.object_canvas import ObjectCanvas

@@ -2,7 +2,7 @@
 This module makes the GUI available for use when imported
 """
 # Built-in modules
-from tkinter import Tk, PhotoImage
+from tkinter import PhotoImage, Tk
 
 # Self-made modules
 from src.graphic_handlers.widget_container import WidgetContainer

@@ -5,9 +5,9 @@ This module makes the Simulation object available for use when imported
 from tkinter.messagebox import askyesno
 
 # Self-made modules
-from src.event_handlers.statistics_frame_handler import StatisticsFrameHandler
-from src.event_handlers.object_frame_handler import ObjectFrameHandler
 from src.components.network import Network
+from src.event_handlers.object_frame_handler import ObjectFrameHandler
+from src.event_handlers.statistics_frame_handler import StatisticsFrameHandler
 from src.graphic_handlers.main_window import MainWindow
 from src.utils.logger import Logger
 
@@ -26,8 +26,7 @@ class Simulation:
         self.logger: Logger = Logger("conf/logger_config.json")
         self.main_window: MainWindow = MainWindow()
         self.__setup_object_frame_handler()
-        self.statistics_frame_handler: StatisticsFrameHandler = StatisticsFrameHandler(
-            self.main_window.content.statistics_frame, self.logger)
+        self.__setup_statistics_frame_handler()
         self.network: Network = Network()
 
     def start(self) -> None:
@@ -43,7 +42,7 @@ class Simulation:
         they want to exit or not
 
         Returns:
-        bool: The answer of the user - yes or no choice (True / False)
+        bool: Whether the user wants to exit or not
         """
         answer: bool = askyesno(title="Exit application",
                                 message="Are you sure you want to quit the application?")
@@ -57,3 +56,10 @@ class Simulation:
         self.object_frame_handler: ObjectFrameHandler = ObjectFrameHandler(
             self.main_window.content.object_frame, self.logger)
         self.object_frame_handler.bind_to_exit(self.__exit_prompt)
+
+    def __setup_statistics_frame_handler(self) -> None:
+        """
+        Sets up the StatisticsFrameHandler object
+        """
+        self.statistics_frame_handler: StatisticsFrameHandler = StatisticsFrameHandler(
+            self.main_window.content.statistics_frame, self.logger)

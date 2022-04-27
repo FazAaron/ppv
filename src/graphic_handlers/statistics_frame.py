@@ -1,7 +1,6 @@
 """
 This module makes StatisticsFrame objects available for use when imported
 """
-from re import S
 from tkinter import Label, ttk
 
 

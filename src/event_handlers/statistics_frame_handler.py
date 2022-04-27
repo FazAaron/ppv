@@ -20,9 +20,3 @@ class StatisticsFrameHandler:
         packets_dropped (int): The total Packets dropped
         """
         self.statistics_frame.update_labels(packets_sent, packets_dropped)
-
-    def reset_statistics(self) -> None:
-        """
-        Resets the statistics in the statistics_frame
-        """
-        self.statistics_frame.update_labels(packets_sent=0, packets_dropped=0)
