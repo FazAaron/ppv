@@ -44,7 +44,7 @@ class ObjectFrame:
         # Set the grid configuration for the Widgets
         self.exit_button.grid(column=1, row=0, sticky="nsew")
         self.display_text_label.grid(
-            column=0, row=1, columnspan=2, sticky="nsew", ipadx=0, padx=0)
+            column=0, row=1, columnspan=2, sticky="new", ipadx=0, padx=0)
         start_display: str = ("Press right-click on the display to start working with the Network\n\n"
                               "Press left-click on a component to display it's attributes here\n\n"
                               "Press left-click on a component and then drag to move it")

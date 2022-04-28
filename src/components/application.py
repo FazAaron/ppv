@@ -28,7 +28,7 @@ class Application:
         self.ip:        str = ip
         self.amount:    int = amount
         self.send_rate: int = send_rate
-        self.app_type:  str = app_type
+        self.app_type:  str = app_type.upper()
         self.curr_sent: int = 0
 
     def can_send(self) -> bool:

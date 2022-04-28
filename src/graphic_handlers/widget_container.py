@@ -7,6 +7,7 @@ from tkinter import Tk, ttk
 # Self-made modules
 from src.graphic_handlers.object_canvas import ObjectCanvas
 from src.graphic_handlers.object_frame import ObjectFrame
+from src.graphic_handlers.options_menu import OptionsMenu
 from src.graphic_handlers.statistics_frame import StatisticsFrame
 
 
@@ -18,9 +19,10 @@ class WidgetContainer:
     def __init__(self, parent: Tk) -> None:
         self.root: Tk = parent
         self.content: ttk.Frame = ttk.Frame(parent)
-        self.canvas: ObjectCanvas = ObjectCanvas(self.content)
+        self.object_canvas: ObjectCanvas = ObjectCanvas(self.content)
         self.object_frame: ObjectFrame = ObjectFrame(self.content)
         self.statistics_frame: StatisticsFrame = StatisticsFrame(self.content)
+        self.options_menu: OptionsMenu = OptionsMenu(self.content)
 
         self.content.grid(column=0, row=0, sticky="nsew")
         self.content.columnconfigure(0, weight=3)

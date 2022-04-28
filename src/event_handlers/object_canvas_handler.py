@@ -1,15 +1,39 @@
+"""
+This module makes ObjectCanvasHandler objects available for use when imported
+"""
+# Built-in modules
+from typing import Callable
+
+# Self-made modules
+from src.graphic_handlers.object_canvas import ObjectCanvas
+from src.utils.logger import Logger
+
+
 class ObjectCanvasHandler:
+    """
+    The class handling any access to the ObjectCanvas class
 
-    def __init__(self) -> None:
-        pass
+    Data members:
+    object_canvas (ObjectCanvas): The Frame itself to access
+    logger       (Logger): The logging object
+    """
 
-def movement_handler(event, c):
-    x, y = event.x, event.y
-    c.delete("all")
-    if x - 20 > 0 and y - 20 > 0:
-        c.create_rectangle(x - 20, y - 20, x + 20, y + 20, outline="#fb0", fill="#fb0")
-        c.create_text(x, y, fill="darkblue", font="Times 12 italic bold", text="Router")
-    else:
-        c.create_rectangle(x, y, x + 40, y + 40, outline="#fb0", fill="#fb0")
-        c.create_text(x + 20, y + 20, fill="darkblue", font="Times 10 italic bold", text="Router")
-    print('{}, {}'.format(x, y))
+    def __init__(self, object_canvas: ObjectCanvas, logger: Logger) -> None:
+        self.object_canvas: ObjectCanvas = object_canvas
+        self.logger: Logger = logger
+
+    def bind(self, event: str, func: Callable) -> None:
+        self.object_canvas.bind(event, func)
+
+    def is_placing(self) -> None:
+        return self.object_canvas.placing[1]
+
+    def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0) -> None:
+        if comp_type.upper() == "COMPONENT/ROUTER":
+            self.object_canvas.draw_component(x1, y1, "ROUTER")
+        elif comp_type.upper() == "COMPONENT/HOST":
+            self.object_canvas.draw_component(x1, y1, "HOST")
+        elif comp_type.upper() == "LINK":
+            self.object_canvas.draw_link(x1, y1, x2, y2)
+        elif comp_type.upper() == "INTERFACE":
+            self.object_canvas.draw_interface(x1, y1)
