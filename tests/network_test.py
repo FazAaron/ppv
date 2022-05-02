@@ -10,7 +10,7 @@ def test_network_init():
     """
     # Setup the Network object
     network = Network()
-    
+
     assert len(network.hosts) == 0 and \
         len(network.routers) == 0 and \
         len(network.graph.vertices) == 0 and \
@@ -50,7 +50,7 @@ def test_network_get_applications():
     # Get the number of initial Applications
     init_apps = network.get_applications()
 
-    # Add Hosts to the Network    
+    # Add Hosts to the Network
     network.hosts.append(Host("host_1", "192.168.1.1", 10))
     network.hosts.append(Host("host_2", "192.167.1.1", 10))
 
@@ -475,7 +475,8 @@ def test_network_delete_interface():
     prev_connection_len_router = len(network.routers[0].connections)
 
     # Delete a connected Interface
-    network.get_router("router_123").get_interface("eth2_2").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
+    network.get_router("router_123").get_interface(
+        "eth2_2").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
     connected_interface_success = network.delete_interface(
         "router_123", "eth2_2")
 
@@ -617,7 +618,8 @@ def test_network_disconnect_node_interfaces():
         "host_1", "eth2_2")
 
     # Disconnect using multiple methods
-    network.get_host("host_1").get_interface("eth1_1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
+    network.get_host("host_1").get_interface(
+        "eth1_1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
     disconnect_by_name_success = network.disconnect_node_interface(
         "host_1", "eth1_1")
     disconnect_by_ip_success = network.disconnect_node_interface(

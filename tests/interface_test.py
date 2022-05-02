@@ -65,7 +65,8 @@ def test_interface_disconnect_link():
     send_channel = link.channels[0]
     receive_channel = link.channels[1]
     success = interface.connect_link(link, send_channel, receive_channel)
-    interface.receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
+    interface.receive_channel.fill_payload(
+        Packet("127.0.0.1", "127.1.1.1", 10))
 
     # Disconnect the Link from the Interface
     ret_val = interface.disconnect_link()

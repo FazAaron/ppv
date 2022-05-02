@@ -288,7 +288,8 @@ def test_node_delete_interface():
     conn_succ = node.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
 
     # Delete the Interface
-    node.get_interface("eth1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1", 10))
+    node.get_interface("eth1").receive_channel.fill_payload(
+        Packet("127.0.0.1", "127.1.1", 10))
     success_4 = node.delete_interface("eth1")
 
     assert not success_1[0] and \
