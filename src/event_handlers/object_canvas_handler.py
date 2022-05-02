@@ -12,17 +12,15 @@ from src.utils.logger import Logger
 
 class ObjectCanvasHandler:
     """
-    The class handling any access to the ObjectCanvas class
+    The class handling any access to the ObjectCanvas class, and also handling \
+    specific actions using the methods binded to them by the MainHandler class
 
     Data members:
     object_canvas (ObjectCanvas): The Frame itself to access
-    logger        (Logger): The logging object
     """
 
-    def __init__(self, object_canvas: ObjectCanvas, logger: Logger, network: Network) -> None:
+    def __init__(self, object_canvas: ObjectCanvas) -> None:
         self.object_canvas: ObjectCanvas = object_canvas
-        self.logger: Logger = logger
-        self.network: Network = network
 
     def bind(self, event: str, func: Callable) -> None:
         self.object_canvas.bind(event, func)

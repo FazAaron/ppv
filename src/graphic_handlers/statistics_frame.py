@@ -30,11 +30,11 @@ class StatisticsFrame:
 
         # Setup the Labels
         self.packets_sent_label: Label = Label(
-            self.statistics_frame, text="Packets sent: 0")
+            self.statistics_frame)
         self.packets_dropped_label: Label = Label(
-            self.statistics_frame, text="Packets dropped: 0")
+            self.statistics_frame)
         self.packets_received_label: Label = Label(
-            self.statistics_frame, text="Packets received: 0")
+            self.statistics_frame)
 
         # Set the grid cnfiguration for the Widgets
         self.packets_sent_label.grid(column=0, row=0, sticky="nsw")
