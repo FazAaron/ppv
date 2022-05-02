@@ -447,11 +447,10 @@ class Network:
             return False
         if router is None:
             return node.receive_packet(interface_name)
-        else:
-            ret_val: Tuple[bool, bool] = node.receive_packet(interface_name)
-            if ret_val[1]:
-                self.dropped_pack += 1
-            return ret_val[0]
+        ret_val: Tuple[bool, bool] = node.receive_packet(interface_name)
+        if ret_val[1]:
+            self.dropped_pack += 1
+        return ret_val[0]
 
     def print_node(self, node: Node) -> bool:
         """
