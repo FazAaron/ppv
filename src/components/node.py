@@ -107,7 +107,7 @@ class Node:
                 return interface
         return None
 
-    def delete_interface(self, name: str) -> bool:
+    def delete_interface(self, name: str) -> Tuple[bool, int]:
         """
         Deletes an Interface on the Node\n
         Before deletion, the Interface is disconnected and is removed from all
@@ -117,17 +117,19 @@ class Node:
         name (str): The Interface's name to delete
 
         Returns:
-        bool: Whether deleting the interface was successful or not
+        Tuple[bool, int]: Whether deleting the interface was successful or not \
+                          and the amount of Packets dropped
         """
         interface: Interface = self.get_interface(name)
+        pack_dropped: int = 0
         if interface is None:
-            return False
+            return (False, pack_dropped)
         for connection in self.connections:
             if connection[0][0] == interface:
-                self.disconnect_interface(name)
+                pack_dropped = self.disconnect_interface(name)[1]
                 break
         self.interfaces.remove(interface)
-        return True
+        return (True, pack_dropped)
 
     def connect_to_interface(self,
                              __o: Node,
@@ -135,7 +137,7 @@ class Node:
                              other_name: str,
                              speed: int,
                              metrics: int
-                             ) -> bool:
+                             ) -> Tuple[bool, int]:
         """
         Connects an Interface of the Node to another Node's Interface\n
         This creates a Link between the two Interfaces\n
@@ -150,16 +152,18 @@ class Node:
         metrics               (int): Metrics of Link between the Interfaces
 
         Returns:
-        bool: Whether creating the connection was successful or not
+        Tuple[bool, int]: Whether creating the connection was successful or not \
+                          and how many Packets were dropped
         """
+        pack_dropped: int = 0
         if self is __o:
-            return False
+            return (False, pack_dropped)
         self_interface:  Interface = self.get_interface(self_name)
         other_interface: Interface = __o.get_interface(other_name)
         if (self_interface and other_interface) is None:
-            return False
-        self.disconnect_interface(self_name)
-        __o.disconnect_interface(other_name)
+            return (False, pack_dropped)
+        pack_dropped = self.disconnect_interface(self_name)[1]
+        pack_dropped += __o.disconnect_interface(other_name)[1]
         connection: Link = Link(speed, metrics)
         self_success: bool = self_interface.connect_link(connection,
                                                          connection.channels[0],
@@ -174,10 +178,10 @@ class Node:
                                     other_connection))
             __o.connections.append((other_connection,
                                     self_connection))
-            return True
-        return False
+            return (True, pack_dropped)
+        return (False, pack_dropped)
 
-    def disconnect_interface(self, name: str) -> bool:
+    def disconnect_interface(self, name: str) -> Tuple[bool, int]:
         """
         Disconnects an Interface and also disconnects the corresponding
         Interface on the other Node
@@ -186,23 +190,25 @@ class Node:
         name (str): The Interface's name to disconnect
 
         Returns:
-        bool: Whether disconnecting the Interface was successful or not
+        Tuple[bool, int]: Whether disconnecting the Interface was successful or not, \
+                          and how many Packets were dropped
         """
         self_interface: Interface = self.get_interface(name)
+        pack_dropped: int = 0
         if self_interface is None:
-            return False
+            return (False, pack_dropped)
         for item in self.connections:
             if item[0][0] is self_interface:
                 other_interface: Interface = item[1][0]
                 other_node:      Node = item[1][1]
-                self_interface.disconnect_link()
+                pack_dropped = self_interface.disconnect_link()
                 self.connections.remove(item)
-                other_interface.disconnect_link()
+                pack_dropped += other_interface.disconnect_link()
                 for connection in other_node.connections:
                     if connection[0][0] is other_interface:
                         other_node.connections.remove(connection)
-                        return True
-        return False
+                        return (True, pack_dropped)
+        return (False, pack_dropped)
 
     def send_feedback(self, packet_source: str, feedback: int) -> None:
         """
@@ -406,6 +412,15 @@ class Router(Node):
         self.buffer:      List[Packet] = []
         self.buffer_size: int = 0 if buffer_size < 0 else buffer_size
 
+    def get_buffer_length(self) -> int:
+        """
+        Gets the total amount of Packets inside the Buffer
+
+        Returns:
+        int: The Packets inside the buffer
+        """
+        return len(self.buffer)
+
     def lowest_buffer_ppv(self) -> Packet:
         """
         Gets the lowest PPV Packet in the buffer, or nothing
@@ -442,7 +457,7 @@ class Router(Node):
                     return route.gateway, receiver_interface
         return None
 
-    def receive_packet(self, name: str) -> bool:
+    def receive_packet(self, name: str) -> Tuple[bool, bool]:
         """
         Handles an incoming Packet accordingly\n
         Puts it in the buffer, or throws it away, since this is the step that
@@ -453,17 +468,20 @@ class Router(Node):
         name (str): The Interface's name the Packet came from
 
         Returns:
-        bool: Whether receiving the Packet was a success or not
+        Tuple[bool, bool]: Whether receiving the Packet was a success or not \
+                           and whether the incoming Packet or one from the \
+                           buffer was dropped
         """
+        dropped_pack: bool = False
         interface: Interface = self.get_interface(name)
         if interface is None:
-            return False
+            return (False, dropped_pack)
         packet: Packet = interface.receive_from_link()
         if packet is not None:
             if len(self.buffer) < self.buffer_size:
                 self.buffer.append(packet)
                 self.send_feedback(packet.source_ip, 1)
-                return True
+                return (True, dropped_pack)
             if len(self.buffer) == self.buffer_size:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
                 if buffer_packet.ppv < packet.ppv:
@@ -472,9 +490,10 @@ class Router(Node):
                     print(f"Dropped from buffer:\n{buffer_packet}")
                 else:
                     print(f"Dropped incoming packet:\n{packet}.")
+                dropped_pack = True
                 self.send_feedback(packet.source_ip, -1)
-                return True
-        return False
+                return (True, dropped_pack)
+        return (False, dropped_pack)
 
     def send_feedback(self, packet_source: str, feedback: int) -> None:
         """

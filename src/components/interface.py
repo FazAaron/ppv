@@ -44,13 +44,19 @@ class Interface:
         print("Successfully connected Link")
         return True
 
-    def disconnect_link(self) -> None:
+    def disconnect_link(self) -> int:
         """
         Disconnects from the Link and sets the Channels into a default state
+
+        Returns:
+        int: The Packets contained inside the send_channel and receive_channel \
+             before disconnecting the Link
         """
+        to_return: int = len(self.receive_channel.payload)
         self.link = None
         self.send_channel = None
         self.receive_channel = None
+        return to_return
 
     def receive_from_link(self) -> Packet:
         """

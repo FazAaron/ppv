@@ -1,4 +1,3 @@
-from multiprocessing import connection
 from src.components.node import Host, Node, Router
 from src.components.packet import Packet
 from src.components.routing_table import Route
@@ -171,11 +170,16 @@ def test_node_connect_to_interface():
     # Connect the Nodes successfully
     success_5 = node.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
 
-    assert not success_1 and \
-        not success_2 and \
-        not success_3 and \
-        not success_4 and \
-        success_5 and \
+    assert not success_1[0] and \
+        success_1[1] == 0 and \
+        not success_2[0] and \
+        success_2[1] == 0 and \
+        not success_3[0] and \
+        success_3[1] == 0 and \
+        not success_4[0] and \
+        success_4[1] == 0 and \
+        success_5[0] and \
+        success_5[1] == 0 and \
         init_connections == 0 and \
         len(node.connections) != 0 and \
         len(node_2.connections) != 0 and \
@@ -186,7 +190,7 @@ def test_node_connect_to_interface():
         "Node.connect_to_interface() failure"
 
 
-def test_node_disconnect_interface_invalid_interface():
+def test_node_disconnect_interface():
     """
     Test the disconnect_interface() method of the Node
     """
@@ -216,6 +220,8 @@ def test_node_disconnect_interface_invalid_interface():
         node_1.connections[0][0][0] == node_2.connections[0][1][0] and \
         node_1.connections[0][1][1] == node_2.connections[0][0][1] and \
         node_1.connections[0][1][0] == node_2.connections[0][0][0]
+    node_1.get_interface("eth1").receive_channel.fill_payload(
+        Packet("127.0.0.1", "127.1.1.1", 10))
 
     # Disconnect an Interface the following ways:
     # - the Interface is invalid
@@ -226,9 +232,12 @@ def test_node_disconnect_interface_invalid_interface():
     # Disconnect the Interface successfully
     success_3 = node_1.disconnect_interface("eth1")
 
-    assert not success_1 and \
-        not success_2 and \
-        success_3 and \
+    assert not success_1[0] and \
+        success_1[1] == 0 and \
+        not success_2[0] and \
+        success_2[1] == 0 and \
+        success_3[0] and \
+        success_3[1] == 1 and \
         init_connections != 0 and \
         prev_connected and \
         len(node_1.connections) == 0 and \
@@ -279,13 +288,19 @@ def test_node_delete_interface():
     conn_succ = node.connect_to_interface(node_2, "eth1", "eth2", 10, 10)
 
     # Delete the Interface
+    node.get_interface("eth1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1", 10))
     success_4 = node.delete_interface("eth1")
 
-    assert not success_1 and \
-        not success_2 and \
-        success_3 and \
-        conn_succ and \
-        success_4 and \
+    assert not success_1[0] and \
+        success_1[1] == 0 and \
+        not success_2[0] and \
+        success_2[1] == 0 and \
+        success_3[0] and \
+        success_3[1] == 0 and \
+        conn_succ[0] and \
+        conn_succ[1] == 0 and \
+        success_4[0] and \
+        success_4[1] == 1 and \
         init_len == 0 and \
         len_2 != 0 and \
         len_3 == 0 and \
@@ -813,11 +828,16 @@ def test_router_receive_packet():
     # Receive the Packet, succeeding
     success_5 = router_2.receive_packet(next_hop[1])
 
-    assert not success_1 and \
-        not success_2 and \
-        success_3 and \
-        success_4 and \
-        success_5 and \
+    assert not success_1[0] and \
+        success_1[1] == 0 and \
+        not success_2[0] and \
+        success_1[1] == 0 and \
+        success_3[0] and \
+        success_3[1] == 1 and \
+        success_4[0] and \
+        success_4[1] == 1 and \
+        success_5[0] and \
+        success_5[1] == 0 and \
         pack_1 != packet_1 and \
         pack_1.ppv == 8 and \
         pack_2 == packet_2 and \
@@ -871,7 +891,7 @@ def test_router_send_feedback():
     # of the Host
     router_2.send_feedback("192.167.1.1", -1)
     final_send_rate = host_1.send_rate
-    
+
     assert final_send_rate == (send_rate + 2) // 2 and \
         prev_send_rate == (send_rate + 2), \
         "Router.send_feedback() failure"

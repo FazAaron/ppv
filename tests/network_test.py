@@ -1,6 +1,7 @@
 from src.components.network import Network
 from src.components.node import Host, Router
 from src.components.routing_table import Route
+from src.components.packet import Packet
 
 
 def test_network_init():
@@ -474,6 +475,7 @@ def test_network_delete_interface():
     prev_connection_len_router = len(network.routers[0].connections)
 
     # Delete a connected Interface
+    network.get_router("router_123").get_interface("eth2_2").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
     connected_interface_success = network.delete_interface(
         "router_123", "eth2_2")
 
@@ -487,6 +489,7 @@ def test_network_delete_interface():
         not interface_not_present_success and \
         prev_connection_len_host + prev_connection_len_router == 2 and \
         connected_interface_success and \
+        network.dropped_pack == 1 and \
         final_connection_len_host + final_connection_len_router == 0, \
         "Network.delete_interface() failure"
 
@@ -614,6 +617,7 @@ def test_network_disconnect_node_interfaces():
         "host_1", "eth2_2")
 
     # Disconnect using multiple methods
+    network.get_host("host_1").get_interface("eth1_1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
     disconnect_by_name_success = network.disconnect_node_interface(
         "host_1", "eth1_1")
     disconnect_by_ip_success = network.disconnect_node_interface(
@@ -627,7 +631,8 @@ def test_network_disconnect_node_interfaces():
         disconnect_by_ip_success and \
         len(network.hosts[1].connections) == 0 and \
         len(network.routers[1].connections) == 0 and \
-        len(network.get_nodes()) == 4, \
+        len(network.get_nodes()) == 4 and \
+        network.dropped_pack == 1, \
         "Network.disconnect_node_interface() failure"
 
 

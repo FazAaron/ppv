@@ -22,15 +22,19 @@ class Network:
     Abstract implementation of a Network, consisting of different components
 
     Data members:
-    hosts:     List[Host]: Hosts available in the Network
-    routers: List[Router]: Routers available in the Network
-    graph:          Graph: A Graph built up of the Nodes in the Network
+    hosts:       (List[Host]): Hosts available in the Network
+    routers:     (List[Router]): Routers available in the Network
+    graph:       (Graph): A Graph built up of the Nodes in the Network
+    total_pack   (int): The total amount of Packets sent out
+    dropped_pack (int): The total amount of Packets droped
     """
 
     def __init__(self) -> None:
-        self.hosts:   List[Host] = []
-        self.routers: List[Router] = []
-        self.graph:   Graph = Graph()
+        self.hosts:        List[Host] = []
+        self.routers:      List[Router] = []
+        self.graph:        Graph = Graph()
+        self.total_pack:   int = 0
+        self.dropped_pack: int = 0
 
     def get_nodes(self) -> List[Node]:
         """
@@ -103,9 +107,9 @@ class Network:
                                                 destination.ip)
                         if route_tuple is not None:
                             source.add_route(Route(route_tuple[0],
-                                                route_tuple[1],
-                                                route_tuple[2],
-                                                route_tuple[3]))
+                                                   route_tuple[1],
+                                                   route_tuple[2],
+                                                   route_tuple[3]))
                     except:
                         return False
         return True
@@ -172,7 +176,11 @@ class Network:
         for host in self.hosts:
             if host_name_or_ip in (host.name, host.ip):
                 for interface in host.interfaces:
-                    host.disconnect_interface(interface.name)
+                    ret_val: Tuple[bool, int] = host.disconnect_interface(
+                        interface.name)
+                    self.dropped_pack += ret_val[1]
+                    if not ret_val[0]:
+                        return ret_val[0]
                 self.hosts.remove(host)
                 return self.update_routing_tables()
         return False
@@ -227,7 +235,12 @@ class Network:
         for router in self.routers:
             if router_name_or_ip in (router.name, router.ip):
                 for interface in router.interfaces:
-                    router.disconnect_interface(interface.name)
+                    ret_val: Tuple[bool, int] = router.disconnect_interface(
+                        interface.name)
+                    self.dropped_pack += ret_val[1]
+                    if not ret_val[0]:
+                        return ret_val[0]
+                self.dropped_pack += router.get_buffer_length()
                 self.routers.remove(router)
                 return self.update_routing_tables()
         return False
@@ -268,15 +281,15 @@ class Network:
         Returns:
         bool: Whether the deletion of the Interface was a success or not
         """
-        # TODO Check if it was connected, if yes, check if the link had any packets
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
         if node is None:
             return False
-        success: bool = node.delete_interface(interface_name)
-        if success:
+        ret_val: Tuple[bool, int] = node.delete_interface(interface_name)
+        self.dropped_pack += ret_val[1]
+        if ret_val[0]:
             return self.update_routing_tables()
-        return success
+        return ret_val[0]
 
     def set_application(self,
                         host_name_or_ip: str,
@@ -333,14 +346,15 @@ class Network:
             self.get_router(o_node_name_or_ip)
         if (first_node and snd_node) is None:
             return False
-        success: bool = first_node.connect_to_interface(snd_node,
-                                                        interface_name,
-                                                        o_interface_name,
-                                                        speed,
-                                                        metrics)
-        if success:
+        ret_val: Tuple[bool, int] = first_node.connect_to_interface(snd_node,
+                                                                    interface_name,
+                                                                    o_interface_name,
+                                                                    speed,
+                                                                    metrics)
+        self.dropped_pack += ret_val[1]
+        if ret_val[0]:
             return self.update_routing_tables()
-        return success
+        return ret_val[0]
 
     def disconnect_node_interface(self,
                                   node_name_or_ip: str,
@@ -358,15 +372,15 @@ class Network:
         Returns:
         bool: Whether the Interface was disconnected or not
         """
-        # TODO check if the link between them had any Packets traveling
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
         if node is None:
             return False
-        success: bool = node.disconnect_interface(interface_name)
-        if success:
+        ret_val: Tuple[bool, int] = node.disconnect_interface(interface_name)
+        self.dropped_pack += ret_val[1]
+        if ret_val[0]:
             return self.update_routing_tables()
-        return success
+        return ret_val[0]
 
     def send_packet(self,
                     node_name_or_ip: str,
@@ -398,9 +412,11 @@ class Network:
             return None
         if router is None:
             next_hop: Tuple[str, str] = node.send_packet(destination_node.ip)
+            self.total_pack += 1
         else:
             next_hop: Tuple[str, str] = node.send_packet()
         if next_hop is None:
+            self.dropped_pack += 1
             return None
         return (next_hop[0], next_hop[1], destination_name_or_ip)
 
@@ -425,11 +441,17 @@ class Network:
         Returns:
         bool: Whether the Packet could be received or not
         """
-        node: Node = (self.get_host(node_name_or_ip) or
-                      self.get_router(node_name_or_ip))
+        router: Router = self.get_router(node_name_or_ip)
+        node: Node = (self.get_host(node_name_or_ip) or router)
         if node is None:
             return False
-        return node.receive_packet(interface_name)
+        if router is None:
+            return node.receive_packet(interface_name)
+        else:
+            ret_val: Tuple[bool, bool] = node.receive_packet(interface_name)
+            if ret_val[1]:
+                self.dropped_pack += 1
+            return ret_val[0]
 
     def print_node(self, node: Node) -> bool:
         """
