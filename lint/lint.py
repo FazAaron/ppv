@@ -39,7 +39,7 @@ options = [["--disable=C0103",
             "src/utils/logger.py"],
            ["src/utils/regex_checker.py"],
            ["--disable=R0903",
-            "src/event_handlers/simulation.py"],
+            "src/event_handlers/main_handler.py"],
            ["--disable=R0903",
             "src/graphic_handlers/main_window.py"],
            ["--disable=R0903",
@@ -53,7 +53,7 @@ options = [["--disable=C0103",
            ["src/event_handlers/object_canvas_handler.py"],
            ["src/event_handlers/object_frame_handler.py"],
            ["src/event_handlers/statistics_frame_handler.py"],
-           ["src/event_handlers/simulation.py"]]
+           ["main.py"]]
 
 for option in options:
     lint_file(option)

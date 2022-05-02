@@ -5,6 +5,7 @@ This module makes ObjectCanvasHandler objects available for use when imported
 from typing import Callable
 
 # Self-made modules
+from src.components.network import Network
 from src.graphic_handlers.object_canvas import ObjectCanvas
 from src.utils.logger import Logger
 
@@ -15,12 +16,13 @@ class ObjectCanvasHandler:
 
     Data members:
     object_canvas (ObjectCanvas): The Frame itself to access
-    logger       (Logger): The logging object
+    logger        (Logger): The logging object
     """
 
-    def __init__(self, object_canvas: ObjectCanvas, logger: Logger) -> None:
+    def __init__(self, object_canvas: ObjectCanvas, logger: Logger, network: Network) -> None:
         self.object_canvas: ObjectCanvas = object_canvas
         self.logger: Logger = logger
+        self.network: Network = network
 
     def bind(self, event: str, func: Callable) -> None:
         self.object_canvas.bind(event, func)
@@ -29,6 +31,7 @@ class ObjectCanvasHandler:
         return self.object_canvas.placing[1]
 
     def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0) -> None:
+        self.object_canvas.clear_canvas()
         if comp_type.upper() == "COMPONENT/ROUTER":
             self.object_canvas.draw_component(x1, y1, "ROUTER")
         elif comp_type.upper() == "COMPONENT/HOST":

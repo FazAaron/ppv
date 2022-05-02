@@ -1,7 +1,8 @@
 """
 This module makes ObjectFrameHandler objects available for use when imported
 """
-# Built-in modules - for type hints
+# Built-in modules
+from tkinter import messagebox
 from typing import Callable
 
 # Self-made modules
@@ -38,6 +39,20 @@ class ObjectFrameHandler():
         Parameters:
         func (Callable): The function to call on exit_button click
         """
-        self.logger.write(
-            "ObjectFrame.exit_button", f"binded function {func.__name__}", "INFORMATION")
+        #self.logger.write(
+            #"ObjectFrame.exit_button", f"binded function {func.__name__}", "INFORMATION")
         self.object_frame.exit_button.config(command=func)
+
+    # Private methods
+    def __exit_prompt(self) -> bool:
+        """
+        Opens a pop-up prompt asking a yes/no question for the user, whether \
+        they want to exit or not
+
+        Returns:
+        bool: Whether the user wants to exit or not
+        """
+        answer: bool = messagebox.askyesno(title="Exit application",
+                                message="Are you sure you want to quit the application?")
+        if answer:
+            self.main_window.exit()
