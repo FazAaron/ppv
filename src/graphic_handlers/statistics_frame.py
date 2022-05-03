@@ -30,11 +30,11 @@ class StatisticsFrame:
 
         # Setup the Labels
         self.packets_sent_label: Label = Label(
-            self.statistics_frame)
+            self.statistics_frame, font=("JetBrainsMono NF", 10))
         self.packets_dropped_label: Label = Label(
-            self.statistics_frame)
+            self.statistics_frame, font=("JetBrainsMono NF", 10))
         self.packets_received_label: Label = Label(
-            self.statistics_frame)
+            self.statistics_frame, font=("JetBrainsMono NF", 10))
 
         # Set the grid cnfiguration for the Widgets
         self.packets_sent_label.grid(column=0, row=0, sticky="nsw")
@@ -50,8 +50,8 @@ class StatisticsFrame:
         packets_dropped (int): The value to display in the packets_dropped_label
         """
         self.packets_sent_label.config(
-            text=f"Packets sent: {packets_sent}")
+            text=f"Packets sent:     {packets_sent}")
         self.packets_dropped_label.config(
-            text=f"Packets dropped: {packets_dropped}")
+            text=f"Packets dropped:  {packets_dropped}")
         self.packets_received_label.config(
             text=f"Packets received: {packets_sent - packets_dropped}")
