@@ -1,8 +1,8 @@
 """
 This module makes ObjectCanvas objects available for use when imported
 """
-from tkinter import Canvas, PhotoImage, ttk
-from typing import List, Tuple
+from tkinter import Canvas, ttk, Menu
+from typing import Callable, Tuple
 
 
 class ObjectCanvas:
@@ -10,80 +10,105 @@ class ObjectCanvas:
     The canvas to 'draw' to, contained inside the main window's WidgetContainer
 
     Data members:
-    canvas     (Canvas): The canvas to draw to
-    placing    (Tuple[str, bool]): Whether the user is placing at the moment or not
-    router_img (PhotoImage): The image of the Router
-    host_img   (PhotoImage): The image of the Host
-    components (List[Tuple[int, int]]): The coordinates of the components
+    canvas              (Canvas): The canvas to draw to
+    network_config_menu (Menu): The Menu for configuring the Network
+    host_config_menu    (Menu): The Menu to configure a Host
+    router_config_menu  (Menu): The Menu to configure a Router
+    config_menu         (ttk.Frame): The Frame to access certain features of \
+                                     the Network
     """
 
     def __init__(self, parent: ttk.Frame) -> None:
         self.canvas: Canvas = Canvas(
             parent, background="lightgrey", bd=1, highlightthickness=1, relief="ridge")
-        self.placing: Tuple[str, bool] = "", False
-        self.router_img: PhotoImage = PhotoImage(file="resources/router.png")
-        self.host_img: PhotoImage = PhotoImage(file="resources/host.png")
-        self.hosts: List[Tuple[int, int, int]] = []
-        self.routers: List[Tuple[int, int, int]] = []
-        self.interfaces: List[Tuple[int, int, int]] = []
-        self.links: List[Tuple[int, int, int, int, int]] = []
+        self.network_config_menu: Menu = None
+        self.host_config_menu: Menu = None
+        self.router_config_menu: Menu = None
+        self.config_menu: ttk.Frame = None
 
         # Set the position of this Frame inside the parent container
         self.canvas.grid(column=0, row=0, sticky="nsew")
 
-    def bind(self, event_type: str, func) -> None:
+    def get_geometry(self) -> Tuple[int, int]:
+        return (self.canvas.winfo_width(), self.canvas.winfo_height())
+
+    def bind(self, event_type: str, func: Callable) -> None:
         self.canvas.bind(event_type, func, add="+")
 
-    def intersects(self, x, y, width, height) -> bool:
-        pass
-
-    def link_intersects(self, x, y, width, height) -> bool:
-        pass
-
-    def draw_component(self, x: int, y: int, component_type: str) -> None:
+    def draw_component(self, x: int, y: int, component_type: str) -> int:
+        item_id: int = -1
         if component_type.upper() == "ROUTER":
-            item_id: int = self.canvas.create_image((x, y), image=self.router_img)
-            self.routers.append((item_id, x, y))
+            item_id = self.canvas.create_rectangle(x, y, x + 32, y + 32, fill="lightblue")
         elif component_type.upper() == "HOST":
-            item_id: int = self.canvas.create_image((x, y), image=self.host_img)
-            self.hosts.append((item_id, x, y))
+            item_id = self.canvas.create_rectangle(x, y, x + 32, y + 32, fill="grey")
+        return item_id
 
-    def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> None:
-        self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="3")
+    def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
+        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="3")
 
-    def draw_interface(self, x: int, y: int) -> None:
-        self.canvas.create_rectangle(x, y, x + 10, y + 10, fill="white")
+    def draw_interface(self, x: int, y: int) -> int:
+        return self.canvas.create_rectangle(x, y, x + 10, y + 10, fill="white")
 
     def draw_string(self, x: int, y: int) -> None:
         self.canvas.create_text(x, y, text="Asd")
 
-    def delete_component(self, x: int, y: int) -> None:
-        pass
-
-    def delete_link(self, x: int, y: int) -> None:
-        pass
-
-    def delete_interface(self, x: int, y: int) -> None:
-        pass
-
-    def __redraw(self) -> None:
-        for _, x, y in self.hosts:
-            pass
-        for _, x, y in self.routers:
-            self.canvas.create_image((x, y), image=self.router_img)
-        for _, x, y in self.interfaces:
-            pass
-        for _, x1, y1, x2, y2 in self.links:
-            pass
-
     def clear_canvas(self) -> None:
         self.canvas.delete("all")
-        self.__redraw()
 
-    def show_menu(self, type: str) -> None:
+    def setup_network_config_menu(self) -> Menu:
+        if self.network_config_menu is None:
+            self.network_config_menu = Menu(self.canvas, tearoff=0)
+            self.network_config_menu.add_command(label="Place Host")
+            self.network_config_menu.add_command(label="Place Router")
+        return self.network_config_menu
+
+    def setup_host_config_menu(self) -> Menu:
+        if self.host_config_menu is None:
+            self.host_config_menu = Menu(self.canvas, tearoff=0)
+            self.host_config_menu.add_command(label="Delete Component")
+            self.host_config_menu.add_command(label="Add Interface")
+            self.host_config_menu.add_command(label="Delete Interface")
+            self.host_config_menu.add_command(label="Set Application")
+            self.host_config_menu.add_command(label="Start sending")
+            self.host_config_menu.add_command(label="Connect to Node")
+            self.host_config_menu.add_command(label="Disconnect Interface")
+        return self.host_config_menu
+
+    def setup_router_config_menu(self) -> Menu:
+        if self.router_config_menu is None:
+            self.router_config_menu = Menu(self.canvas, tearoff=0)
+            self.router_config_menu.add_command(label="Delete Component")
+            self.router_config_menu.add_command(label="Add Interface")
+            self.router_config_menu.add_command(label="Delete Interface")
+            self.router_config_menu.add_command(label="Connect to Node")
+            self.router_config_menu.add_command(label="Disconnect Interface")
+        return self.router_config_menu
+
+    def setup_place_host_frame(self) -> None:
         pass
 
-    def show_frame(self) -> None:
+    def setup_place_router_frame(self) -> None:
+        pass
+
+    def setup_add_interface_frame(self) -> None:
+        pass
+
+    def setup_delete_interface_frame(self) -> None:
+        pass
+
+    def setup_set_application_frame(self) -> None:
+        pass
+
+    def setup_set_application_frame(self) -> None:
+        pass
+
+    def setup_start_sending_frame(self) -> None:
+        pass
+
+    def setup_connect_to_node_frame(self) -> None:
+        pass
+
+    def setup_disconnect_interface_frame(self) -> None:
         pass
 
 # """

@@ -45,6 +45,8 @@ class MainHandler:
 
         # Setup the bindings to the Handlers
         self.__bind_to_object_frame_handler()
+        self.__bind_to_object_canvas_handler()
+        self.__bind_to_more_widgets()
 
     # Bindings to Handlers
     ## ObjectFrameHandler specific bindings
@@ -52,10 +54,17 @@ class MainHandler:
         self.object_frame_handler.bind_to_exit(self.__exit_prompt)
 
     ## ObjectCanvasHandler specific bindings
+    def __bind_to_object_canvas_handler(self) -> None:
+        self.object_canvas_handler.bind("<Button-1>", lambda event:
+            self.object_canvas_handler.draw("COMPONENT/ROUTER", event.x, event.y))
+        self.object_canvas_handler.bind("<Button-3>", self.__right_click_event)
 
     ## Bindings on more than one Handler
+    def __bind_to_more_widgets(self) -> None:
+        pass
 
     # Private methods
+    ## ObjectFrame handlers
     def __exit_prompt(self) -> None:
         """
         Opens a pop-up prompt asking a yes/no question for the user, whether \
@@ -65,3 +74,14 @@ class MainHandler:
                                            message="Are you sure you want to quit the application?")
         if answer:
             self.main_window.exit()
+
+    ## StatisticsFrame handlers
+    def __change_text(self, event) -> None:
+        # Max on non-fullscreen
+        self.object_frame_handler.display_text("D"*54)
+        # Max on fullscreen
+        self.object_frame_handler.display_text("A"*55)
+
+    ## ObjectCanvas handlers
+    def __right_click_event(self, event) -> None:
+        self.object_canvas_handler.show_menu(event.x, event.y)
