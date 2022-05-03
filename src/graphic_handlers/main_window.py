@@ -39,6 +39,7 @@ class MainWindow:
         self.app.iconphoto(False, icon)
 
         # Set the application to fullscreen
+        self.app.geometry("1920x1080")
         self.app.attributes("-fullscreen", True)
 
         # Set the basic grid in the main window

@@ -14,6 +14,7 @@ class ObjectFrameHandler():
 
     Data members:
     object_frame (ObjectFrame): The Frame itself to access
+    curr_showing (str): The component currently being shown
     """
 
     def __init__(self, object_frame: ObjectFrame) -> None:
@@ -23,15 +24,17 @@ class ObjectFrameHandler():
                               "Left-click-drag on a component:\nMove component")
 
         # Display a starting text
-        self.display_text(start_display)
+        self.display_text("", start_display)
 
-    def display_text(self, to_display: str) -> None:
+    def display_text(self, curr_showing: str, to_display: str) -> None:
         """
         Displays text in the object_frame
 
         Parameters:
-        to_display (str): The string to display
+        to_display   (str): The string to display
+        curr_showing (str): The component currently being shown
         """
+        self.curr_showing = curr_showing
         self.object_frame.display_text(to_display)
 
     def bind_to_exit(self, func: Callable) -> None:

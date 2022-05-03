@@ -14,6 +14,8 @@ class StatisticsFrameHandler:
 
     def __init__(self, statistics_frame: StatisticsFrame) -> None:
         self.statistics_frame: StatisticsFrame = statistics_frame
+
+        # Setup starting values
         self.update_labels(0, 0)
 
     def update_labels(self, packets_sent: int, packets_dropped: int) -> None:
@@ -24,4 +26,7 @@ class StatisticsFrameHandler:
         packets_sent    (int): The total Packets sent
         packets_dropped (int): The total Packets dropped
         """
-        self.statistics_frame.update_labels(packets_sent, packets_dropped)
+        sent: str = f"Packets sent:     {packets_sent}"
+        dropped: str = f"Packets dropped:  {packets_dropped}"
+        received: str = f"Packets received: {packets_sent - packets_dropped}"
+        self.statistics_frame.update_labels(sent, dropped, received)
