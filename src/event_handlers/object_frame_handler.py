@@ -19,22 +19,22 @@ class ObjectFrameHandler():
 
     def __init__(self, object_frame: ObjectFrame) -> None:
         self.object_frame: ObjectFrame = object_frame
-        start_display: str = ("Right-click on the display or on a component:\nOpen Network configuration menu\n\n"
-                              "Left-click on a component:\nDisplay component attributes\n\n")
+        self.start_display: str = ("Right-click on the display or on a component:\nOpen Network configuration menu\n\n"
+                              "Left-click on a component:\nDisplay component attributes\n\n"
+                              "Left-click on the display:\nDisplay these starting tips")
 
         # Display a starting text
-        self.display_text("", start_display)
+        self.display_text("", self.start_display)
 
     def display_text(self, curr_showing: str, to_display: str) -> None:
         """
         Displays text in the object_frame
 
         Parameters:
+        curr_showing (str): The component type currently shown
         to_display   (str): The string to display
-        curr_showing (str): The component currently being shown
         """
-        self.curr_showing = curr_showing
-        self.object_frame.display_text(to_display)
+        self.object_frame.display_text(curr_showing + to_display)
 
     def bind_to_exit(self, func: Callable) -> None:
         """

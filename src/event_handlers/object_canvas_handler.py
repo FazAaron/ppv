@@ -26,6 +26,7 @@ class ObjectCanvasHandler:
         self.routers: List[Tuple[int, int, int]] = []
         self.interfaces: List[Tuple[int, int, int]] = []
         self.links: List[Tuple[int, int, int, int, int]] = []
+        self.shown_message: Tuple[int, int, str] = ()
         self.mouse_pos_x: int = 0
         self.mouse_pos_y: int = 0
 
@@ -54,9 +55,19 @@ class ObjectCanvasHandler:
     def is_placing(self) -> bool:
         return self.placing_data != []
 
+    def show_message(self, text: str, time: int) -> None:
+        x: int = self.object_canvas.get_geometry()[0] - 3
+        y: int = self.object_canvas.get_geometry()[1] - 10
+        self.shown_message = (x, y, text)
+        self.redraw()
+        self.object_canvas.after(time, self.hide_message)
+
+    def hide_message(self) -> None:
+        self.shown_message = ()
+        self.redraw()
+
     def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0, save: bool = True) -> int:
         item_id: int = -1
-        # Change to mouse_pos_x and mouse_pos_y ?
         aligned_coords: Tuple[int, int] = (x1, y1)
 
         if comp_type.upper() == "COMPONENT/ROUTER" or comp_type.upper() == "COMPONENT/HOST":
@@ -103,6 +114,9 @@ class ObjectCanvasHandler:
             self.object_canvas.draw_interface(x, y)
         for _, x1, y1, x2, y2 in self.links:
             self.object_canvas.draw_link(x1, y1, x2, y2)
+        if (self.shown_message != ()):
+            self.object_canvas.draw_string(
+                self.shown_message[0], self.shown_message[1], self.shown_message[2])
 
     def intersects(self, x, y, width, height) -> Tuple[str, int]:
         for host in self.hosts:
@@ -200,22 +214,20 @@ class ObjectCanvasHandler:
         menu_type: Tuple[str, int] = self.intersects(x, y, 1, 1)
         if menu_type[0].upper() == "ROUTER":
             menu: Menu = self.object_canvas.router_config_menu
-            try:
-                menu.tk_popup(x, y)
-            finally:
-                menu.grab_release()
         elif menu_type[0].upper() == "HOST":
             menu: Menu = self.object_canvas.host_config_menu
-            try:
-                menu.tk_popup(x, y)
-            finally:
-                menu.grab_release()
         else:
             menu: Menu = self.object_canvas.network_config_menu
-            try:
-                menu.tk_popup(x, y)
-            finally:
-                menu.grab_release()
+        self.object_canvas.show_menu(menu, x, y)
+
+    def get_network_config_menu_frames(self) -> List[str]:
+        return ["PLACEHOST", "PLACEROUTER"]
+
+    def get_host_config_menu_frames(self) -> List[str]:
+        return ["ADDINTERFACE", "DELETEINTERFACE", "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
+
+    def get_router_config_menu_frames(self) -> List[str]:
+        return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
 
     def show_frame(self, frame_type: str) -> None:
         aligned_coords: Tuple[int, int] = self.re_align_coords(
@@ -238,15 +250,6 @@ class ObjectCanvasHandler:
             self.object_canvas.setup_connect_to_node_frame(x, y)
         else:
             self.object_canvas.setup_disconnect_interface_frame(x, y)
-
-    def get_network_config_menu_frames(self) -> List[str]:
-        return ["PLACEHOST", "PLACEROUTER"]
-
-    def get_host_config_menu_frames(self) -> List[str]:
-        return ["ADDINTERFACE", "DELETEINTERFACE", "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
-
-    def get_router_config_menu_frames(self) -> List[str]:
-        return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
 
     def hide_frame(self) -> None:
         self.object_canvas.clear_frame()
@@ -313,7 +316,7 @@ class ObjectCanvasHandler:
                 name_regex, self.object_canvas.entry_1.get())
             return frst
 
-    def submit_input(self) -> List[str]:
+    def submit_input(self) -> None:
         self.placing_data = []
         title_label: str = self.object_canvas.title_label.cget("text")
         if self.check_regex(title_label):
@@ -327,4 +330,3 @@ class ObjectCanvasHandler:
             self.hide_frame()
         else:
             self.object_canvas.information_label.config(fg="red")
-        return self.placing_data

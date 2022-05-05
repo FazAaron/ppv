@@ -68,21 +68,6 @@ class RoutingTable:
                 found.append(route)
         return found
 
-    def list_routes(self) -> None:
-        """
-        Prints Routes contained in the RoutingTable in a formatted way
-        """
-        if len(self.routes) == 0:
-            print("The routing table is empty.")
-            return
-        curr_line: int = 1
-        for route in self.routes:
-            print(f"\nRoute {curr_line}")
-            first_row_len: int = len(route.destination) + len("Destination: ")
-            print("-" * first_row_len)
-            print(route)
-            curr_line += 1
-
     def set_route(self, to_set: Route) -> None:
         """
         Overrides the corresponding Route with the one passed as an argument\n
@@ -109,3 +94,31 @@ class RoutingTable:
         Resets the RoutingTable to a default state
         """
         self.routes = []
+
+    def list_routes(self) -> None:
+        """
+        Prints Routes contained in the RoutingTable in a formatted way
+        """
+        if len(self.routes) == 0:
+            print("The routing table is empty.")
+            return
+        curr_line: int = 1
+        for route in self.routes:
+            print(f"\nRoute {curr_line}")
+            first_row_len: int = len(route.destination) + len("Destination: ")
+            print("-" * first_row_len)
+            print(route)
+            curr_line += 1
+
+    def __str__(self) -> str:
+        if len(self.routes) == 0:
+            return "The routing table is empty."
+        curr_line: int = 1
+        to_return: str = ""
+        for route in self.routes:
+            to_return += f"\nRoute {curr_line}"
+            first_row_len: int = len(route.destination) + len("Destination: ")
+            to_return += "-" * first_row_len
+            to_return += route
+            curr_line += 1
+        return to_return

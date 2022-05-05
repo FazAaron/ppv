@@ -384,6 +384,26 @@ class Host(Node):
             for same_node, other_node in self.connections:
                 print(f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n")
 
+    def __str__(self) -> str:
+        to_return: str = ""
+        to_return += (f"\nHOST {self.name} - {self.ip}:\n\n"
+                      f"Send rate: {self.send_rate} packets / s\n\n"
+                      f"Running application:\n{self.application}\n\n")
+        to_return += self.routing_table.__str__()
+        to_return += "\n\nAvailable Interfaces on Node:\n"
+        if len(self.interfaces) == 0:
+            to_return += ("There are no interfaces on the Node.")
+        else:
+            for interface in self.interfaces:
+                to_return += interface
+        to_return += "\n\nAvailable connections to other Nodes:\n"
+        if len(self.connections) == 0:
+            to_return += "There are no connections to other Nodes."
+        else:
+            for same_node, other_node in self.connections:
+                to_return += f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n"
+        return to_return
+
 
 class Router(Node):
     """
@@ -538,3 +558,23 @@ class Router(Node):
         else:
             for same_node, other_node in self.connections:
                 print(f"\n{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}")
+
+    def __str__(self) -> str:
+        to_return: str = ""
+        to_return += (f"\nROUTER {self.name} - {self.ip}:\n\n"
+                      f"Send rate: {self.send_rate} packets / s\n\n"
+                      f"Buffer: {len(self.buffer)} / {self.buffer_size}\n\n")
+        to_return += self.routing_table.__str__()
+        to_return += "\n\nAvailable Interfaces on Node:\n"
+        if len(self.interfaces) == 0:
+            to_return += ("There are no interfaces on the Node.\n")
+        else:
+            for interface in self.interfaces:
+                to_return += interface
+        to_return += "\n\nAvailable connections to other Nodes:\n"
+        if len(self.connections) == 0:
+            to_return += "There are no connections to other Nodes."
+        else:
+            for same_node, other_node in self.connections:
+                to_return += f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n"
+        return to_return

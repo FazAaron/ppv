@@ -2,6 +2,7 @@
 This module makes ObjectCanvas objects available for use when imported
 """
 from tkinter import Button, Canvas, Entry, Label, Menu, ttk
+from turtle import bgcolor
 from typing import Callable, Tuple
 
 
@@ -94,10 +95,13 @@ class ObjectCanvas:
         return self.canvas.create_rectangle(x, y, x + 10, y + 10, fill="white")
 
     def draw_string(self, x: int, y: int, text: str) -> None:
-        self.canvas.create_text(x, y, text=text)
+        self.canvas.create_text(x, y, text=text, anchor="e")
 
     def clear_canvas(self) -> None:
         self.canvas.delete("all")
+
+    def after(self, time: int, func: Callable) -> None:
+        self.canvas.after(time, func)
 
     def __setup_network_config_menu(self) -> Menu:
         network_config_menu = Menu(self.canvas, tearoff=0)
@@ -130,6 +134,12 @@ class ObjectCanvas:
         router_config_menu.add_separator()
         router_config_menu.add_command(label="Close")
         return router_config_menu
+
+    def show_menu(self, menu: Menu, x: int, y: int) -> None:
+        try:
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
     def setup_place_host_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)

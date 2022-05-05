@@ -39,7 +39,7 @@ class ObjectFrame:
             self.object_frame, image=self.exit_button_image)
         Hovertip(self.exit_button, "Exit the application")
         self.display_text_label: Label = Label(
-            self.object_frame, text="", width=10, font=("JetBrainsMono NF", 10))
+            self.object_frame, text="", width=10, height=10, font=("JetBrainsMono NF", 10))
 
         # Set the grid configuration for the Widgets
         self.exit_button.grid(column=1, row=0, sticky="nsew")
