@@ -3,6 +3,7 @@ This module makes MainHandler objects available for use when imported
 """
 # Built-in modules
 from tkinter import messagebox
+from typing import List
 
 # Self-made modules
 from src.components.network import Network
@@ -46,7 +47,6 @@ class MainHandler:
         # Setup the bindings to the Handlers
         self.__bind_to_object_frame_handler()
         self.__bind_to_object_canvas_handler()
-        self.__bind_to_more_widgets()
 
     # Bindings to Handlers
     ## ObjectFrameHandler specific bindings
@@ -55,13 +55,14 @@ class MainHandler:
 
     ## ObjectCanvasHandler specific bindings
     def __bind_to_object_canvas_handler(self) -> None:
-        self.object_canvas_handler.bind("<Button-1>", lambda event:
-            self.object_canvas_handler.draw("COMPONENT/ROUTER", event.x, event.y))
-        self.object_canvas_handler.bind("<Button-3>", self.__right_click_event)
-
-    ## Bindings on more than one Handler
-    def __bind_to_more_widgets(self) -> None:
-        pass
+        self.object_canvas_handler.bind("<Motion>", self.__set_mouse_pos)
+        self.object_canvas_handler.bind("<Button-3>", self.__show_options_menu)
+        self.__setup_config_frames()
+        self.__setup_config_buttons()
+        self.object_canvas_handler.bind("<Motion>", self.__handle_is_placing_motion)
+        self.object_canvas_handler.bind("<Button-1>", self.__handle_is_placing_left_click)
+        #self.object_canvas_handler.bind("<Motion>", self.__placing_motion_handler)
+        #self.object_canvas_handler.bind("<Button-1>", self.__placing_left_click_handdler)
 
     # Private methods
     ## ObjectFrame handlers
@@ -71,17 +72,77 @@ class MainHandler:
         they want to exit or not
         """
         answer: bool = messagebox.askyesno(title="Exit application",
-                                           message="Are you sure you want to quit the application?")
+                                           message="Are you sure you want to exit the application?")
         if answer:
             self.main_window.exit()
 
     ## StatisticsFrame handlers
-    def __change_text(self, event) -> None:
+    def __change_text(self) -> None:
         # Max on non-fullscreen
         self.object_frame_handler.display_text("D"*54)
         # Max on fullscreen
         self.object_frame_handler.display_text("A"*55)
 
     ## ObjectCanvas handlers
-    def __right_click_event(self, event) -> None:
-        self.object_canvas_handler.show_menu(event.x, event.y)
+    def __set_mouse_pos(self, event: str) -> None:
+        self.object_canvas_handler.mouse_pos_x = event.x
+        self.object_canvas_handler.mouse_pos_y = event.y
+
+    def __show_options_menu(self, event: str) -> None:
+        self.object_canvas_handler.show_menu()
+
+    def __setup_config_frames(self) -> None:
+        network: List[str] = self.object_canvas_handler.get_network_config_menu_frames()
+        host: List[str] = self.object_canvas_handler.get_host_config_menu_frames()
+        router: List[str] = self.object_canvas_handler.get_router_config_menu_frames()
+        self.object_canvas_handler.bind_to_options_menu_entries(network, host, router)
+
+    def __setup_config_buttons(self) -> None:
+        self.object_canvas_handler.bind_to_frame_buttons(self.object_canvas_handler.submit_input)
+
+    def __handle_is_placing_motion(self, event) -> None:
+        if self.object_canvas_handler.is_placing():
+            self.object_canvas_handler.draw(self.object_canvas_handler.placing_data[0], event.x, event.y, save=False)
+
+    def __handle_is_placing_left_click(self, event) -> None:
+        if self.object_canvas_handler.is_placing():
+            # TODO check if duplicate name
+            self.object_canvas_handler.draw(self.object_canvas_handler.placing_data[0], event.x, event.y)
+            self.object_canvas_handler.placing_data = []
+ 
+    #def __right_click_event(self, event) -> None:
+        #self.object_canvas_handler.show_menu(event.x, event.y)
+        ##self.object_canvas_handler.bind_to_options_menu_entries(lambda x=event.x, y=event.y: self.__place_host_frame(x, y))
+        #self.object_canvas_handler.show_frame("PLACEHOST", event.x, event.y)
+        #self.__place_host_frame(event.x, event.y)
+
+    #def __place_host_frame(self, x: int, y: int) -> None:
+       ##frame = self.object_canvas_handler.show_frame(x, y)
+       ##for widget in frame.winfo_children():
+            ##if widget == self.object_canvas_handler.object_canvas.cancel_button:
+                ##widget.configure(command=self.object_canvas_handler.object_canvas.hide_frame)
+            ##elif widget == self.object_canvas_handler.object_canvas.submit_button:
+                ##widget.configure(command=self.testing)
+        #self.object_canvas_handler.bind_to_frame_buttons(self.object_canvas_handler.submit_input)
+
+    #def testing(self) -> None:
+        #new_object_details: List[str] = self.object_canvas_handler.fetch_entry_content()
+        #self.object_canvas_handler.placing = "COMPONENT/ROUTER", True
+
+    #def __placing_motion_handler(self, event) -> None:
+        #if self.object_canvas_handler.is_placing:
+            #comp_type: str = self.object_canvas_handler.placing[0]
+            #self.object_canvas_handler.draw(comp_type, event.x, event.y, save=False)
+
+    #def __placing_left_click_handdler(self, event) -> None:
+        #if self.object_canvas_handler.is_placing:
+            #comp_type: str = self.object_canvas_handler.placing[0]
+            #self.object_canvas_handler.draw(comp_type, event.x, event.y)
+            #self.object_canvas_handler.placing = ("", False)
+
+    #def __object_details_left_click_handler(self, event) -> None:
+        #pass
+
+    #def __move_left_drag_handler(self, event) -> None:
+        #pass
+    

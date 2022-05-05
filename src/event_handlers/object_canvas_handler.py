@@ -3,9 +3,11 @@ This module makes ObjectCanvasHandler objects available for use when imported
 """
 # Built-in modules
 from typing import Callable, Tuple, List
+from tkinter import Menu
 
 # Self-made modules
 from src.graphic_handlers.object_canvas import ObjectCanvas
+from src.utils.regex_checker import regex_matches
 
 
 class ObjectCanvasHandler:
@@ -19,48 +21,75 @@ class ObjectCanvasHandler:
 
     def __init__(self, object_canvas: ObjectCanvas) -> None:
         self.object_canvas: ObjectCanvas = object_canvas
-        self.placing: Tuple[str, bool] = "", False
+        self.placing_data: List[str] = []
         self.hosts: List[Tuple[int, int, int]] = []
         self.routers: List[Tuple[int, int, int]] = []
         self.interfaces: List[Tuple[int, int, int]] = []
         self.links: List[Tuple[int, int, int, int, int]] = []
+        self.mouse_pos_x: int = 0
+        self.mouse_pos_y: int = 0
 
     def bind(self, event: str, func: Callable) -> None:
         self.object_canvas.bind(event, func)
 
-    def is_placing(self) -> None:
-        return self.object_canvas.placing[1]
+    def bind_to_options_menu_entries(self,
+                                     network_conf_options: List[str],
+                                     host_conf_options: List[str],
+                                     router_conf_options: List[str]
+                                     ) -> None:
+        for i in range(len(network_conf_options)):
+            self.object_canvas.network_config_menu.entryconfigure(
+                i, command=lambda i=i: self.show_frame(network_conf_options[i]))
+        for i in range(len(host_conf_options)):
+            self.object_canvas.host_config_menu.entryconfigure(
+                i, command=lambda i=i: self.show_frame(host_conf_options[i]))
+        for i in range(len(router_conf_options)):
+            self.object_canvas.router_config_menu.entryconfigure(
+                i, command=lambda i=i: self.show_frame(router_conf_options[i]))
 
-    def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0) -> int:
+    def bind_to_frame_buttons(self, submit_command: Callable) -> None:
+        self.object_canvas.submit_button.config(command=submit_command)
+        self.object_canvas.cancel_button.config(command=self.hide_frame)
+
+    def is_placing(self) -> bool:
+        return self.placing_data != []
+
+    def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0, save: bool = True) -> int:
         item_id: int = -1
+        # Change to mouse_pos_x and mouse_pos_y ?
         aligned_coords: Tuple[int, int] = (x1, y1)
 
         if comp_type.upper() == "COMPONENT/ROUTER" or comp_type.upper() == "COMPONENT/HOST":
             aligned_coords = self.re_align_coords(x1, y1, 32, 32)
-            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 32, 32)[1] is not None:
+            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 32, 32)[1] != -1:
                 return item_id
         elif comp_type.upper() == "INTERFACE":
             aligned_coords = self.re_align_coords(x1, y1, 10, 10)
-            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] is not None:
+            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] != -1:
                 return item_id
 
+        self.redraw()
         if comp_type.upper() == "COMPONENT/ROUTER":
-            item_id = self.object_canvas.draw_component(
+            item_id: int = self.object_canvas.draw_component(
                 aligned_coords[0], aligned_coords[1], "ROUTER")
-            self.routers.append(
-                (item_id, aligned_coords[0], aligned_coords[1]))
+            if save:
+                self.routers.append(
+                    (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "COMPONENT/HOST":
-            item_id = self.object_canvas.draw_component(
+            item_id: int = self.object_canvas.draw_component(
                 aligned_coords[0], aligned_coords[1], "HOST")
-            self.hosts.append((item_id, aligned_coords[0], aligned_coords[1]))
+            if save:
+                self.hosts.append(
+                    (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "LINK":
-            item_id = self.object_canvas.draw_link(x1, y1, x2, y2)
+            item_id: int = self.object_canvas.draw_link(x1, y1, x2, y2)
             self.links.append((item_id, x1, y1, x2, y2))
         elif comp_type.upper() == "INTERFACE":
-            item_id = self.object_canvas.draw_interface(
+            item_id: int = self.object_canvas.draw_interface(
                 aligned_coords[0], aligned_coords[1])
-            self.interfaces.append(
-                (item_id, aligned_coords[0], aligned_coords[1]))
+            if save:
+                self.interfaces.append(
+                    (item_id, aligned_coords[0], aligned_coords[1]))
 
         return item_id
 
@@ -78,14 +107,14 @@ class ObjectCanvasHandler:
     def intersects(self, x, y, width, height) -> Tuple[str, int]:
         for host in self.hosts:
             if (host[1] <= x + width and host[2] <= y + height and host[1] + 32 >= x and host[2] + 32 >= y):
-                return ("host", host[0])
+                return ("HOST", host[0])
         for router in self.routers:
             if (router[1] <= x + width and router[2] <= y + height and router[1] + 32 >= x and router[2] + 32 >= y):
-                return ("router", router[0])
+                return ("ROUTER", router[0])
         for interface in self.interfaces:
             if (interface[1] <= x + width and interface[2] <= y + height and interface[1] + 10 >= x and interface[2] + 10 >= y):
-                return ("interface", interface[0])
-        return ("", None)
+                return ("INTERFACE", interface[0])
+        return ("", -1)
 
     def delete_component(self, item_id: int) -> bool:
         for host in self.hosts:
@@ -137,49 +166,165 @@ class ObjectCanvasHandler:
 
         # 1
         if (x <= 1 and y <= 1):
-            #self.canvas.create_rectangle(2, 2, width + 2, height + 2)
             coords = (2, 2)
         # 3
         elif (x + width > max_x and y <= 1):
-            # self.canvas.create_rectangle(max_x - width, 2, max_x, height + 2)
             coords = (max_x - width, 2)
         # 2
         elif (x > 1 and y <= 1):
-            # self.canvas.create_rectangle(x, 2, x + width, height + 2)
             coords = (x, 2)
         # 7
         elif (x <= 1 and y + height > max_y):
-            # self.canvas.create_rectangle(2, max_y - height, width + 2, max_y)
             coords = (2, max_y - height)
         # 9
         elif (x + width > max_x and y + height > max_y):
-            #self.canvas.create_rectangle(max_x - width, max_y - height, max_x, max_y)
             coords = (max_x - width, max_y - height)
         # 8
         elif (x > 1 and y + height > max_y):
-            # self.canvas.create_rectangle(x, max_y - height, x + width, max_y)
             coords = (x, max_y - height)
         # 4
         elif (x <= 1 and y > 1):
-            # self.canvas.create_rectangle(2, y, width + 2, y + height)
             coords = (2, y)
         # 6
         elif (x + width > max_x and y > 1):
-            # self.canvas.create_rectangle(max_x - width, y, max_x, y + height)
             coords = (max_x - width, y)
         # 5
         else:
-            #self.canvas.create_rectangle(x, y, x + width, y + height)
             coords = (x, y)
 
         return coords
 
-    def show_menu(self, x: int, y: int) -> None:
-        menu_type = self.intersects(x, y, 1, 1)
-        if menu_type[0] == "router":
-            self.object_canvas.setup_router_config_menu().tk_popup(x, y)
-        elif menu_type[0] == "host":
-            self.object_canvas.setup_host_config_menu().tk_popup(x, y)
+    def show_menu(self) -> None:
+        x: int = self.mouse_pos_x
+        y: int = self.mouse_pos_y
+        menu_type: Tuple[str, int] = self.intersects(x, y, 1, 1)
+        if menu_type[0].upper() == "ROUTER":
+            menu: Menu = self.object_canvas.router_config_menu
+            try:
+                menu.tk_popup(x, y)
+            finally:
+                menu.grab_release()
+        elif menu_type[0].upper() == "HOST":
+            menu: Menu = self.object_canvas.host_config_menu
+            try:
+                menu.tk_popup(x, y)
+            finally:
+                menu.grab_release()
         else:
-            self.object_canvas.setup_network_config_menu().tk_popup(x, y)
-            
+            menu: Menu = self.object_canvas.network_config_menu
+            try:
+                menu.tk_popup(x, y)
+            finally:
+                menu.grab_release()
+
+    def show_frame(self, frame_type: str) -> None:
+        aligned_coords: Tuple[int, int] = self.re_align_coords(
+            self.mouse_pos_x, self.mouse_pos_y, 350, 350)
+        x: int = aligned_coords[0]
+        y: int = aligned_coords[1]
+        if frame_type == "PLACEHOST":
+            self.object_canvas.setup_place_host_frame(x, y)
+        elif frame_type == "PLACEROUTER":
+            self.object_canvas.setup_place_router_frame(x, y)
+        elif frame_type == "ADDINTERFACE":
+            self.object_canvas.setup_add_interface_frame(x, y)
+        elif frame_type == "DELETEINTERFACE":
+            self.object_canvas.setup_delete_interface_frame(x, y)
+        elif frame_type == "SETAPPLICATION":
+            self.object_canvas.setup_set_application_frame(x, y)
+        elif frame_type == "SEND":
+            self.object_canvas.setup_start_sending_frame(x, y)
+        elif frame_type == "CONNECT":
+            self.object_canvas.setup_connect_to_node_frame(x, y)
+        else:
+            self.object_canvas.setup_disconnect_interface_frame(x, y)
+
+    def get_network_config_menu_frames(self) -> List[str]:
+        return ["PLACEHOST", "PLACEROUTER"]
+
+    def get_host_config_menu_frames(self) -> List[str]:
+        return ["ADDINTERFACE", "DELETEINTERFACE", "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
+
+    def get_router_config_menu_frames(self) -> List[str]:
+        return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
+
+    def hide_frame(self) -> None:
+        self.object_canvas.clear_frame()
+
+    def check_regex(self, title_label: str) -> bool:
+        name_regex: str = "^.{1,15}$"
+        ip_regex: str = "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$"
+        digit_regex: str = "^\d{1,2}$"
+        if title_label.upper() == "PLACE HOST":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            snd: bool = regex_matches(
+                ip_regex, self.object_canvas.entry_2.get())
+            thrd: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_3.get())
+            return frst and snd and thrd
+        elif title_label.upper() == "PLACE ROUTER":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            snd: bool = regex_matches(
+                ip_regex, self.object_canvas.entry_2.get())
+            thrd: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_3.get())
+            frth: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_4.get())
+            return frst and snd and thrd and frth
+        elif title_label.upper() == "ADD INTERFACE":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            return frst
+        elif title_label.upper() == "DELETE INTERFACE":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            return frst
+        elif title_label.upper() == "SET APPLICATION":
+            app_type_regex: str = "^CONST$|^AIMD$"
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            snd: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_2.get())
+            thrd: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_3.get())
+            frth: bool = regex_matches(
+                app_type_regex, self.object_canvas.entry_4.get())
+            return frst and snd and thrd and frth
+        elif title_label.upper() == "START SENDING":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            return frst
+        elif title_label.upper() == "CONNECT TO NODE":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            snd: bool = regex_matches(
+                name_regex, self.object_canvas.entry_2.get())
+            thrd: bool = regex_matches(
+                name_regex, self.object_canvas.entry_3.get())
+            frth: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_4.get())
+            ffth: bool = regex_matches(
+                digit_regex, self.object_canvas.entry_5.get())
+            return frst and snd and thrd and frth and ffth
+        elif title_label.upper() == "DISCONNECT INTERFACE":
+            frst: bool = regex_matches(
+                name_regex, self.object_canvas.entry_1.get())
+            return frst
+
+    def submit_input(self) -> List[str]:
+        self.placing_data = []
+        title_label: str = self.object_canvas.title_label.cget("text")
+        if self.check_regex(title_label):
+            if title_label.upper() == "PLACE HOST":
+                self.placing_data.append("COMPONENT/HOST")
+            elif title_label.upper() == "PLACE ROUTER":
+                self.placing_data.append("COMPONENT/ROUTER")
+            for widget in self.object_canvas.config_frame.winfo_children():
+                if widget.winfo_class() == "Entry" and widget["state"] == "normal":
+                    self.placing_data.append(widget.get())
+            self.hide_frame()
+        else:
+            self.object_canvas.information_label.config(fg="red")
+        return self.placing_data

@@ -1,7 +1,7 @@
 """
 This module makes ObjectCanvas objects available for use when imported
 """
-from tkinter import Canvas, ttk, Menu
+from tkinter import Button, Canvas, Entry, Label, Menu, ttk
 from typing import Callable, Tuple
 
 
@@ -16,15 +16,57 @@ class ObjectCanvas:
     router_config_menu  (Menu): The Menu to configure a Router
     config_menu         (ttk.Frame): The Frame to access certain features of \
                                      the Network
+    submit_button       (Button): The Button to be used for submission inside \
+                                  the config_menu
+    cancel_button       (Button): The Button to be used for cancellation inside \
+                                  the config_menu
+    label_[1..5]        (Label): The Labels to be used inside the config_menu
+    entry_[1..5]        (Entry): The Entries to be used inside the config_menu
     """
 
     def __init__(self, parent: ttk.Frame) -> None:
         self.canvas: Canvas = Canvas(
             parent, background="lightgrey", bd=1, highlightthickness=1, relief="ridge")
-        self.network_config_menu: Menu = None
-        self.host_config_menu: Menu = None
-        self.router_config_menu: Menu = None
-        self.config_menu: ttk.Frame = None
+
+        # Pop-up menus
+        self.network_config_menu: Menu = self.__setup_network_config_menu()
+        self.host_config_menu: Menu = self.__setup_host_config_menu()
+        self.router_config_menu: Menu = self.__setup_router_config_menu()
+
+        # Frame that is opened after clicking an option in the pop-up menu
+        self.config_frame: ttk.Frame = ttk.Frame(self.canvas, relief="ridge")
+
+        # The Frame's inner Widgets - initial state
+        font: Tuple[str, int] = ("JetBrainsMono NF", 8)
+        self.submit_button: Button = Button(
+            self.config_frame, text="Submit", font=font)
+        self.cancel_button: Button = Button(
+            self.config_frame, text="Cancel", font=font)
+
+        self.title_label: Label = Label(
+            self.config_frame, text="Title Label", font=font)
+        self.information_label: Label = Label(
+            self.config_frame, text="Information Label", font=font)
+
+        self.label_1: Label = Label(
+            self.config_frame, text="First Label", relief="ridge", font=font)
+        self.entry_1: Entry = Entry(self.config_frame, state="disabled")
+
+        self.label_2: Label = Label(
+            self.config_frame, text="Second Label", relief="ridge", font=font)
+        self.entry_2: Entry = Entry(self.config_frame, state="disabled")
+
+        self.label_3: Label = Label(
+            self.config_frame, text="Third Label", relief="ridge", font=font)
+        self.entry_3: Entry = Entry(self.config_frame, state="disabled")
+
+        self.label_4: Label = Label(
+            self.config_frame, text="Fourth Label", relief="ridge", font=font)
+        self.entry_4: Entry = Entry(self.config_frame, state="disabled")
+
+        self.label_5: Label = Label(
+            self.config_frame, text="Fifth Label", relief="ridge", font=font)
+        self.entry_5: Entry = Entry(self.config_frame, state="disabled")
 
         # Set the position of this Frame inside the parent container
         self.canvas.grid(column=0, row=0, sticky="nsew")
@@ -38,9 +80,11 @@ class ObjectCanvas:
     def draw_component(self, x: int, y: int, component_type: str) -> int:
         item_id: int = -1
         if component_type.upper() == "ROUTER":
-            item_id = self.canvas.create_rectangle(x, y, x + 32, y + 32, fill="lightblue")
+            item_id = self.canvas.create_rectangle(
+                x, y, x + 32, y + 32, fill="lightblue")
         elif component_type.upper() == "HOST":
-            item_id = self.canvas.create_rectangle(x, y, x + 32, y + 32, fill="grey")
+            item_id = self.canvas.create_rectangle(
+                x, y, x + 32, y + 32, fill="grey")
         return item_id
 
     def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
@@ -49,120 +93,322 @@ class ObjectCanvas:
     def draw_interface(self, x: int, y: int) -> int:
         return self.canvas.create_rectangle(x, y, x + 10, y + 10, fill="white")
 
-    def draw_string(self, x: int, y: int) -> None:
-        self.canvas.create_text(x, y, text="Asd")
+    def draw_string(self, x: int, y: int, text: str) -> None:
+        self.canvas.create_text(x, y, text=text)
 
     def clear_canvas(self) -> None:
         self.canvas.delete("all")
 
-    def setup_network_config_menu(self) -> Menu:
-        if self.network_config_menu is None:
-            self.network_config_menu = Menu(self.canvas, tearoff=0)
-            self.network_config_menu.add_command(label="Place Host")
-            self.network_config_menu.add_command(label="Place Router")
-        return self.network_config_menu
+    def __setup_network_config_menu(self) -> Menu:
+        network_config_menu = Menu(self.canvas, tearoff=0)
+        network_config_menu.add_command(label="Place Host")
+        network_config_menu.add_command(label="Place Router")
+        network_config_menu.add_separator()
+        network_config_menu.add_command(label="Close")
+        return network_config_menu
 
-    def setup_host_config_menu(self) -> Menu:
-        if self.host_config_menu is None:
-            self.host_config_menu = Menu(self.canvas, tearoff=0)
-            self.host_config_menu.add_command(label="Delete Component")
-            self.host_config_menu.add_command(label="Add Interface")
-            self.host_config_menu.add_command(label="Delete Interface")
-            self.host_config_menu.add_command(label="Set Application")
-            self.host_config_menu.add_command(label="Start sending")
-            self.host_config_menu.add_command(label="Connect to Node")
-            self.host_config_menu.add_command(label="Disconnect Interface")
-        return self.host_config_menu
+    def __setup_host_config_menu(self) -> Menu:
+        host_config_menu = Menu(self.canvas, tearoff=0)
+        host_config_menu.add_command(label="Add Interface")
+        host_config_menu.add_command(label="Delete Interface")
+        host_config_menu.add_command(label="Set Application")
+        host_config_menu.add_command(label="Start sending")
+        host_config_menu.add_command(label="Connect to Node")
+        host_config_menu.add_command(label="Disconnect Interface")
+        host_config_menu.add_command(label="Delete Component")
+        host_config_menu.add_separator()
+        host_config_menu.add_command(label="Close")
+        return host_config_menu
 
-    def setup_router_config_menu(self) -> Menu:
-        if self.router_config_menu is None:
-            self.router_config_menu = Menu(self.canvas, tearoff=0)
-            self.router_config_menu.add_command(label="Delete Component")
-            self.router_config_menu.add_command(label="Add Interface")
-            self.router_config_menu.add_command(label="Delete Interface")
-            self.router_config_menu.add_command(label="Connect to Node")
-            self.router_config_menu.add_command(label="Disconnect Interface")
-        return self.router_config_menu
+    def __setup_router_config_menu(self) -> Menu:
+        router_config_menu = Menu(self.canvas, tearoff=0)
+        router_config_menu.add_command(label="Add Interface")
+        router_config_menu.add_command(label="Delete Interface")
+        router_config_menu.add_command(label="Connect to Node")
+        router_config_menu.add_command(label="Disconnect Interface")
+        router_config_menu.add_command(label="Delete Component")
+        router_config_menu.add_separator()
+        router_config_menu.add_command(label="Close")
+        return router_config_menu
 
-    def setup_place_host_frame(self) -> None:
-        pass
+    def setup_place_host_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
 
-    def setup_place_router_frame(self) -> None:
-        pass
+        self.title_label.config(text="Place Host")
+        self.information_label.config(text=("Host Name:\nbetween 1 and 15 characters"
+                                            "\nIP address:\n[0-255].[0-255].[0-255].[0-255]"
+                                            "\nSend Rate:\n1-99"), fg="black")
 
-    def setup_add_interface_frame(self) -> None:
-        pass
+        self.label_1.config(text="Host Name")
+        self.entry_1.config(state="normal")
 
-    def setup_delete_interface_frame(self) -> None:
-        pass
+        self.label_2.config(text="IP Address")
+        self.entry_2.config(state="normal")
 
-    def setup_set_application_frame(self) -> None:
-        pass
+        self.label_3.config(text="Send Rate")
+        self.entry_3.config(state="normal")
 
-    def setup_set_application_frame(self) -> None:
-        pass
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
-    def setup_start_sending_frame(self) -> None:
-        pass
+        self.label_2.place(relx=0.0, rely=0.1, relwidth=0.5, relheight=0.1)
+        self.entry_2.place(relx=0.5, rely=0.1, relwidth=0.5, relheight=0.1)
 
-    def setup_connect_to_node_frame(self) -> None:
-        pass
+        self.label_3.place(relx=0.0, rely=0.2, relwidth=0.5, relheight=0.1)
+        self.entry_3.place(relx=0.5, rely=0.2, relwidth=0.5, relheight=0.1)
 
-    def setup_disconnect_interface_frame(self) -> None:
-        pass
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
-# """
-# This module makes OptionsMenu objects available for use when imported
-# """
-#from tkinter import Button, Entry, Label, Menu, ttk
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
 
+        return self.config_frame
 
-# class OptionsMenu:
+    def setup_place_router_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
 
-    # def __init__(self, parent: ttk.Frame) -> None:
-        #self.parent = parent
-        #self.options_menu: Menu = Menu(parent, tearoff=0)
-        #self.options_menu.add_command(label="1", command=self.show_canvas_options)
-        # self.options_menu.add_command(label="1")
-        # self.options_menu.add_command(label="1")
-        # self.options_menu.add_command(label="1")
-        # self.options_menu.add_command(label="1")
-        # self.options_menu.add_command(label="1")
-        # To remove menu items self.options_menu.delete(1, 5)
+        self.title_label.config(text="Place Router")
+        self.information_label.config(text=("Router Name:\nbetween 1 and 15 characters"
+                                            "\nIP address:\n[0-255].[0-255].[0-255].[0-255]"
+                                            "\nSend Rate:\n1-99"
+                                            "\nBuffer Size:\n1-99"), fg="black")
 
-    # def pop_up(self, x: int, y: int) -> None:
-        #self.x = x
-        #self.y = y
-        #self.options_menu.tk_popup(x, y)
+        self.label_1.config(text="Router Name")
+        self.entry_1.config(state="normal")
 
-    # def show_frame(self) -> None:
-        #test = ttk.Frame(self.parent, relief="ridge")
-        #self.entry_1 = Entry(test)
-        #button = Button(test, text="asd", command=self.stuff)
-        #label_1 = Label(test, text="asd")
-        #test.place(x=self.x, y=self.y, width=250, height=250)
-        #button.place(x=2, y=0, width=250, height=100)
-        #label_1.place(x=2, y=100, width=100, height=150)
-        #self.entry_1.place(x=50, y=100, width=150, height=150)
+        self.label_2.config(text="IP Address")
+        self.entry_2.config(state="normal")
 
-    # def show_host_options(self) -> None:
-        #self.options_menu.delete(0, self.options_menu.index("end"))
+        self.label_3.config(text="Send Rate")
+        self.entry_3.config(state="normal")
 
-    # def show_router_options(self) -> None:
-        #self.options_menu.delete(0, self.options_menu.index("end"))
+        self.label_4.config(text="Buffer size")
+        self.entry_4.config(state="normal")
 
-    # def show_canvas_options(self) -> None:
-        #self.options_menu.delete(0, self.options_menu.index("end"))
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
-    # def test_stuff(self) -> None:
-        #test = ttk.Frame(self.parent, relief="ridge")
-        #self.entry_1 = Entry(test)
-        #button = Button(test, text="asd", command=self.stuff)
-        #label_1 = Label(test, text="asd")
-        #test.place(x=self.x, y=self.y, width=250, height=250)
-        #button.place(x=0, y=0)
-        #label_1.place(x=0, y=button.winfo_y() + button.winfo_height())
-        #self.entry_1.place(x=0, y=label_1.winfo_height())
+        self.label_2.place(relx=0.0, rely=0.1, relwidth=0.5, relheight=0.1)
+        self.entry_2.place(relx=0.5, rely=0.1, relwidth=0.5, relheight=0.1)
 
-    # def stuff(self) -> None:
-        # print(self.entry_1.get())
+        self.label_3.place(relx=0.0, rely=0.2, relwidth=0.5, relheight=0.1)
+        self.entry_3.place(relx=0.5, rely=0.2, relwidth=0.5, relheight=0.1)
+
+        self.label_4.place(relx=0.0, rely=0.3, relwidth=0.5, relheight=0.1)
+        self.entry_4.place(relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_add_interface_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+
+        self.title_label.config(text="Add Interface")
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+                                      fg="black")
+
+        self.label_1.config(text="Interface name")
+        self.entry_1.config(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.3, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.7, rely=0.9, relwidth=0.3, relheight=0.1)
+        self.title_label.place(relx=0.3, rely=0.9, relwidth=0.4, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_delete_interface_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+
+        self.title_label.config(text="Delete Interface")
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+                                      fg="black")
+
+        self.label_1.config(text="Interface name")
+        self.entry_1.config(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_set_application_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+        
+        self.title_label.config(text="Set Application")
+        self.information_label.config(text=("Application Name:\nbetween 1 and 15 characters"
+                                            "\nPacket Amount:\n1-99"
+                                            "\nSend Rate:\n1-99"
+                                            "\nApplication Type:\nCONST/AIMD"), fg="black")
+        
+        self.label_1.config(text="Application Name")
+        self.entry_1.config(state="normal")
+        
+        self.label_2.config(text="Packet Amount")
+        self.entry_2.config(state="normal")
+        
+        self.label_3.config(text="Send Rate")
+        self.entry_3.config(state="normal")
+        
+        self.label_4.config(text="Application Type")
+        self.entry_4.config(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
+
+        self.label_2.place(relx=0.0, rely=0.1, relwidth=0.5, relheight=0.1)
+        self.entry_2.place(relx=0.5, rely=0.1, relwidth=0.5, relheight=0.1)
+
+        self.label_3.place(relx=0.0, rely=0.2, relwidth=0.5, relheight=0.1)
+        self.entry_3.place(relx=0.5, rely=0.2, relwidth=0.5, relheight=0.1)
+
+        self.label_4.place(relx=0.0, rely=0.3, relwidth=0.5, relheight=0.1)
+        self.entry_4.place(relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_start_sending_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+
+        self.title_label.config(text="Start Sending")
+        self.information_label.config(text=("Target Host IP or Name:\n"
+                                            "[0-255].[0-255].[0-255].[0-255]\nOR\n"
+                                            "between 1 and 15 characters"), 
+                                      fg="black")
+
+        self.label_1.config(text="Target Host IP or Name")
+        self.entry_1.config(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.6, relheight=0.1)
+        self.entry_1.place(relx=0.6, rely=0.0, relwidth=0.4, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_connect_to_node_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+
+        self.title_label.config(text="Connect to Node")
+        self.information_label.config(text=("Target Node IP or Name:\n[0-255].[0-255].[0-255].[0-255]"
+                                            "\nOR\nbetween 1 and 15 characters"
+                                            "\nInterface Name:\nbetween 1 and 15 characters"
+                                            "\nTarget Interface Name:\nbetween 1 and 15 characters"
+                                            "\nSpeed of Link: 1-99"
+                                            "\nMetrics of Link: 1-99"), fg="black")
+
+        self.label_1.config(text="Target Node IP or Name")
+        self.entry_1.config(state="normal")
+
+        self.label_2.config(text="Interface Name")
+        self.entry_2.config(state="normal")
+
+        self.label_3.config(text="Target Interface Name")
+        self.entry_3.config(state="normal")
+
+        self.label_4.config(text="Speed of Link")
+        self.entry_4.config(state="normal")
+
+        self.label_5.config(text="Metrics of Link")
+        self.entry_5.config(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.6, relheight=0.1)
+        self.entry_1.place(relx=0.6, rely=0.0, relwidth=0.4, relheight=0.1)
+
+        self.label_2.place(relx=0.0, rely=0.1, relwidth=0.6, relheight=0.1)
+        self.entry_2.place(relx=0.6, rely=0.1, relwidth=0.4, relheight=0.1)
+
+        self.label_3.place(relx=0.0, rely=0.2, relwidth=0.6, relheight=0.1)
+        self.entry_3.place(relx=0.6, rely=0.2, relwidth=0.4, relheight=0.1)
+
+        self.label_4.place(relx=0.0, rely=0.3, relwidth=0.6, relheight=0.1)
+        self.entry_4.place(relx=0.6, rely=0.3, relwidth=0.4, relheight=0.1)
+
+        self.label_5.place(relx=0.0, rely=0.4, relwidth=0.6, relheight=0.1)
+        self.entry_5.place(relx=0.6, rely=0.4, relwidth=0.4, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.4)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def setup_disconnect_interface_frame(self, x: int, y: int) -> None:
+        self.config_frame.place(x=x, y=y, width=350, height=350)
+
+        self.title_label.config(text="Disconnect Interface")
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+                                      fg="black")
+
+        self.label_1.config(text="Interface Name")
+        self.entry_1.configure(state="normal")
+
+        self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
+        self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
+
+        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+
+        self.submit_button.place(
+            relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.cancel_button.place(
+            relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
+        self.title_label.place(relx=0.25, rely=0.9,
+                               relwidth=0.5, relheight=0.1)
+
+        return self.config_frame
+
+    def clear_frame(self) -> None:
+        self.config_frame.place_forget()
+        for widget in self.config_frame.winfo_children():
+            if widget.winfo_class() == "Entry":
+                widget.delete(0, "end")
+                widget.configure(state="disabled")
+            widget.place_forget()

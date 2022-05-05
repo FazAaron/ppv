@@ -20,8 +20,7 @@ class ObjectFrameHandler():
     def __init__(self, object_frame: ObjectFrame) -> None:
         self.object_frame: ObjectFrame = object_frame
         start_display: str = ("Right-click on the display or on a component:\nOpen Network configuration menu\n\n"
-                              "Left-click on a component:\nDisplay component attributes\n\n"
-                              "Left-click-drag on a component:\nMove component")
+                              "Left-click on a component:\nDisplay component attributes\n\n")
 
         # Display a starting text
         self.display_text("", start_display)
