@@ -36,17 +36,24 @@ class ObjectCanvasHandler:
     def bind_to_options_menu_entries(self,
                                      network_conf_options: List[str],
                                      host_conf_options: List[str],
-                                     router_conf_options: List[str]
+                                     router_conf_options: List[str],
+                                     deletion_option: Callable
                                      ) -> None:
         for i in range(len(network_conf_options)):
             self.object_canvas.network_config_menu.entryconfigure(
                 i, command=lambda i=i: self.show_frame(network_conf_options[i]))
+
         for i in range(len(host_conf_options)):
             self.object_canvas.host_config_menu.entryconfigure(
                 i, command=lambda i=i: self.show_frame(host_conf_options[i]))
+        last_index = len(host_conf_options)
+        self.object_canvas.host_config_menu.entryconfigure(last_index, command=deletion_option)        
+
         for i in range(len(router_conf_options)):
             self.object_canvas.router_config_menu.entryconfigure(
                 i, command=lambda i=i: self.show_frame(router_conf_options[i]))
+        last_index = len(router_conf_options)
+        self.object_canvas.router_config_menu.entryconfigure(last_index, command=deletion_option)        
 
     def bind_to_frame_buttons(self, submit_command: Callable) -> None:
         self.object_canvas.submit_button.config(command=submit_command)
@@ -130,17 +137,19 @@ class ObjectCanvasHandler:
                 return ("INTERFACE", interface[0])
         return ("", -1)
 
-    def delete_component(self, item_id: int) -> bool:
-        for host in self.hosts:
-            if host[0] == item_id:
-                self.hosts.remove(host)
-                self.redraw()
-                return True
-        for router in self.hosts:
-            if router[0] == item_id:
-                self.routers.remove(router)
-                self.redraw()
-                return True
+    def delete_component(self, comp_type: str, item_id: int) -> bool:
+        if comp_type == "HOST":
+            for host in self.hosts:
+                if host[0] == item_id:
+                    self.hosts.remove(host)
+                    self.redraw()
+                    return True
+        elif comp_type == "ROUTER":
+            for router in self.routers:
+                if router[0] == item_id:
+                    self.routers.remove(router)
+                    self.redraw()
+                    return True
         return False
 
     def delete_link(self, item_id: int) -> bool:
