@@ -1,4 +1,4 @@
-from src.components.routing_table import RoutingTable, Route
+from src.components.routing_table import Route, RoutingTable
 
 #------------------------------------------------#
 # ROUTE TESTS

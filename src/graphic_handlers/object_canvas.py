@@ -167,7 +167,8 @@ class ObjectCanvas:
         self.label_3.place(relx=0.0, rely=0.2, relwidth=0.5, relheight=0.1)
         self.entry_3.place(relx=0.5, rely=0.2, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -184,8 +185,8 @@ class ObjectCanvas:
         self.title_label.config(text="Place Router")
         self.information_label.config(text=("Router Name:\nbetween 1 and 15 characters"
                                             "\nIP address:\n[0-255].[0-255].[0-255].[0-255]"
-                                            "\nSend Rate:\n1-99"
-                                            "\nBuffer Size:\n1-99"), fg="black")
+                                            "\nSend Rate: 1-99"
+                                            "\nBuffer Size: 1-99"), fg="black")
 
         self.label_1.config(text="Router Name")
         self.entry_1.config(state="normal")
@@ -211,7 +212,8 @@ class ObjectCanvas:
         self.label_4.place(relx=0.0, rely=0.3, relwidth=0.5, relheight=0.1)
         self.entry_4.place(relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -226,7 +228,7 @@ class ObjectCanvas:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Add Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface name")
@@ -235,7 +237,8 @@ class ObjectCanvas:
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.3, relheight=0.1)
@@ -249,7 +252,7 @@ class ObjectCanvas:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Delete Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface name")
@@ -258,7 +261,8 @@ class ObjectCanvas:
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -271,22 +275,22 @@ class ObjectCanvas:
 
     def setup_set_application_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
-        
+
         self.title_label.config(text="Set Application")
         self.information_label.config(text=("Application Name:\nbetween 1 and 15 characters"
-                                            "\nPacket Amount:\n1-99"
-                                            "\nSend Rate:\n1-99"
-                                            "\nApplication Type:\nCONST/AIMD"), fg="black")
-        
+                                            "\nPacket Amount: 1-99"
+                                            "\nSend Rate: 1-99"
+                                            "\nApplication Type: CONST/AIMD"), fg="black")
+
         self.label_1.config(text="Application Name")
         self.entry_1.config(state="normal")
-        
+
         self.label_2.config(text="Packet Amount")
         self.entry_2.config(state="normal")
-        
+
         self.label_3.config(text="Send Rate")
         self.entry_3.config(state="normal")
-        
+
         self.label_4.config(text="Application Type")
         self.entry_4.config(state="normal")
 
@@ -302,7 +306,8 @@ class ObjectCanvas:
         self.label_4.place(relx=0.0, rely=0.3, relwidth=0.5, relheight=0.1)
         self.entry_4.place(relx=0.5, rely=0.3, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -319,7 +324,7 @@ class ObjectCanvas:
         self.title_label.config(text="Start Sending")
         self.information_label.config(text=("Target Host IP or Name:\n"
                                             "[0-255].[0-255].[0-255].[0-255]\nOR\n"
-                                            "between 1 and 15 characters"), 
+                                            "between 1 and 15 characters"),
                                       fg="black")
 
         self.label_1.config(text="Target Host IP or Name")
@@ -328,7 +333,8 @@ class ObjectCanvas:
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.6, relheight=0.1)
         self.entry_1.place(relx=0.6, rely=0.0, relwidth=0.4, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -380,7 +386,8 @@ class ObjectCanvas:
         self.label_5.place(relx=0.0, rely=0.4, relwidth=0.6, relheight=0.1)
         self.entry_5.place(relx=0.6, rely=0.4, relwidth=0.4, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.5, relwidth=0.8, relheight=0.4)
+        self.information_label.place(
+            relx=0.1, rely=0.5, relwidth=0.8, relheight=0.4)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)
@@ -395,7 +402,7 @@ class ObjectCanvas:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Disconnect Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters", 
+        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface Name")
@@ -404,7 +411,8 @@ class ObjectCanvas:
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
-        self.information_label.place(relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
+        self.information_label.place(
+            relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 
         self.submit_button.place(
             relx=0.0, rely=0.9, relwidth=0.25, relheight=0.1)

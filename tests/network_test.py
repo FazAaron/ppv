@@ -1,7 +1,7 @@
 from src.components.network import Network
 from src.components.node import Host, Router
-from src.components.routing_table import Route
 from src.components.packet import Packet
+from src.components.routing_table import Route
 
 
 def test_network_init():

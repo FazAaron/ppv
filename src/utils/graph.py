@@ -4,7 +4,7 @@ This module makes Graph objects available for use when imported
 
 # Built-in modules
 from math import inf
-from typing import List, Tuple, Dict
+from typing import Dict, List, Tuple
 
 # Self-written modules
 from src.components.node import Node

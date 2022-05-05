@@ -2,8 +2,8 @@
 This module makes ObjectCanvasHandler objects available for use when imported
 """
 # Built-in modules
-from typing import Callable, Tuple, List
 from tkinter import Menu
+from typing import Callable, List, Tuple
 
 # Self-made modules
 from src.graphic_handlers.object_canvas import ObjectCanvas
@@ -47,13 +47,15 @@ class ObjectCanvasHandler:
             self.object_canvas.host_config_menu.entryconfigure(
                 i, command=lambda i=i: self.show_frame(host_conf_options[i]))
         last_index = len(host_conf_options)
-        self.object_canvas.host_config_menu.entryconfigure(last_index, command=deletion_option)        
+        self.object_canvas.host_config_menu.entryconfigure(
+            last_index, command=deletion_option)
 
         for i in range(len(router_conf_options)):
             self.object_canvas.router_config_menu.entryconfigure(
                 i, command=lambda i=i: self.show_frame(router_conf_options[i]))
         last_index = len(router_conf_options)
-        self.object_canvas.router_config_menu.entryconfigure(last_index, command=deletion_option)        
+        self.object_canvas.router_config_menu.entryconfigure(
+            last_index, command=deletion_option)
 
     def bind_to_frame_buttons(self, submit_command: Callable) -> None:
         self.object_canvas.submit_button.config(command=submit_command)

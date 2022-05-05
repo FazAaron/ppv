@@ -21,7 +21,8 @@ class Simulation:
     def __init__(self) -> None:
         self.network: Network = Network()
         self.main_window: MainWindow = MainWindow()
-        self.main_handler: MainHandler = MainHandler(self.main_window, self.network)
+        self.main_handler: MainHandler = MainHandler(
+            self.main_window, self.network)
 
     def start(self) -> None:
         """

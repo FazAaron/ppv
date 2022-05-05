@@ -7,13 +7,13 @@ from typing import List, Tuple
 
 # Self-made modules
 from src.components.network import Network
+from src.components.node import Host, Router
 from src.event_handlers.object_canvas_handler import ObjectCanvasHandler
 from src.event_handlers.object_frame_handler import ObjectFrameHandler
 from src.event_handlers.statistics_frame_handler import StatisticsFrameHandler
 from src.graphic_handlers.main_window import MainWindow
 from src.graphic_handlers.widget_container import WidgetContainer
 from src.utils.logger import Logger
-from src.components.node import Host, Router
 
 
 class MainHandler:
@@ -71,8 +71,6 @@ class MainHandler:
             "<Button-1>", self.__handle_show_details_left_click)
         self.object_canvas_handler.bind(
             "<Button-1>", self.__handle_is_placing_left_click)
-        #self.object_canvas_handler.bind("<Motion>", self.__placing_motion_handler)
-        #self.object_canvas_handler.bind("<Button-1>", self.__placing_left_click_handdler)
 
     # Private methods
     # ObjectFrame handlers
@@ -180,6 +178,7 @@ class MainHandler:
         else:
             self.__change_text("", self.object_frame_handler.start_display)
 
+    # ----
     def __handle_deletion_option(self) -> None:
         x: int = self.object_canvas_handler.mouse_pos_x
         y: int = self.object_canvas_handler.mouse_pos_y
