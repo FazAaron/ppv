@@ -8,7 +8,7 @@ from typing import Callable
 from src.graphic_handlers.object_frame import ObjectFrame
 
 
-class ObjectFrameHandler():
+class ObjectFrameHandler:
     """
     The class handling any access to the ObjectFrame class
 

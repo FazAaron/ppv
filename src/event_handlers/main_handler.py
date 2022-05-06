@@ -133,7 +133,7 @@ class MainHandler:
                         pass
                 else:
                     self.object_canvas_handler.show_message(
-                        "Failed to create the Host: duplicate Node IP or Name.")
+                        "Failed to create the Host: duplicate Node IP or Name.", 2000)
                     while not self.logger.write(f"Host {to_create[1]} - {to_create[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
                         pass
             else:

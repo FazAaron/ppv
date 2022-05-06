@@ -368,12 +368,12 @@ class Host(Node):
         Prints details of the Host, listing every attribute of it
         """
         print(f"\nHOST {self.name} - {self.ip}:\n"
-              f"Send rate: {self.send_rate} packets / s\n"
-              f"Running application:\n{self.application}")
+              f"Send rate: {self.send_rate} Packets / s\n"
+              f"Running Application:\n{self.application}")
         self.routing_table.list_routes()
         print("---\nAvailable Interfaces on Node:")
         if len(self.interfaces) == 0:
-            print("There are no interfaces on the Node.")
+            print("There are no Interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 print(interface)
@@ -387,12 +387,12 @@ class Host(Node):
     def __str__(self) -> str:
         to_return: str = ""
         to_return += (f"\nHOST {self.name} - {self.ip}:\n\n"
-                      f"Send rate: {self.send_rate} packets / s\n\n"
-                      f"Running application:\n{self.application}\n\n")
+                      f"Send rate: {self.send_rate} Packets / s\n\n"
+                      f"Running Application:\n{self.application}\n\n")
         to_return += self.routing_table.__str__()
         to_return += "\n\nAvailable Interfaces on Node:\n"
         if len(self.interfaces) == 0:
-            to_return += ("There are no interfaces on the Node.")
+            to_return += ("There are no Interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 to_return += interface
@@ -543,12 +543,12 @@ class Router(Node):
         Prints details of the Router, listing every attribute of it
         """
         print(f"\nROUTER {self.name} - {self.ip}:\n"
-              f"Send rate: {self.send_rate} packets / s\n"
+              f"Send rate: {self.send_rate} Packets / s\n"
               f"Buffer: {len(self.buffer)} / {self.buffer_size}")
         self.routing_table.list_routes()
         print("---\nAvailable Interfaces on Node:")
         if len(self.interfaces) == 0:
-            print("There are no interfaces on the Node.")
+            print("There are no Interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 print(interface)
@@ -562,12 +562,12 @@ class Router(Node):
     def __str__(self) -> str:
         to_return: str = ""
         to_return += (f"\nROUTER {self.name} - {self.ip}:\n\n"
-                      f"Send rate: {self.send_rate} packets / s\n\n"
+                      f"Send rate: {self.send_rate} Packets / s\n\n"
                       f"Buffer: {len(self.buffer)} / {self.buffer_size}\n\n")
         to_return += self.routing_table.__str__()
         to_return += "\n\nAvailable Interfaces on Node:\n"
         if len(self.interfaces) == 0:
-            to_return += ("There are no interfaces on the Node.\n")
+            to_return += ("There are no Interfaces on the Node.")
         else:
             for interface in self.interfaces:
                 to_return += interface
