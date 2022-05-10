@@ -21,7 +21,8 @@ class ObjectCanvasHandler:
 
     def __init__(self, object_canvas: ObjectCanvas) -> None:
         self.object_canvas: ObjectCanvas = object_canvas
-        self.placing_data: List[str] = []
+        self.input_data: List[str] = []
+        self.placing: bool = False
         self.hosts: List[Tuple[int, int, int]] = []
         self.routers: List[Tuple[int, int, int]] = []
         self.interfaces: List[Tuple[int, int, int]] = []
@@ -29,40 +30,45 @@ class ObjectCanvasHandler:
         self.shown_message: Tuple[int, int, str] = ()
         self.mouse_pos_x: int = 0
         self.mouse_pos_y: int = 0
+        self.menu_x: int = 0
+        self.menu_y: int = 0
 
     def bind(self, event: str, func: Callable) -> None:
         self.object_canvas.bind(event, func)
 
     def bind_to_options_menu_entries(self,
-                                     network_conf_options: List[str],
-                                     host_conf_options: List[str],
-                                     router_conf_options: List[str],
+                                     network_conf_options: Tuple[List[str], List[Callable]],
+                                     host_conf_options: Tuple[List[str], List[Callable]],
+                                     router_conf_options: Tuple[List[str], List[Callable]],
                                      deletion_option: Callable
                                      ) -> None:
-        for i in range(len(network_conf_options)):
+        for i in range(len(network_conf_options[0])):
             self.object_canvas.network_config_menu.entryconfigure(
-                i, command=lambda i=i: self.show_frame(network_conf_options[i]))
+                i, command=lambda i=i: self.show_frame(network_conf_options[0][i], network_conf_options[1][i]))
 
-        for i in range(len(host_conf_options)):
+        for i in range(len(host_conf_options[0])):
             self.object_canvas.host_config_menu.entryconfigure(
-                i, command=lambda i=i: self.show_frame(host_conf_options[i]))
-        last_index = len(host_conf_options)
+                i, command=lambda i=i: self.show_frame(host_conf_options[0][i], host_conf_options[1][i]))
+        last_index = len(host_conf_options[0])
         self.object_canvas.host_config_menu.entryconfigure(
             last_index, command=deletion_option)
 
-        for i in range(len(router_conf_options)):
+        for i in range(len(router_conf_options[0])):
             self.object_canvas.router_config_menu.entryconfigure(
-                i, command=lambda i=i: self.show_frame(router_conf_options[i]))
-        last_index = len(router_conf_options)
+                i, command=lambda i=i: self.show_frame(router_conf_options[0][i], router_conf_options[1][i]))
+
+        last_index = len(router_conf_options[0])
         self.object_canvas.router_config_menu.entryconfigure(
             last_index, command=deletion_option)
 
-    def bind_to_frame_buttons(self, submit_command: Callable) -> None:
+    def bind_to_submit_button(self, submit_command: Callable) -> None:
         self.object_canvas.submit_button.config(command=submit_command)
+
+    def bind_to_cancel_button(self) -> None:
         self.object_canvas.cancel_button.config(command=self.hide_frame)
 
     def is_placing(self) -> bool:
-        return self.placing_data != []
+        return self.placing
 
     def show_message(self, text: str, time: int) -> None:
         x: int = self.object_canvas.get_geometry()[0] - 3
@@ -229,6 +235,8 @@ class ObjectCanvasHandler:
             menu: Menu = self.object_canvas.host_config_menu
         else:
             menu: Menu = self.object_canvas.network_config_menu
+        self.menu_x = x
+        self.menu_y = y
         self.object_canvas.show_menu(menu, x, y)
 
     def get_network_config_menu_frames(self) -> List[str]:
@@ -240,27 +248,35 @@ class ObjectCanvasHandler:
     def get_router_config_menu_frames(self) -> List[str]:
         return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
 
-    def show_frame(self, frame_type: str) -> None:
+    def show_frame(self, frame_type: str, func: Callable) -> None:
         aligned_coords: Tuple[int, int] = self.re_align_coords(
             self.mouse_pos_x, self.mouse_pos_y, 350, 350)
         x: int = aligned_coords[0]
         y: int = aligned_coords[1]
         if frame_type == "PLACEHOST":
             self.object_canvas.setup_place_host_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "PLACEROUTER":
             self.object_canvas.setup_place_router_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "ADDINTERFACE":
             self.object_canvas.setup_add_interface_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "DELETEINTERFACE":
             self.object_canvas.setup_delete_interface_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "SETAPPLICATION":
             self.object_canvas.setup_set_application_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "SEND":
             self.object_canvas.setup_start_sending_frame(x, y)
+            self.bind_to_submit_button(func)
         elif frame_type == "CONNECT":
             self.object_canvas.setup_connect_to_node_frame(x, y)
+            self.bind_to_submit_button(func)
         else:
             self.object_canvas.setup_disconnect_interface_frame(x, y)
+            self.bind_to_submit_button(func)
 
     def hide_frame(self) -> None:
         self.object_canvas.clear_frame()
@@ -328,16 +344,18 @@ class ObjectCanvasHandler:
             return frst
 
     def submit_input(self) -> None:
-        self.placing_data = []
+        self.input_data = []
         title_label: str = self.object_canvas.title_label.cget("text")
         if self.check_regex(title_label):
             if title_label.upper() == "PLACE HOST":
-                self.placing_data.append("COMPONENT/HOST")
+                self.placing = True
+                self.input_data.append("COMPONENT/HOST")
             elif title_label.upper() == "PLACE ROUTER":
-                self.placing_data.append("COMPONENT/ROUTER")
+                self.placing = True
+                self.input_data.append("COMPONENT/ROUTER")
             for widget in self.object_canvas.config_frame.winfo_children():
                 if widget.winfo_class() == "Entry" and widget["state"] == "normal":
-                    self.placing_data.append(widget.get())
+                    self.input_data.append(widget.get())
             self.hide_frame()
         else:
             self.object_canvas.information_label.config(fg="red")
