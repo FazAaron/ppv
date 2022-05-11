@@ -36,7 +36,7 @@ class Interface:
         receive_channel (Channel): The Channel to set as the receiving Channel
         """
         if (link and send_channel and receive_channel) is None:
-            print("Failed to connect link")
+            print("Failed to connect Link")
             return False
         self.link = link
         self.send_channel = send_channel
@@ -82,4 +82,4 @@ class Interface:
 
     def __str__(self) -> str:
         return (f"Interface name: {self.name}\n"
-                f"Connected link:\n{self.link}")
+                f"Connected Link:\n{self.link}\n")

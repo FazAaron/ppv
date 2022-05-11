@@ -68,6 +68,7 @@ class Application:
         print(f"Received packet on {self.name}:\n{packet}")
 
     def __str__(self) -> str:
-        return (f"{self.app_type}_APP_{self.name} - {self.ip}:\n"
+        return (f"{self.name} - {self.ip}:\n"
+                f"Application type: {self.app_type}\n"
                 f"Sent packets: {self.curr_sent} / {self.amount}\n"
-                f"Send rate: {self.send_rate}")
+                f"Send rate: {self.send_rate} Packet(s) / s")

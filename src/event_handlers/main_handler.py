@@ -54,6 +54,7 @@ class MainHandler:
         self.interfaces: List[Tuple[int, str, str]] = []
         self.links: List[Tuple[int, str, str]] = []
 
+        # Move to object_canvas_handler
         self.last_saved_x: int = 0
         self.last_saved_y: int = 0
 
@@ -165,7 +166,6 @@ class MainHandler:
                         "Failed to create the Router: duplicate Node IP or Name.", 2000)
                     while not self.logger.write(f"Router {to_create[1]} - {to_create[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
                         pass
-            self.object_canvas_handler.input_data = []
             self.object_canvas_handler.placing = False
             self.object_canvas_handler.redraw()
 
@@ -236,24 +236,113 @@ class MainHandler:
 
     # ----
     def __handle_component_add_submit(self) -> None:
-        print("Placing")
         self.object_canvas_handler.submit_input()
 
     def __handle_interface_add_submit(self) -> None:
-        print("Adding Interface")
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+        details = self.object_canvas_handler.intersects(x, y, 1, 1)
         self.object_canvas_handler.submit_input()
-        print(self.object_canvas_handler.input_data)
+        if details[0] == "HOST":
+            for host in self.hosts:
+                if host[0] == details[1]:
+                    created = self.network.add_interface(
+                        host[1], self.object_canvas_handler.input_data[0])
+                    host_name = host[1]
+                    interface_name = self.object_canvas_handler.input_data[0]
+                    if created:
+                        self.object_canvas_handler.show_message(
+                            f"Successfully created Interface {interface_name} on Host {host_name}.", 2000)
+                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Successful creation", "Information"):
+                            pass
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to create Interface {interface_name} on {host_name}: duplicate Interface name on Host.", 2000)
+                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Failed creation: duplicate Interface name on Host", "Information"):
+                            pass
+        elif details[0] == "ROUTER":
+            for router in self.routers:
+                if router[0] == details[1]:
+                    created = self.network.add_interface(
+                        router[1], self.object_canvas_handler.input_data[0])
+                    router_name = router[1]
+                    interface_name = self.object_canvas_handler.input_data[0]
+                    if created:
+                        self.object_canvas_handler.show_message(
+                            f"Successfully created Interface {interface_name} on Router {router_name}.", 2000)
+                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Successful creation", "Information"):
+                            pass
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to create Interface {interface_name} on {router_name}: duplicate Interface name on Router.", 2000)
+                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Failed creation: duplicate Interface name on Router", "Information"):
+                            pass
 
     def __handle_interface_delete_submit(self) -> None:
-        print("Deleting Interface")
+        # TODO: check if any packets were lost / what happens with connections, application, sending, etc
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+        details = self.object_canvas_handler.intersects(x, y, 1, 1)
         self.object_canvas_handler.submit_input()
-        print(self.object_canvas_handler.input_data)
+        if details[0] == "HOST":
+            for host in self.hosts:
+                if host[0] == details[1]:
+                    created = self.network.delete_interface(
+                        host[1], self.object_canvas_handler.input_data[0])
+                    host_name = host[1]
+                    interface_name = self.object_canvas_handler.input_data[0]
+                    if created:
+                        self.object_canvas_handler.show_message(
+                            f"Successfully deleted Interface {interface_name} on Host {host_name}.", 2000)
+                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Successful deletion", "Information"):
+                            pass
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to delete Interface {interface_name} on {host_name}: no such Interface on Host.", 2000)
+                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Failed deletion: no such Interface on Host", "Information"):
+                            pass
+        elif details[0] == "ROUTER":
+            for router in self.routers:
+                if router[0] == details[1]:
+                    created = self.network.delete_interface(
+                        router[1], self.object_canvas_handler.input_data[0])
+                    router_name = router[1]
+                    interface_name = self.object_canvas_handler.input_data[0]
+                    if created:
+                        self.object_canvas_handler.show_message(
+                            f"Successfully deleted Interface {interface_name} on Router {router_name}.", 2000)
+                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Successful deletion", "Information"):
+                            pass
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to delete Interface {interface_name} on {router_name}: no such Interface on Router.", 2000)
+                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Failed creation: no such Interface on Router", "Information"):
+                            pass
 
     def __handle_set_application_submit(self) -> None:
-        print("Setting Application")
+        # TODO: keep sending if it was sending or just stop?
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+        details = self.object_canvas_handler.intersects(x, y, 1, 1)
         self.object_canvas_handler.submit_input()
-        print(self.object_canvas_handler.input_data)
-
+        data = self.object_canvas_handler.input_data
+        print(data)
+        for host in self.hosts:
+            if host[0] == details[1]:
+                applied = self.network.set_application(host[1], data[0], data[1], data[2], data[3])
+                if applied:
+                    self.object_canvas_handler.show_message(
+                        f"Successfully set Application {data[0]} on Host {host[1]}.", 2000)
+                    while not self.logger.write(f"Host {host[1]} -> Application {data[0]}", "Set successfully", "Information"):
+                        pass
+                else:
+                    # This can't happen by default, only if there is a logical error in the code
+                    self.object_canvas_handler.show_message(
+                        f"Failed to set Application {data[0]} on Host {host[1]}.", 2000)
+                    while not self.logger.write(f"Host {host[1]} -> Application {data[0]}", "Failed to set", "Information"):
+                        pass
+                    
+        
     def __handle_send_submit(self) -> None:
         print("Sending")
         self.object_canvas_handler.submit_input()

@@ -25,7 +25,7 @@ class ObjectCanvasHandler:
         self.placing: bool = False
         self.hosts: List[Tuple[int, int, int]] = []
         self.routers: List[Tuple[int, int, int]] = []
-        self.interfaces: List[Tuple[int, int, int]] = []
+        #self.interfaces: List[Tuple[int, int, int]] = []
         self.links: List[Tuple[int, int, int, int, int]] = []
         self.shown_message: Tuple[int, int, str] = ()
         self.mouse_pos_x: int = 0
@@ -89,10 +89,10 @@ class ObjectCanvasHandler:
             aligned_coords = self.re_align_coords(x1, y1, 32, 32)
             if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 32, 32)[1] != -1:
                 return item_id
-        elif comp_type.upper() == "INTERFACE":
-            aligned_coords = self.re_align_coords(x1, y1, 10, 10)
-            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] != -1:
-                return item_id
+        #elif comp_type.upper() == "INTERFACE":
+            #aligned_coords = self.re_align_coords(x1, y1, 10, 10)
+            #if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] != -1:
+                #return item_id
 
         self.redraw()
         if comp_type.upper() == "COMPONENT/ROUTER":
@@ -110,12 +110,12 @@ class ObjectCanvasHandler:
         elif comp_type.upper() == "LINK":
             item_id: int = self.object_canvas.draw_link(x1, y1, x2, y2)
             self.links.append((item_id, x1, y1, x2, y2))
-        elif comp_type.upper() == "INTERFACE":
-            item_id: int = self.object_canvas.draw_interface(
-                aligned_coords[0], aligned_coords[1])
-            if save:
-                self.interfaces.append(
-                    (item_id, aligned_coords[0], aligned_coords[1]))
+        #elif comp_type.upper() == "INTERFACE":
+            #item_id: int = self.object_canvas.draw_interface(
+                #aligned_coords[0], aligned_coords[1])
+            #if save:
+                #self.interfaces.append(
+                    #(item_id, aligned_coords[0], aligned_coords[1]))
 
         return item_id
 
@@ -125,8 +125,8 @@ class ObjectCanvasHandler:
             self.object_canvas.draw_component(x, y, "HOST")
         for _, x, y in self.routers:
             self.object_canvas.draw_component(x, y, "ROUTER")
-        for _, x, y in self.interfaces:
-            self.object_canvas.draw_interface(x, y)
+        #for _, x, y in self.interfaces:
+            #self.object_canvas.draw_interface(x, y)
         for _, x1, y1, x2, y2 in self.links:
             self.object_canvas.draw_link(x1, y1, x2, y2)
         if (self.shown_message != ()):
@@ -140,9 +140,9 @@ class ObjectCanvasHandler:
         for router in self.routers:
             if (router[1] <= x + width and router[2] <= y + height and router[1] + 32 >= x and router[2] + 32 >= y):
                 return ("ROUTER", router[0])
-        for interface in self.interfaces:
-            if (interface[1] <= x + width and interface[2] <= y + height and interface[1] + 10 >= x and interface[2] + 10 >= y):
-                return ("INTERFACE", interface[0])
+        #for interface in self.interfaces:
+            #if (interface[1] <= x + width and interface[2] <= y + height and interface[1] + 10 >= x and interface[2] + 10 >= y):
+                #return ("INTERFACE", interface[0])
         return ("", -1)
 
     def delete_component(self, comp_type: str, item_id: int) -> bool:
@@ -168,13 +168,13 @@ class ObjectCanvasHandler:
                 return True
         return False
 
-    def delete_interface(self, item_id: int) -> bool:
-        for interface in self.interfaces:
-            if interface[0] == item_id:
-                self.interfaces.remove(interface)
-                self.redraw()
-                return True
-        return False
+    #def delete_interface(self, item_id: int) -> bool:
+        #for interface in self.interfaces:
+            #if interface[0] == item_id:
+                #self.interfaces.remove(interface)
+                #self.redraw()
+                #return True
+        #return False
 
     def re_align_coords(self, x: int, y: int, width: int, height: int) -> Tuple[int, int]:
         # Magic numbers are due to the ridge taking up some space
