@@ -78,21 +78,21 @@ class ObjectCanvas:
     def bind(self, event_type: str, func: Callable) -> None:
         self.canvas.bind(event_type, func, add="+")
 
-    def draw_component(self, x: int, y: int, component_type: str) -> int:
+    def draw_component(self, x: int, y: int, width: int, height: int, component_type: str) -> int:
         item_id: int = -1
         if component_type.upper() == "ROUTER":
             item_id = self.canvas.create_rectangle(
-                x, y, x + 32, y + 32, fill="lightblue")
+                x, y, x + width, y + height, fill="lightblue")
         elif component_type.upper() == "HOST":
             item_id = self.canvas.create_rectangle(
-                x, y, x + 32, y + 32, fill="grey")
+                x, y, x + width, y + height, fill="grey")
         return item_id
 
     def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
-        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="3")
+        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2")
 
-    def draw_interface(self, x: int, y: int) -> int:
-        return self.canvas.create_rectangle(x, y, x + 10, y + 10, fill="white")
+    def draw_interface(self, x: int, y: int, width: int, height: int) -> int:
+        return self.canvas.create_rectangle(x, y, x + width, y + height, fill="white")
 
     def draw_string(self, x: int, y: int, text: str) -> None:
         self.canvas.create_text(x, y, text=text, anchor="e")
