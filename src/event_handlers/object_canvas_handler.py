@@ -386,7 +386,8 @@ class ObjectCanvasHandler:
         # 1
         above_left: bool = above and x2 < x1 + self.node_width // 4
         # 2
-        above_middle: bool = above and (x2 + self.node_width >= x1 + self.node_width // 4 and x2 <= x1 + self.node_width - self.node_width // 4) # TODO
+        above_middle: bool = above and (x2 + self.node_width >= x1 + self.node_width //
+                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)  # TODO
         # 3
         above_right: bool = above and x2 > x1 + self.node_width - self.node_width // 4
 
@@ -394,32 +395,42 @@ class ObjectCanvasHandler:
         # 4
         below_left: bool = below and x2 + self.node_width < x1 + self.node_width // 4
         # 5
-        below_middle: bool = below and (x2 + self.node_width >= x1 + self.node_width // 4 and x2 <= x1 + self.node_width - self.node_width // 4) # TODO
+        below_middle: bool = below and (x2 + self.node_width >= x1 + self.node_width //
+                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)  # TODO
         # 6
         below_right: bool = below and x2 > x1 + self.node_width - self.node_width // 4
 
         # 7
-        left: bool = y2 + self.node_height > y1 and y2 < y1 + self.node_height and x2 + self.node_width <= x1
+        left: bool = y2 + self.node_height > y1 and y2 < y1 + \
+            self.node_height and x2 + self.node_width <= x1
 
         # 8 - unneccessary, since the "else" branch will always cover this case
 
         coords: Tuple[int, int, int, int] = None
         if above_middle:
-            coords = (x1 + self.node_width // 2, y1, x2 + self.node_width // 2, y2 + self.node_height)
+            coords = (x1 + self.node_width // 2, y1, x2 +
+                      self.node_width // 2, y2 + self.node_height)
         elif above_left:
-            coords = (x1 + self.node_width // 2, y1, x2 + self.node_width, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width // 2, y1, x2 +
+                      self.node_width, y2 + self.node_height // 2)
         elif above_right:
-            coords = (x1 + self.node_width // 2, y1, x2, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width // 2, y1,
+                      x2, y2 + self.node_height // 2)
         elif below_middle:
-            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2 + self.node_width // 2, y2)
+            coords = (x1 + self.node_width // 2, y1 +
+                      self.node_height, x2 + self.node_width // 2, y2)
         elif below_left:
-            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2 + self.node_width, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width // 2, y1 + self.node_height,
+                      x2 + self.node_width, y2 + self.node_height // 2)
         elif below_right:
-            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width // 2, y1 +
+                      self.node_height, x2, y2 + self.node_height // 2)
         elif left:
-            coords = (x1, y1 + self.node_height // 2, x2 + self.node_width, y2 + self.node_height // 2)
+            coords = (x1, y1 + self.node_height // 2, x2 +
+                      self.node_width, y2 + self.node_height // 2)
         else:
-            coords = (x1 + self.node_width, y1 + self.node_height // 2, x2, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width, y1 + self.node_height //
+                      2, x2, y2 + self.node_height // 2)
         return coords
 
     def get_node_coords(self, item_id: int) -> Tuple[int, int]:

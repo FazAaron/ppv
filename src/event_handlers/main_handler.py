@@ -54,9 +54,11 @@ class MainHandler:
         self.interfaces: List[Tuple[int, str, str]] = []
         self.links: List[Tuple[int, str, str]] = []
 
-        # Move to object_canvas_handler
+        # TODO: Move to object_canvas_handler
         self.last_saved_x: int = 0
         self.last_saved_y: int = 0
+
+        # TODO: Restore to default state
 
         # Setup the bindings to the Handlers
         self.__bind_to_object_frame_handler()
@@ -329,7 +331,8 @@ class MainHandler:
         print(data)
         for host in self.hosts:
             if host[0] == details[1]:
-                applied = self.network.set_application(host[1], data[0], data[1], data[2], data[3])
+                applied = self.network.set_application(
+                    host[1], data[0], data[1], data[2], data[3])
                 if applied:
                     self.object_canvas_handler.show_message(
                         f"Successfully set Application {data[0]} on Host {host[1]}.", 2000)
@@ -341,16 +344,33 @@ class MainHandler:
                         f"Failed to set Application {data[0]} on Host {host[1]}.", 2000)
                     while not self.logger.write(f"Host {host[1]} -> Application {data[0]}", "Failed to set", "Information"):
                         pass
-                    
-        
+
     def __handle_send_submit(self) -> None:
         print("Sending")
         self.object_canvas_handler.submit_input()
         print(self.object_canvas_handler.input_data)
 
     def __handle_connect_submit(self) -> None:
-        print("Connecting Interfaces")
+        # TODO: Handle IP and Node name as well, and actually connect them
+        details = self.object_canvas_handler.intersects(
+            self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
         self.object_canvas_handler.submit_input()
+        host_1 = None  # The host to connect to
+        host_2 = None  # The host to connect
+        for host in self.hosts:
+            if host[1] == self.object_canvas_handler.input_data[0]:
+                for inner_host in self.object_canvas_handler.hosts:
+                    if host[0] == inner_host[0]:
+                        host_1 = (inner_host[1], inner_host[2])
+                        break
+        for inner_host in self.object_canvas_handler.hosts:
+            if details[1] == inner_host[0]:
+                host_2 = (inner_host[1], inner_host[2])
+                break
+        coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
+            host_2[0], host_2[1], host_1[0], host_1[1])
+        self.object_canvas_handler.draw(
+            "LINK", coords[0], coords[1], coords[2], coords[3])
         print(self.object_canvas_handler.input_data)
 
     def __handle_disconnect_submit(self) -> None:
