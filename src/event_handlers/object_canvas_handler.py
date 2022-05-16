@@ -32,6 +32,8 @@ class ObjectCanvasHandler:
         self.mouse_pos_y: int = 0
         self.menu_x: int = 0
         self.menu_y: int = 0
+        self.node_width: int = 60
+        self.node_height: int = 60
 
     def bind(self, event: str, func: Callable) -> None:
         self.object_canvas.bind(event, func)
@@ -86,63 +88,66 @@ class ObjectCanvasHandler:
         aligned_coords: Tuple[int, int] = (x1, y1)
 
         if comp_type.upper() == "COMPONENT/ROUTER" or comp_type.upper() == "COMPONENT/HOST":
-            aligned_coords = self.re_align_coords(x1, y1, 32, 32)
-            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 32, 32)[1] != -1:
+            aligned_coords = self.re_align_coords(
+                x1, y1, self.node_width, self.node_width)
+            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], self.node_width, self.node_height)[1] != -1:
                 return item_id
-        #elif comp_type.upper() == "INTERFACE":
+        # elif comp_type.upper() == "INTERFACE":
             #aligned_coords = self.re_align_coords(x1, y1, 10, 10)
-            #if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] != -1:
-                #return item_id
+            # if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], 10, 10)[1] != -1:
+                # return item_id
 
         self.redraw()
         if comp_type.upper() == "COMPONENT/ROUTER":
             item_id: int = self.object_canvas.draw_component(
-                aligned_coords[0], aligned_coords[1], "ROUTER")
+                aligned_coords[0], aligned_coords[1], self.node_width, self.node_height, "ROUTER")
             if save:
                 self.routers.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "COMPONENT/HOST":
             item_id: int = self.object_canvas.draw_component(
-                aligned_coords[0], aligned_coords[1], "HOST")
+                aligned_coords[0], aligned_coords[1], self.node_width, self.node_height, "HOST")
             if save:
                 self.hosts.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "LINK":
             item_id: int = self.object_canvas.draw_link(x1, y1, x2, y2)
             self.links.append((item_id, x1, y1, x2, y2))
-        #elif comp_type.upper() == "INTERFACE":
-            #item_id: int = self.object_canvas.draw_interface(
-                #aligned_coords[0], aligned_coords[1])
-            #if save:
-                #self.interfaces.append(
-                    #(item_id, aligned_coords[0], aligned_coords[1]))
+        # elif comp_type.upper() == "INTERFACE":
+            # item_id: int = self.object_canvas.draw_interface(
+            # aligned_coords[0], aligned_coords[1])
+            # if save:
+            # self.interfaces.append(
+            # (item_id, aligned_coords[0], aligned_coords[1]))
 
         return item_id
 
     def redraw(self) -> None:
         self.object_canvas.clear_canvas()
-        for _, x, y in self.hosts:
-            self.object_canvas.draw_component(x, y, "HOST")
-        for _, x, y in self.routers:
-            self.object_canvas.draw_component(x, y, "ROUTER")
-        #for _, x, y in self.interfaces:
-            #self.object_canvas.draw_interface(x, y)
         for _, x1, y1, x2, y2 in self.links:
             self.object_canvas.draw_link(x1, y1, x2, y2)
+        for _, x, y in self.hosts:
+            self.object_canvas.draw_component(
+                x, y, self.node_width, self.node_height, "HOST")
+        for _, x, y in self.routers:
+            self.object_canvas.draw_component(
+                x, y, self.node_width, self.node_height, "ROUTER")
+        # for _, x, y in self.interfaces:
+            #self.object_canvas.draw_interface(x, y)
         if (self.shown_message != ()):
             self.object_canvas.draw_string(
                 self.shown_message[0], self.shown_message[1], self.shown_message[2])
 
     def intersects(self, x, y, width, height) -> Tuple[str, int]:
         for host in self.hosts:
-            if (host[1] <= x + width and host[2] <= y + height and host[1] + 32 >= x and host[2] + 32 >= y):
+            if (host[1] <= x + width and host[2] <= y + height and host[1] + self.node_width >= x and host[2] + self.node_height >= y):
                 return ("HOST", host[0])
         for router in self.routers:
-            if (router[1] <= x + width and router[2] <= y + height and router[1] + 32 >= x and router[2] + 32 >= y):
+            if (router[1] <= x + width and router[2] <= y + height and router[1] + self.node_width >= x and router[2] + self.node_height >= y):
                 return ("ROUTER", router[0])
-        #for interface in self.interfaces:
-            #if (interface[1] <= x + width and interface[2] <= y + height and interface[1] + 10 >= x and interface[2] + 10 >= y):
-                #return ("INTERFACE", interface[0])
+        # for interface in self.interfaces:
+            # if (interface[1] <= x + width and interface[2] <= y + height and interface[1] + 10 >= x and interface[2] + 10 >= y):
+                # return ("INTERFACE", interface[0])
         return ("", -1)
 
     def delete_component(self, comp_type: str, item_id: int) -> bool:
@@ -168,17 +173,18 @@ class ObjectCanvasHandler:
                 return True
         return False
 
-    #def delete_interface(self, item_id: int) -> bool:
-        #for interface in self.interfaces:
-            #if interface[0] == item_id:
-                #self.interfaces.remove(interface)
-                #self.redraw()
-                #return True
-        #return False
+    # def delete_interface(self, item_id: int) -> bool:
+        # for interface in self.interfaces:
+        # if interface[0] == item_id:
+        # self.interfaces.remove(interface)
+        # self.redraw()
+        # return True
+        # return False
 
     def re_align_coords(self, x: int, y: int, width: int, height: int) -> Tuple[int, int]:
         # Magic numbers are due to the ridge taking up some space
         # They have been tested thoroughly manually
+        # TODO add a named variable serving as the maximum size on either side
         max_x = self.object_canvas.get_geometry()[0] - 3
         max_y = self.object_canvas.get_geometry()[1] - 3
 
@@ -194,6 +200,8 @@ class ObjectCanvasHandler:
         #  7----------8----------9
 
         coords: Tuple[int, int] = None
+        # TODO group the conditions here instead of adding magic numbers
+        left_corner: bool = x <= 1 and y <= 1
 
         # 1
         if (x <= 1 and y <= 1):
@@ -359,3 +367,66 @@ class ObjectCanvasHandler:
             self.hide_frame()
         else:
             self.object_canvas.information_label.config(fg="red")
+
+    def get_link_endpoints(self, x1: int, y1: int, x2: int, y2: int) -> Tuple[int, int, int, int]:
+        # Positions to check:
+        # 1            2            3
+        #   -----------------------
+        #   |                     |
+        #   |                     |
+        #   |                     |
+        # 7 |                     | 8
+        #   |                     |
+        #   |                     |
+        #   |                     |
+        #   -----------------------
+        # 4            5            6
+
+        above: bool = y2 + self.node_height <= y1
+        # 1
+        above_left: bool = above and x2 < x1 + self.node_width // 4
+        # 2
+        above_middle: bool = above and (x2 + self.node_width >= x1 + self.node_width // 4 and x2 <= x1 + self.node_width - self.node_width // 4) # TODO
+        # 3
+        above_right: bool = above and x2 > x1 + self.node_width - self.node_width // 4
+
+        below: bool = y2 >= y1 + self.node_height
+        # 4
+        below_left: bool = below and x2 + self.node_width < x1 + self.node_width // 4
+        # 5
+        below_middle: bool = below and (x2 + self.node_width >= x1 + self.node_width // 4 and x2 <= x1 + self.node_width - self.node_width // 4) # TODO
+        # 6
+        below_right: bool = below and x2 > x1 + self.node_width - self.node_width // 4
+
+        # 7
+        left: bool = y2 + self.node_height > y1 and y2 < y1 + self.node_height and x2 + self.node_width <= x1
+
+        # 8 - unneccessary, since the "else" branch will always cover this case
+
+        coords: Tuple[int, int, int, int] = None
+        if above_middle:
+            coords = (x1 + self.node_width // 2, y1, x2 + self.node_width // 2, y2 + self.node_height)
+        elif above_left:
+            coords = (x1 + self.node_width // 2, y1, x2 + self.node_width, y2 + self.node_height // 2)
+        elif above_right:
+            coords = (x1 + self.node_width // 2, y1, x2, y2 + self.node_height // 2)
+        elif below_middle:
+            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2 + self.node_width // 2, y2)
+        elif below_left:
+            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2 + self.node_width, y2 + self.node_height // 2)
+        elif below_right:
+            coords = (x1 + self.node_width // 2, y1 + self.node_height, x2, y2 + self.node_height // 2)
+        elif left:
+            coords = (x1, y1 + self.node_height // 2, x2 + self.node_width, y2 + self.node_height // 2)
+        else:
+            coords = (x1 + self.node_width, y1 + self.node_height // 2, x2, y2 + self.node_height // 2)
+        return coords
+
+    def get_node_coords(self, item_id: int) -> Tuple[int, int]:
+        for host in self.hosts:
+            if host[0] == item_id:
+                return (host[1], host[2])
+        for router in self.routers:
+            if router[0] == item_id:
+                return (host[1], host[2])
+        return None
