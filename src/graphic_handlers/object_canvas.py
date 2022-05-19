@@ -177,8 +177,6 @@ class ObjectCanvas:
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
 
-        return self.config_frame
-
     def setup_place_router_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
@@ -222,8 +220,6 @@ class ObjectCanvas:
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
 
-        return self.config_frame
-
     def setup_add_interface_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
@@ -245,8 +241,6 @@ class ObjectCanvas:
         self.cancel_button.place(
             relx=0.7, rely=0.9, relwidth=0.3, relheight=0.1)
         self.title_label.place(relx=0.3, rely=0.9, relwidth=0.4, relheight=0.1)
-
-        return self.config_frame
 
     def setup_delete_interface_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
@@ -270,8 +264,6 @@ class ObjectCanvas:
             relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
-
-        return self.config_frame
 
     def setup_set_application_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
@@ -316,8 +308,6 @@ class ObjectCanvas:
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
 
-        return self.config_frame
-
     def setup_start_sending_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
@@ -342,8 +332,6 @@ class ObjectCanvas:
             relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
-
-        return self.config_frame
 
     def setup_connect_to_node_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
@@ -396,8 +384,6 @@ class ObjectCanvas:
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
 
-        return self.config_frame
-
     def setup_disconnect_interface_frame(self, x: int, y: int) -> None:
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
@@ -420,8 +406,6 @@ class ObjectCanvas:
             relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
-
-        return self.config_frame
 
     def clear_frame(self) -> None:
         self.config_frame.place_forget()

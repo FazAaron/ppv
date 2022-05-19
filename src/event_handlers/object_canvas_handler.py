@@ -261,6 +261,7 @@ class ObjectCanvasHandler:
             self.mouse_pos_x, self.mouse_pos_y, 350, 350)
         x: int = aligned_coords[0]
         y: int = aligned_coords[1]
+        self.hide_frame()
         if frame_type == "PLACEHOST":
             self.object_canvas.setup_place_host_frame(x, y)
             self.bind_to_submit_button(func)

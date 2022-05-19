@@ -76,9 +76,9 @@ class Graph:
                 if dist[u] == inf or u == destination_ip:
                     break
                 for v, interface, cost in neighbours[u]:
-                    if dist[u] + cost < dist[v]:
+                    if dist[u] + int(cost) < dist[v]:
                         previous[v] = u
-                        dist[v] = dist[u] + cost
+                        dist[v] = dist[u] + int(cost)
 
             # Get the values to return
             next_hop: str = None
