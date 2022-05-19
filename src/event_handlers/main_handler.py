@@ -6,6 +6,7 @@ from tkinter import messagebox
 from typing import Callable, List, Tuple
 
 # Self-made modules
+from src.components.node import Node
 from src.components.network import Network
 from src.components.node import Host, Router
 from src.event_handlers.object_canvas_handler import ObjectCanvasHandler
@@ -355,23 +356,42 @@ class MainHandler:
         details = self.object_canvas_handler.intersects(
             self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
         self.object_canvas_handler.submit_input()
-        host_1 = None  # The host to connect to
-        host_2 = None  # The host to connect
-        for host in self.hosts:
-            if host[1] == self.object_canvas_handler.input_data[0]:
-                for inner_host in self.object_canvas_handler.hosts:
-                    if host[0] == inner_host[0]:
-                        host_1 = (inner_host[1], inner_host[2])
-                        break
-        for inner_host in self.object_canvas_handler.hosts:
-            if details[1] == inner_host[0]:
-                host_2 = (inner_host[1], inner_host[2])
+        user_input: List[str] = self.object_canvas_handler.input_data
+        node_1: Node = None  # The Node to connect
+        node_1_coords: Tuple[int, int] = None
+        node_2: Node = self.network.get_host(user_input[0]) or self.network.get_router(
+            user_input[0])  # The Node to connect to
+        node_2_coords: Tuple[int, int] = None
+        nodes: List[Tuple[int, str]] = self.hosts + self.routers
+        for node in nodes:
+            if node[0] == details[1]:
+                node_1 = self.network.get_host(
+                    node[1]) or self.network.get_router(node[1])
+                node_1_coords = self.object_canvas_handler.get_node_coords(
+                    node[0])
                 break
-        coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
-            host_2[0], host_2[1], host_1[0], host_1[1])
-        self.object_canvas_handler.draw(
-            "LINK", coords[0], coords[1], coords[2], coords[3])
-        print(self.object_canvas_handler.input_data)
+        for node in nodes:
+            if node[1] == node_2.name:
+                node_2_coords = self.object_canvas_handler.get_node_coords(
+                    node[0])
+                break
+        if self.network.connect_node_interfaces(node_1.name, user_input[0], user_input[1], user_input[2], user_input[3], user_input[4]):
+            coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
+                node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
+            self.object_canvas_handler.draw(
+                "LINK", coords[0], coords[1], coords[2], coords[3])
+        else:
+            if node_1 == node_2:
+                self.object_canvas_handler.show_message(
+                    f"Failed to connect {node_1.name} - {node_1.ip} to {node_2.name} - {node_2.ip}: can't connect to self.", 2000)
+                self.logger.write(f"Node {node_1.name} - {node_1.ip} <-> Node {node_2.name} - {node_2.ip}",
+                                  "Failed to connect: can't connect to self", "Information")
+            else:
+                self.object_canvas_handler.show_message(
+                    f"Failed to connect {node_1.name} - {node_1.ip} - {user_input[1]} to {node_2.name} - {node_2.ip} - {user_input[2]}: invalid Interface.", 2000)
+                self.logger.write(
+                    f"Node {node_1.name} - {node_1.ip} - {user_input[1]} <-> Node {node_2.name} - {node_2.ip} - {user_input[2]}", "Failed to connect: invalid Interface", "Information")
+            # There is one more case where it could theoretically fail, but that depends on programming the proper logic, so it's not needed to check it
 
     def __handle_disconnect_submit(self) -> None:
         print("Disconnecting Interfaces")

@@ -387,7 +387,7 @@ class ObjectCanvasHandler:
         above_left: bool = above and x2 < x1 + self.node_width // 4
         # 2
         above_middle: bool = above and (x2 + self.node_width >= x1 + self.node_width //
-                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)  # TODO
+                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)
         # 3
         above_right: bool = above and x2 > x1 + self.node_width - self.node_width // 4
 
@@ -396,7 +396,7 @@ class ObjectCanvasHandler:
         below_left: bool = below and x2 + self.node_width < x1 + self.node_width // 4
         # 5
         below_middle: bool = below and (x2 + self.node_width >= x1 + self.node_width //
-                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)  # TODO
+                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)
         # 6
         below_right: bool = below and x2 > x1 + self.node_width - self.node_width // 4
 
@@ -434,10 +434,7 @@ class ObjectCanvasHandler:
         return coords
 
     def get_node_coords(self, item_id: int) -> Tuple[int, int]:
-        for host in self.hosts:
-            if host[0] == item_id:
-                return (host[1], host[2])
-        for router in self.routers:
-            if router[0] == item_id:
-                return (host[1], host[2])
+        for node in (self.hosts + self.routers):
+            if node[0] == item_id:
+                return (node[1], node[2])
         return None
