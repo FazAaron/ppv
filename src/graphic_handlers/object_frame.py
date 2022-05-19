@@ -37,8 +37,8 @@ class ObjectFrame:
 
         # Setup the Widgets
         self.exit_button: Button = Button(
-            self.object_frame, image=self.exit_button_image)
-        Hovertip(self.exit_button, "Exit the application")
+            self.object_frame, image=self.exit_button_image, bd=0, highlightthickness=0)
+        Hovertip(self.exit_button, "Exit")
         self.display_text_box: ScrolledText = ScrolledText(
             self.object_frame, width=10, height=10, font=("JetBrainsMono NF", 10), bg="lightgrey", relief="ridge")
 
