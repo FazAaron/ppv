@@ -412,20 +412,24 @@ class ObjectCanvasHandler:
             coords = (x1 + self.node_width // 2, y1, x2 +
                       self.node_width // 2, y2 + self.node_height)
         elif above_left:
-            coords = (x1 + self.node_width // 2, y1, x2 +
-                      self.node_width, y2 + self.node_height // 2)
+            coords = (x1, y1 + self.node_height // 2, x2 + self.node_width, y2 + self.node_height // 2)
+            #coords = (x1 + self.node_width // 2, y1, x2 +
+                      #self.node_width, y2 + self.node_height // 2)
         elif above_right:
-            coords = (x1 + self.node_width // 2, y1,
-                      x2, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width, y1 + self.node_height // 2, x2, y2 + self.node_height // 2)
+            #coords = (x1 + self.node_width // 2, y1,
+                      #x2, y2 + self.node_height // 2)
         elif below_middle:
             coords = (x1 + self.node_width // 2, y1 +
                       self.node_height, x2 + self.node_width // 2, y2)
         elif below_left:
-            coords = (x1 + self.node_width // 2, y1 + self.node_height,
-                      x2 + self.node_width, y2 + self.node_height // 2)
+            coords = (x1, y1 + self.node_height // 2, x2 + self.node_width, y2 + self.node_height // 2)
+            #coords = (x1 + self.node_width // 2, y1 + self.node_height,
+                      #x2 + self.node_width, y2 + self.node_height // 2)
         elif below_right:
-            coords = (x1 + self.node_width // 2, y1 +
-                      self.node_height, x2, y2 + self.node_height // 2)
+            coords = (x1 + self.node_width, y1 + self.node_height // 2, x2, y2 + self.node_height // 2)
+            #coords = (x1 + self.node_width // 2, y1 +
+                      #self.node_height, x2, y2 + self.node_height // 2)
         elif left:
             coords = (x1, y1 + self.node_height // 2, x2 +
                       self.node_width, y2 + self.node_height // 2)

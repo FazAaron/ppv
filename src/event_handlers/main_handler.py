@@ -53,7 +53,7 @@ class MainHandler:
         self.hosts: List[Tuple[int, str]] = []
         self.routers: List[Tuple[int, str]] = []
         self.interfaces: List[Tuple[int, str, str]] = []
-        self.links: List[Tuple[int, str, str]] = []
+        self.links: List[Tuple[int, str, str, str, str]] = []
 
         # TODO: Move to object_canvas_handler
         self.last_saved_x: int = 0
@@ -174,6 +174,7 @@ class MainHandler:
 
     # ----
     def __handle_show_details_left_click(self, event: str) -> None:
+        # TODO make this into a scrollable menu
         details: Tuple[str, int] = self.object_canvas_handler.intersects(
             event.x, event.y, 1, 1)
         if details[1] > 0:
@@ -352,7 +353,7 @@ class MainHandler:
         print(self.object_canvas_handler.input_data)
 
     def __handle_connect_submit(self) -> None:
-        # TODO: Handle IP and Node name as well, and actually connect them
+        # TODO check packets dropped / how sending is affected, etc. when connecting (since this disconnects then connects the links)
         details = self.object_canvas_handler.intersects(
             self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
         self.object_canvas_handler.submit_input()
@@ -378,8 +379,13 @@ class MainHandler:
         if self.network.connect_node_interfaces(node_1.name, user_input[0], user_input[1], user_input[2], user_input[3], user_input[4]):
             coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
                 node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
-            self.object_canvas_handler.draw(
+            item_id: int = self.object_canvas_handler.draw(
                 "LINK", coords[0], coords[1], coords[2], coords[3])
+            self.links.append((item_id, node_1.name, user_input[1], node_2.name, user_input[2]))
+            self.object_canvas_handler.show_message(
+                f"Successfully connected {node_1.name} - {node_1.ip} - {user_input[1]} to {node_2.name} - {node_2.ip} - {user_input[2]}.", 2000)
+            self.logger.write(
+                f"Node {node_1.name} - {node_1.ip} - {user_input[1]} <-> Node {node_2.name} - {node_2.ip} - {user_input[2]}", "Successfully connected", "Information")
         else:
             if node_1 == node_2:
                 self.object_canvas_handler.show_message(
@@ -394,6 +400,7 @@ class MainHandler:
             # There is one more case where it could theoretically fail, but that depends on programming the proper logic, so it's not needed to check it
 
     def __handle_disconnect_submit(self) -> None:
+        # TODO check packets dropped / how sending is affected, etc.
         print("Disconnecting Interfaces")
         self.object_canvas_handler.submit_input()
         print(self.object_canvas_handler.input_data)

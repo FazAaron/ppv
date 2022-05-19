@@ -116,9 +116,10 @@ class RoutingTable:
         curr_line: int = 1
         to_return: str = ""
         for route in self.routes:
-            to_return += f"\nRoute {curr_line}"
+            to_return += f"\nRoute {curr_line}\n"
             first_row_len: int = len(route.destination) + len("Destination: ")
             to_return += "-" * first_row_len
-            to_return += route
+            to_return += "\n"
+            to_return += route.__str__()
             curr_line += 1
         return to_return
