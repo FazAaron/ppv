@@ -59,8 +59,6 @@ class MainHandler:
         self.last_saved_x: int = 0
         self.last_saved_y: int = 0
 
-        # TODO: Restore to default state
-
         # Setup the bindings to the Handlers
         self.__bind_to_object_frame_handler()
         self.__bind_to_object_canvas_handler()
@@ -129,8 +127,7 @@ class MainHandler:
             item_id: int = self.object_canvas_handler.draw(
                 self.object_canvas_handler.input_data[0], event.x, event.y, save=False)
             if item_id != -1:
-                self.last_saved_x = event.x
-                self.last_saved_y = event.y
+                self.object_canvas_handler.set_last_saved_pos(event.x, event.y)
 
     # ----
     def __handle_is_placing_left_click(self, event: str) -> None:
@@ -139,12 +136,14 @@ class MainHandler:
             if len(user_input) == 0:
                 return
             created: bool = False
+            last_x: int = self.object_canvas_handler.last_saved_x
+            last_y: int = self.object_canvas_handler.last_saved_y
             if user_input[0] == "COMPONENT/HOST":
                 created = self.network.create_host(
                     user_input[1], user_input[2], int(user_input[3]))
                 if created:
                     item_id: int = self.object_canvas_handler.draw(
-                        user_input[0], self.last_saved_x, self.last_saved_y)
+                        user_input[0], last_x, last_y)
                     self.hosts.append((item_id, user_input[1]))
                     self.object_canvas_handler.show_message(
                         "Successfully created the Host.", 2000)
@@ -160,7 +159,7 @@ class MainHandler:
                     user_input[1], user_input[2], int(user_input[3]), int(user_input[4]))
                 if created:
                     item_id: int = self.object_canvas_handler.draw(
-                        user_input[0], self.last_saved_x, self.last_saved_y)
+                        user_input[0], last_x, last_y)
                     self.routers.append((item_id, user_input[1]))
                     self.object_canvas_handler.show_message(
                         "Successfully created the Router.", 2000)
@@ -307,7 +306,6 @@ class MainHandler:
         user_input: List[str] = self.object_canvas_handler.input_data
         if len(user_input) == 0:
             return
-        link_success: bool = False
         if details[0] == "HOST":
             for host in self.hosts:
                 if host[0] == details[1]:
@@ -318,10 +316,10 @@ class MainHandler:
                     for link in self.links:
                         if (host_name == link[1] and interface_name == link[2]) or (host_name == link[3] and interface_name == link[4]):
                             self.links.remove(link)
-                            link_success = self.object_canvas_handler.delete_link(
+                            self.object_canvas_handler.delete_link(
                                 link[0])
                             break
-                    if deleted and link_success:
+                    if deleted:
                         self.object_canvas_handler.show_message(
                             f"Successfully deleted Interface {interface_name} on Host {host_name}.", 2000)
                         while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Successful deletion", "Information"):
@@ -341,10 +339,10 @@ class MainHandler:
                     for link in self.links:
                         if (router_name == link[1] and interface_name == link[2]) or (router_name == link[3] and interface_name == link[4]):
                             self.links.remove(link)
-                            link_success = self.object_canvas_handler.delete_link(
+                            self.object_canvas_handler.delete_link(
                                 link[0])
                             break
-                    if deleted and link_success:
+                    if deleted:
                         self.object_canvas_handler.show_message(
                             f"Successfully deleted Interface {interface_name} on Router {router_name}.", 2000)
                         while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Successful deletion", "Information"):

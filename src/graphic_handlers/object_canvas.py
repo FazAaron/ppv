@@ -179,9 +179,6 @@ class ObjectCanvas:
         """
         return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2")
 
-    # def draw_interface(self, x: int, y: int, width: int, height: int) -> int:
-        # return self.canvas.create_rectangle(x, y, x + width, y + height, fill="white")
-
     def draw_string(self, x: int, y: int, text: str) -> None:
         """
         Draws a string onto the Canvas
