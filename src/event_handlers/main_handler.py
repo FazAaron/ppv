@@ -217,7 +217,8 @@ class MainHandler:
                     for link in self.links:
                         if router[1] == link[1] or router[1] == link[3]:
                             self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(link[0])
+                            link_success = link_success and self.object_canvas_handler.delete_link(
+                                link[0])
                     if handler_success and network_success and link_success:
                         self.routers.remove(router)
                         self.object_canvas_handler.show_message(
@@ -236,7 +237,8 @@ class MainHandler:
                     for link in self.links:
                         if host[1] == link[1] or host[1] == link[3]:
                             self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(link[0])
+                            link_success = link_success and self.object_canvas_handler.delete_link(
+                                link[0])
                     if handler_success and network_success and link_success:
                         self.hosts.remove(host)
                         self.object_canvas_handler.show_message(
@@ -316,7 +318,8 @@ class MainHandler:
                     for link in self.links:
                         if (host_name == link[1] and interface_name == link[2]) or (host_name == link[3] and interface_name == link[4]):
                             self.links.remove(link)
-                            link_success = self.object_canvas_handler.delete_link(link[0])
+                            link_success = self.object_canvas_handler.delete_link(
+                                link[0])
                             break
                     if deleted and link_success:
                         self.object_canvas_handler.show_message(
@@ -338,7 +341,8 @@ class MainHandler:
                     for link in self.links:
                         if (router_name == link[1] and interface_name == link[2]) or (router_name == link[3] and interface_name == link[4]):
                             self.links.remove(link)
-                            link_success = self.object_canvas_handler.delete_link(link[0])
+                            link_success = self.object_canvas_handler.delete_link(
+                                link[0])
                             break
                     if deleted and link_success:
                         self.object_canvas_handler.show_message(
@@ -406,28 +410,31 @@ class MainHandler:
             self.object_canvas_handler.show_message(
                 f"Failed to connect {node_1.name} - {node_1.ip} to {user_input[0]}: no such Node.", 2000)
             self.logger.write(f"Node {node_1.name} - {node_1.ip} <-> Node {user_input[0]}",
-                            "Failed to connect: no such Node", "Information")
+                              "Failed to connect: no such Node", "Information")
             return
         for node in nodes:
             if node[1] == node_2.name:
                 node_2_coords = self.object_canvas_handler.get_node_coords(
                     node[0])
                 break
-        connect_success: bool = self.network.connect_node_interfaces(node_1.name, user_input[0], user_input[1], user_input[2], user_input[3], user_input[4])
+        connect_success: bool = self.network.connect_node_interfaces(
+            node_1.name, user_input[0], user_input[1], user_input[2], user_input[3], user_input[4])
         link_success: bool = True
         if connect_success:
             for link in self.links:
                 if (node_1.name == link[1] and user_input[1] == link[2]) or (node_1.name == link[3] and user_input[1] == link[4]) or \
-                    (node_2.name == link[1] and user_input[2] == link[2]) or (node_2.name == link[3] and user_input[2] == link[4]):
+                        (node_2.name == link[1] and user_input[2] == link[2]) or (node_2.name == link[3] and user_input[2] == link[4]):
                     self.links.remove(link)
-                    link_success = self.object_canvas_handler.delete_link(link[0])
+                    link_success = self.object_canvas_handler.delete_link(
+                        link[0])
                     break
             if link_success:
                 coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
                     node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
                 item_id: int = self.object_canvas_handler.draw(
                     "LINK", coords[0], coords[1], coords[2], coords[3])
-                self.links.append((item_id, node_1.name, user_input[1], node_2.name, user_input[2]))
+                self.links.append(
+                    (item_id, node_1.name, user_input[1], node_2.name, user_input[2]))
                 self.object_canvas_handler.show_message(
                     f"Successfully connected {node_1.name} - {node_1.ip} - {user_input[1]} to {node_2.name} - {node_2.ip} - {user_input[2]}.", 2000)
                 self.logger.write(
@@ -446,9 +453,68 @@ class MainHandler:
 
     def __handle_disconnect_submit(self) -> None:
         # TODO check packets dropped / how sending is affected, etc.
-        print("Disconnecting Interfaces")
+        details: Tuple[str, int] = self.object_canvas_handler.intersects(
+            self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
         self.object_canvas_handler.submit_input()
-        print(self.object_canvas_handler.input_data)
+        user_input: List[str] = self.object_canvas_handler.input_data
+        if len(user_input) == 0:
+            return
+        if details[0] == "HOST":
+            for host in self.hosts:
+                if host[0] == details[1]:
+                    network_success: bool = self.network.disconnect_node_interface(
+                        host[1], user_input[0])
+                    link_success: bool = False
+                    if network_success:
+                        for link in self.links:
+                            if (link[1] == host[1] and link[2] == user_input[0]) or \
+                                    (link[3] == host[1] and link[4] == user_input[0]):
+                                link_success = self.object_canvas_handler.delete_link(
+                                    link[0])
+                                if link_success:
+                                    self.links.remove(link)
+                                    self.object_canvas_handler.show_message(
+                                        f"Successfully disconnected Interface {user_input[0]}.", 2000)
+                                    self.logger.write(
+                                        f"Host {host[1]} - Interface {user_input[0]}", "Successfully disconnected", "Information")
+                                else:
+                                    self.object_canvas_handler.show_message(
+                                        f"Failed to disconnect Interface {user_input[0]}: no corresponding Link.", 2000)
+                                    self.logger.write(
+                                        f"Host {host[1]} - Interface {user_input[0]}", "Failed to disconnect: no corresponding Link", "Error")
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to disconnect Interface {user_input[0]}: no such Interface on Host {host[1]}.", 2000)
+                        self.logger.write(
+                            f"Host {host[1]} - Interface {user_input[0]}", f"Failed to disconnect: no such Interface on Host {host[1]}", "Error")
+        else:
+            for router in self.routers:
+                if router[0] == details[1]:
+                    network_success: bool = self.network.disconnect_node_interface(
+                        router[1], user_input[0])
+                    link_success: bool = False
+                    if network_success:
+                        for link in self.links:
+                            if (link[1] == router[1] and link[2] == user_input[0]) or \
+                                    (link[3] == router[1] and link[4] == user_input[0]):
+                                link_success = self.object_canvas_handler.delete_link(
+                                    link[0])
+                                if link_success:
+                                    self.links.remove(link)
+                                    self.object_canvas_handler.show_message(
+                                        f"Successfully disconnected Interface {user_input[0]}.", 2000)
+                                    self.logger.write(
+                                        f"Router {router[1]} - Interface {user_input[0]}", "Successfully disconnected", "Information")
+                                else:
+                                    self.object_canvas_handler.show_message(
+                                        f"Failed to disconnect Interface {user_input[0]}: no corresponding Link.", 2000)
+                                    self.logger.write(
+                                        f"Router {router[1]} - Interface {user_input[0]}", "Failed to disconnect: no corresponding Link", "Error")
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to disconnect Interface {user_input[0]}: no such Interface on Router {router[1]}.", 2000)
+                        self.logger.write(
+                            f"Router {router[1]} - Interface {user_input[0]}", f"Failed to disconnect: no such Interface on Router {router[1]}", "Error")
 
     # -----
     def __get_handlers(self, menu_type: str) -> List[Callable]:
