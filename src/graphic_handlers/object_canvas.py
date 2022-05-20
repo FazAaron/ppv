@@ -2,7 +2,6 @@
 This module makes ObjectCanvas objects available for use when imported
 """
 from tkinter import Button, Canvas, Entry, Label, Menu, ttk
-from turtle import bgcolor
 from typing import Callable, Tuple
 
 
@@ -17,14 +16,17 @@ class ObjectCanvas:
     router_config_menu  (Menu): The Menu to configure a Router
     config_menu         (ttk.Frame): The Frame to access certain features of \
                                      the Network
+    label_[1..5]        (Label): The Labels to be used inside the config_menu
+    entry_[1..5]        (Entry): The Entries to be used inside the config_menu
     submit_button       (Button): The Button to be used for submission inside \
                                   the config_menu
     cancel_button       (Button): The Button to be used for cancellation inside \
                                   the config_menu
-    label_[1..5]        (Label): The Labels to be used inside the config_menu
-    entry_[1..5]        (Entry): The Entries to be used inside the config_menu
     """
 
+# -----------------------------------------------------------------------------
+# CONSTRUCTOR
+# -----------------------------------------------------------------------------
     def __init__(self, parent: ttk.Frame) -> None:
         self.canvas: Canvas = Canvas(
             parent, background="lightgrey", bd=1, highlightthickness=1, relief="ridge")
@@ -72,37 +74,9 @@ class ObjectCanvas:
         # Set the position of this Frame inside the parent container
         self.canvas.grid(column=0, row=0, sticky="nsew")
 
-    def get_geometry(self) -> Tuple[int, int]:
-        return (self.canvas.winfo_width(), self.canvas.winfo_height())
-
-    def bind(self, event_type: str, func: Callable) -> None:
-        self.canvas.bind(event_type, func, add="+")
-
-    def draw_component(self, x: int, y: int, width: int, height: int, component_type: str) -> int:
-        item_id: int = -1
-        if component_type.upper() == "ROUTER":
-            item_id = self.canvas.create_rectangle(
-                x, y, x + width, y + height, fill="lightblue")
-        elif component_type.upper() == "HOST":
-            item_id = self.canvas.create_rectangle(
-                x, y, x + width, y + height, fill="grey")
-        return item_id
-
-    def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
-        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2")
-
-    def draw_interface(self, x: int, y: int, width: int, height: int) -> int:
-        return self.canvas.create_rectangle(x, y, x + width, y + height, fill="white")
-
-    def draw_string(self, x: int, y: int, text: str) -> None:
-        self.canvas.create_text(x, y, text=text, anchor="e")
-
-    def clear_canvas(self) -> None:
-        self.canvas.delete("all")
-
-    def after(self, time: int, func: Callable) -> None:
-        self.canvas.after(time, func)
-
+# -----------------------------------------------------------------------------
+# PRIVATE METHODS
+# -----------------------------------------------------------------------------
     def __setup_network_config_menu(self) -> Menu:
         network_config_menu = Menu(self.canvas, tearoff=0)
         network_config_menu.add_command(label="Place Host")
@@ -135,13 +109,122 @@ class ObjectCanvas:
         router_config_menu.add_command(label="Close")
         return router_config_menu
 
+# -----------------------------------------------------------------------------
+# PUBLIC METHODS
+# -----------------------------------------------------------------------------
+    def after(self, time: int, func: Callable) -> None:
+        """
+        Calls a function after a given time elapses\n
+        This serves as a wrapper function for the Canvas Widget's after method
+
+        Parameters:
+        time (int): The time in miliseconds
+        func (Callable): The function to call after the time elapses
+        """
+        self.canvas.after(time, func)
+
+    def bind(self, event_type: str, func: Callable) -> None:
+        """
+        Binds an event handler to a specific event on the Canvas
+
+        Parameters:
+        event_type (str): The type of the event represented as a string
+        func       (Callable): The function handling the event when event_type \
+                               occurs
+        """
+        self.canvas.bind(event_type, func, add="+")
+
+    def get_geometry(self) -> Tuple[int, int]:
+        """
+        Gets the dimensions of the Canvas to draw onto
+
+        Returns:
+        Tuple[int, int]: The Canvas dimensions in the form of width x height
+        """
+        return (self.canvas.winfo_width(), self.canvas.winfo_height())
+
+    def draw_component(self, x: int, y: int, width: int, height: int, component_type: str) -> int:
+        """
+        Draws a Node component onto the Canvas
+
+        Parameters:
+        x              (int): The x coordinate of the starting point
+        y              (int): The y coordinate of the starting point
+        width          (int): The width of the component
+        height         (int): The height of the component
+        component_type (str): The component's type, either ROUTER or HOST
+
+        Returns:
+        int: The ID of the drawn item
+        """
+        if component_type.upper() == "ROUTER":
+            return self.canvas.create_rectangle(
+                x, y, x + width, y + height, fill="lightblue")
+        elif component_type.upper() == "HOST":
+            return self.canvas.create_rectangle(
+                x, y, x + width, y + height, fill="grey")
+
+    def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
+        """
+        Draws a Link onto the Canvas
+
+        Parameters:
+        x1 (int): The x coordinate of the starting point
+        y1 (int): The y coordinate of the starting point
+        x2 (int): The x coordinate of the end point
+        y2 (int): The y coordinate of the end point
+
+        Returns:
+        int: The ID of the drawn item
+        """
+        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2")
+
+    # def draw_interface(self, x: int, y: int, width: int, height: int) -> int:
+        # return self.canvas.create_rectangle(x, y, x + width, y + height, fill="white")
+
+    def draw_string(self, x: int, y: int, text: str) -> None:
+        """
+        Draws a string onto the Canvas
+
+        Parameters:
+        x   (int): The x coordinate of the starting point
+        y   (int): The y coordinate of the starting point
+        text (str): The string to display
+
+        Returns:
+        int: The ID of the drawn item
+        """
+        self.canvas.create_text(x, y, text=text, anchor="e")
+
+    def clear_canvas(self) -> None:
+        """
+        Clears the Canvas, removing everything that was drawn beforehand
+        """
+        self.canvas.delete("all")
+
     def show_menu(self, menu: Menu, x: int, y: int) -> None:
+        """
+        Shows a pop-up Menu at the given coordinates
+
+        Parameters:
+        menu (Menu): The Menu to show
+        x    (int): The x coordinate of the starting point of the Menu
+        y    (int): The y coordinate of the starting point of the Menu
+        """
         try:
             menu.tk_popup(x, y)
         finally:
             menu.grab_release()
 
     def setup_place_host_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Place Host" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Place Host")
@@ -178,6 +261,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_place_router_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Place Router" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Place Router")
@@ -221,6 +312,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_add_interface_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Add Interface" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Add Interface")
@@ -243,6 +342,14 @@ class ObjectCanvas:
         self.title_label.place(relx=0.3, rely=0.9, relwidth=0.4, relheight=0.1)
 
     def setup_delete_interface_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Delete Interface" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Delete Interface")
@@ -266,6 +373,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_set_application_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Set Application" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Set Application")
@@ -309,6 +424,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_start_sending_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Start Sending" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Start Sending")
@@ -334,6 +457,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_connect_to_node_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Connect to Node" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Connect to Node")
@@ -385,6 +516,14 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def setup_disconnect_interface_frame(self, x: int, y: int) -> None:
+        """
+        Sets up the "Disconnect Interface" Frame
+
+        Parameters:
+        x (int): The x coordinate to show the Frame at
+        y (int): The y coordinate to show the Frame at
+        """
+        self.clear_frame()
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
         self.title_label.config(text="Disconnect Interface")
@@ -408,6 +547,9 @@ class ObjectCanvas:
                                relwidth=0.5, relheight=0.1)
 
     def clear_frame(self) -> None:
+        """
+        Sets a Frame to it's default state, and hides it as well
+        """
         self.config_frame.place_forget()
         for widget in self.config_frame.winfo_children():
             if widget.winfo_class() == "Entry":

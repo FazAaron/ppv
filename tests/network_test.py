@@ -186,31 +186,6 @@ def test_network_update_routing_tables():
         "Network.update_routing_tables() failure"
 
 
-def test_network_is_duplicate_node():
-    """
-    Test checking if the Node is a duplicate Node \
-    (a Node already exists with the given name or IP)
-    """
-    # Setup the Network object
-    network = Network()
-
-    # Check for duplicate name / IP in an empty Network
-    is_first_duplicate = network.is_duplicate_node("first_host", "192.168.1.1")
-
-    # Add Nodes to the Network
-    network.hosts.append(Host("host_1", "192.168.1.1", 10))
-    network.routers.append(Router("router_1", "192.167.1.1", 10, 10))
-
-    # Check duplicate the following way:
-    # - the IP is a duplicate
-    # - the name is a duplicate
-    ip_duplicate = network.is_duplicate_node("host_2", "192.168.1.1")
-    name_duplicate = network.is_duplicate_node("router_1", "192.169.1.1")
-
-    assert not is_first_duplicate and ip_duplicate and name_duplicate, \
-        "Network.is_duplicate_node() failure"
-
-
 def test_network_get_host():
     """
     Test getting Hosts

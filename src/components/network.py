@@ -36,6 +36,23 @@ class Network:
         self.total_pack:   int = 0
         self.dropped_pack: int = 0
 
+    def __is_duplicate_node(self, node_name: str, ip: str) -> bool:
+        """
+        Tells whether a Node with the given name or ip, or both, 
+        is present in the Network, or not
+
+        Parameters:
+        node_name (str): The name of the Node to check
+        ip        (str): The IP address of the Node to check
+
+        Returns:
+        bool: Whether the given Node is already part of the Network
+        """
+        for node in self.get_nodes():
+            if node.ip == ip or node.name == node_name:
+                return True
+        return False
+
     def get_nodes(self) -> List[Node]:
         """
         Gets all the Nodes available in the Network
@@ -114,26 +131,9 @@ class Network:
                         return False
         return True
 
-    def is_duplicate_node(self, node_name: str, ip: str) -> bool:
-        """
-        A helper method, which tells whether a Node with the given name or ip,
-        or both, is present in the Network, or not
-
-        Parameters:
-        node_name (str): The name of the Node to check
-        ip        (str): The IP address of the Node to check
-
-        Returns:
-        bool: Whether the given Node is already part of the Network
-        """
-        for node in self.get_nodes():
-            if node.ip == ip or node.name == node_name:
-                return True
-        return False
-
     def get_host(self, host_name_or_ip: str) -> Host:
         """
-        A helper method which returns the Host corresponding to the name
+        Gets the Host corresponding to the name
 
         Parameters:
         host_name_or_ip (str): The name or IP of the Host to search for
@@ -158,7 +158,7 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
-        if self.is_duplicate_node(host_name, ip):
+        if self.__is_duplicate_node(host_name, ip):
             return False
         self.hosts.append(Host(host_name, ip, send_rate))
         return self.update_routing_tables()
@@ -187,7 +187,7 @@ class Network:
 
     def get_router(self, router_name_or_ip: str) -> Router:
         """
-        A helper method which returns the Router corresponding to the name
+        Gets the Router corresponding to the name
 
         Parameters:
         router_name_or_ip (str): The name or IP of the Router to search for
@@ -217,7 +217,7 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
-        if self.is_duplicate_node(router_name, ip):
+        if self.__is_duplicate_node(router_name, ip):
             return False
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
         return self.update_routing_tables()
