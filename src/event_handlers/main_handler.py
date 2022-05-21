@@ -74,19 +74,35 @@ class MainHandler:
         """
         self.object_frame_handler.bind_to_exit(self.__exit_prompt)
 
-    def __set_mouse_pos(self, event: str) -> None:
-        self.object_canvas_handler.mouse_pos_x = event.x
-        self.object_canvas_handler.mouse_pos_y = event.y
-
     def __show_options_menu(self, event: str) -> None:
-        self.object_canvas_handler.show_menu()
+        """
+        Shows a pop-up Menu at the given coordinates\n
+        The Menu shown is based on whether the coordinates match a component's \
+        coordinates or not
+
+        Parameters:
+        event (str): The event that happens
+        """
+        self.object_canvas_handler.show_menu(event.x, event.y)
 
     def __show_and_log(self, comp: str, message: str, severity: str) -> None:
+        """
+        Shows a message on the right-hand side corner of the screen and then \
+        logs to a file
+
+        Parameters:
+        comp     (str): The component the message is about
+        message  (str): The message
+        severity (str): The severity of the message, can be information or error
+        """
         self.object_canvas_handler.show_message(message, 2000)
         while not self.logger.write(comp, message, severity):
             pass
 
     def __handle_component_add_submit(self) -> None:
+        """
+        Handles the component placement Frame's submit Button event
+        """
         self.object_canvas_handler.submit_input()
 
     def __handle_interface_add_submit(self) -> None:
@@ -501,7 +517,6 @@ class MainHandler:
             self.object_canvas_handler.placing = False
 
     def __bind_to_object_canvas_handler(self) -> None:
-        self.object_canvas_handler.bind("<Motion>", self.__set_mouse_pos)
         self.object_canvas_handler.bind("<Button-3>", self.__show_options_menu)
         self.__setup_config_frames()
         self.object_canvas_handler.bind(
