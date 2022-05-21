@@ -36,23 +36,6 @@ class Network:
         self.total_pack:   int = 0
         self.dropped_pack: int = 0
 
-    def __is_duplicate_node(self, node_name: str, ip: str) -> bool:
-        """
-        Tells whether a Node with the given name or ip, or both, 
-        is present in the Network, or not
-
-        Parameters:
-        node_name (str): The name of the Node to check
-        ip        (str): The IP address of the Node to check
-
-        Returns:
-        bool: Whether the given Node is already part of the Network
-        """
-        for node in self.get_nodes():
-            if node.ip == ip or node.name == node_name:
-                return True
-        return False
-
     def get_nodes(self) -> List[Node]:
         """
         Gets all the Nodes available in the Network
@@ -104,7 +87,22 @@ class Network:
                 connections.append(to_add)
         return connections
 
-    def update_routing_tables(self) -> bool:
+    def get_host(self, host_name_or_ip: str) -> Host:
+        """
+        Gets the Host corresponding to the name
+
+        Parameters:
+        host_name_or_ip (str): The name or IP of the Host to search for
+
+        Returns:
+        Host: The Host corresponding to the name or None
+        """
+        for host in self.hosts:
+            if host_name_or_ip in (host.name, host.ip):
+                return host
+        return None
+
+    def __update_routing_tables(self) -> bool:
         """
         Updates the RoutingTable of every single Node in the Network with the
         help of a Graph object
@@ -131,20 +129,22 @@ class Network:
                         return False
         return True
 
-    def get_host(self, host_name_or_ip: str) -> Host:
+    def __is_duplicate_node(self, node_name: str, ip: str) -> bool:
         """
-        Gets the Host corresponding to the name
+        Tells whether a Node with the given name or ip, or both, 
+        is present in the Network, or not
 
         Parameters:
-        host_name_or_ip (str): The name or IP of the Host to search for
+        node_name (str): The name of the Node to check
+        ip        (str): The IP address of the Node to check
 
         Returns:
-        Host: The Host corresponding to the name or None
+        bool: Whether the given Node is already part of the Network
         """
-        for host in self.hosts:
-            if host_name_or_ip in (host.name, host.ip):
-                return host
-        return None
+        for node in self.get_nodes():
+            if node.ip == ip or node.name == node_name:
+                return True
+        return False
 
     def create_host(self, host_name: str, ip: str, send_rate: int) -> bool:
         """
@@ -161,7 +161,7 @@ class Network:
         if self.__is_duplicate_node(host_name, ip):
             return False
         self.hosts.append(Host(host_name, ip, send_rate))
-        return self.update_routing_tables()
+        return self.__update_routing_tables()
 
     def delete_host(self, host_name_or_ip: str) -> bool:
         """
@@ -182,7 +182,7 @@ class Network:
                     if not ret_val[0]:
                         return ret_val[0]
                 self.hosts.remove(host)
-                return self.update_routing_tables()
+                return self.__update_routing_tables()
         return False
 
     def get_router(self, router_name_or_ip: str) -> Router:
@@ -220,7 +220,7 @@ class Network:
         if self.__is_duplicate_node(router_name, ip):
             return False
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
-        return self.update_routing_tables()
+        return self.__update_routing_tables()
 
     def delete_router(self, router_name_or_ip: str) -> bool:
         """
@@ -242,7 +242,7 @@ class Network:
                         return ret_val[0]
                 self.dropped_pack += router.get_buffer_length()
                 self.routers.remove(router)
-                return self.update_routing_tables()
+                return self.__update_routing_tables()
         return False
 
     def add_interface(self, node_name_or_ip: str, interface_name: str) -> bool:
@@ -288,7 +288,7 @@ class Network:
         ret_val: Tuple[bool, int] = node.delete_interface(interface_name)
         self.dropped_pack += ret_val[1]
         if ret_val[0]:
-            return self.update_routing_tables()
+            return self.__update_routing_tables()
         return ret_val[0]
 
     def set_application(self,
@@ -353,7 +353,7 @@ class Network:
                                                                     metrics)
         self.dropped_pack += ret_val[1]
         if ret_val[0]:
-            return self.update_routing_tables()
+            return self.__update_routing_tables()
         return ret_val[0]
 
     def disconnect_node_interface(self,
@@ -379,7 +379,7 @@ class Network:
         ret_val: Tuple[bool, int] = node.disconnect_interface(interface_name)
         self.dropped_pack += ret_val[1]
         if ret_val[0]:
-            return self.update_routing_tables()
+            return self.__update_routing_tables()
         return ret_val[0]
 
     def send_packet(self,
@@ -451,53 +451,3 @@ class Network:
         if ret_val[1]:
             self.dropped_pack += 1
         return ret_val[0]
-
-    def print_node(self, node: Node) -> bool:
-        """
-        Prints a Node's configuration
-
-        Parameters:
-        node (Node): The Node to print the configuration of
-
-        Returns:
-        bool: Whether the Node's details could be printed or not
-        """
-        if node is None:
-            return False
-        node.print_details()
-        return True
-
-    def print_nodes(self) -> None:
-        """
-        Prints every Node's configuration in the Network
-        """
-        for node in self.get_nodes():
-            self.print_node(node)
-
-    def print_hosts(self) -> None:
-        """
-        Prints every Host's configuration in the Network
-        """
-        for host in self.hosts:
-            self.print_node(host)
-
-    def print_routers(self) -> None:
-        """
-        Prints every Router's configuration in the Network
-        """
-        for router in self.routers:
-            self.print_node(router)
-
-    def print_connections(self) -> None:
-        """
-        Prints every Connection (back and forth) in the Network
-        """
-        for connection in self.get_connections():
-            print(f"{connection[0]}\n{connection[1]}\n{connection[2]}\n---")
-
-    def print_applications(self) -> None:
-        """
-        Prints every Application running in the Network
-        """
-        for host in self.hosts:
-            print(host.application)

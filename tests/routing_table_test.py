@@ -93,51 +93,6 @@ def test_routing_table_set_route():
         "RoutingTable.set_route() failure"
 
 
-def test_routing_table_get_routes():
-    """
-    Test the get_routes() method of the RoutingTable
-    """
-    # Setup the RoutingTable object
-    routing_table_1 = RoutingTable()
-
-    # Add Routes to the RoutingTable
-    routing_table_1.set_route(Route("192.168.1.1", "192.168.0.1", "eth1", 7))
-    routing_table_1.set_route(Route("192.168.0.1", "192.168.1.1", "eth2", 15))
-
-    # Get the Route(s) matching the IP address (no match in this case)
-    found_routes_1 = routing_table_1.get_routes("127.0.0.1")
-
-    # Setup the RoutingTable object
-    routing_table_2 = RoutingTable()
-
-    # Add Routes to the RoutingTable
-    routing_table_2.set_route(Route("192.168.1.1", "192.168.0.1", "eth1", 7))
-    routing_table_2.set_route(Route("192.168.0.1", "192.168.1.1", "eth2", 15))
-
-    # Get the Route(s) matching the IP address (single match in this case)
-    found_routes_2 = routing_table_2.get_routes("192.168.0.1")
-
-    # Setup the RoutingTable object
-    routing_table_3 = RoutingTable()
-
-    # Add Routes to the RoutingTable
-    routing_table_3.set_route(Route("192.168.1.1", "192.168.0.1", "eth1", 7))
-    routing_table_3.set_route(Route("192.168.0.1", "192.168.1.1", "eth2", 15))
-    routing_table_3.set_route(Route("192.168.1.1", "192.168.1.1", "eth3", 20))
-    routing_table_3.set_route(Route("192.168.0.1", "192.168.1.1", "eth4", 15))
-
-    # Get the Route(s) matching the IP address (multiple matches in this case)
-    found_routes_3 = routing_table_3.get_routes("192.168.0.1")
-
-    assert len(found_routes_1) == 0 and \
-        len(routing_table_1.routes) != 0 and \
-        len(found_routes_2) == 1 and \
-        len(routing_table_2.routes) != 0 and \
-        len(found_routes_3) == 2 and \
-        len(routing_table_3.routes) != 0, \
-        "RoutingTable.get_routes() failure"
-
-
 def test_routing_table_reset_routes():
     """
     Test the reset_routes() method of the RoutingTable

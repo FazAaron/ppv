@@ -210,23 +210,9 @@ class Node:
                         return (True, pack_dropped)
         return (False, pack_dropped)
 
-    def send_feedback(self, packet_source: str, feedback: int) -> None:
-        """
-        Sends feedback - should not be called, only used because of
-        polymorphism's sake
-        """
-        raise NotImplementedError("Base class method call.")
-
     def receive_feedback(self, packet_source: str, feedback: int) -> None:
         """
         Receives feedback - should not be called, only used
-        because of polymorphism's sake
-        """
-        raise NotImplementedError("Base class method call.")
-
-    def print_details(self) -> None:
-        """
-        Prints the details of the Node object - should not be called, only used
         because of polymorphism's sake
         """
         raise NotImplementedError("Base class method call.")
@@ -324,7 +310,7 @@ class Host(Node):
             return True
         return False
 
-    def handle_feedback(self, feedback: int) -> None:
+    def __handle_feedback(self, feedback: int) -> None:
         """
         Adjusts sending rate on the Node and Application based on feedback
 
@@ -349,7 +335,7 @@ class Host(Node):
         """
         if self.application.app_type == "AIMD":
             if packet_source == self.ip:
-                self.handle_feedback(feedback)
+                self.__handle_feedback(feedback)
             else:
                 print("Something went wrong during routing.")
 
@@ -362,27 +348,6 @@ class Host(Node):
         int: The calculated PPV value for the next Packet
         """
         return random.randint(1, 10)
-
-    def print_details(self) -> None:
-        """
-        Prints details of the Host, listing every attribute of it
-        """
-        print(f"\nHOST {self.name} - {self.ip}:\n"
-              f"Send rate: {self.send_rate} Packets / s\n"
-              f"Running Application:\n{self.application}")
-        self.routing_table.list_routes()
-        print("---\nAvailable Interfaces on Node:")
-        if len(self.interfaces) == 0:
-            print("There are no Interfaces on the Node.")
-        else:
-            for interface in self.interfaces:
-                print(interface)
-        print("---\nAvailable connections to other Nodes:")
-        if len(self.connections) == 0:
-            print("There are no connections to other Nodes.")
-        else:
-            for same_node, other_node in self.connections:
-                print(f"{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}\n")
 
     def __str__(self) -> str:
         to_return: str = ""
@@ -500,7 +465,7 @@ class Router(Node):
         if packet is not None:
             if len(self.buffer) < self.buffer_size:
                 self.buffer.append(packet)
-                self.send_feedback(packet.source_ip, 1)
+                self.__send_feedback(packet.source_ip, 1)
                 return (True, dropped_pack)
             if len(self.buffer) == self.buffer_size:
                 buffer_packet: Packet = self.lowest_buffer_ppv()
@@ -511,11 +476,11 @@ class Router(Node):
                 else:
                     print(f"Dropped incoming packet:\n{packet}.")
                 dropped_pack = True
-                self.send_feedback(packet.source_ip, -1)
+                self.__send_feedback(packet.source_ip, -1)
                 return (True, dropped_pack)
         return (False, dropped_pack)
 
-    def send_feedback(self, packet_source: str, feedback: int) -> None:
+    def __send_feedback(self, packet_source: str, feedback: int) -> None:
         """
         Sends feedback data to the Node the Packet was received from
 
@@ -536,28 +501,7 @@ class Router(Node):
         packet_source (str): The source to send feedback to
         feedback      (int): The feedback data being sent back
         """
-        self.send_feedback(packet_source, feedback)
-
-    def print_details(self) -> None:
-        """
-        Prints details of the Router, listing every attribute of it
-        """
-        print(f"\nROUTER {self.name} - {self.ip}:\n"
-              f"Send rate: {self.send_rate} Packets / s\n"
-              f"Buffer: {len(self.buffer)} / {self.buffer_size}")
-        self.routing_table.list_routes()
-        print("---\nAvailable Interfaces on Node:")
-        if len(self.interfaces) == 0:
-            print("There are no Interfaces on the Node.")
-        else:
-            for interface in self.interfaces:
-                print(interface)
-        print("---\nAvailable connections to other Nodes:")
-        if len(self.connections) == 0:
-            print("There are no connections to other Nodes.")
-        else:
-            for same_node, other_node in self.connections:
-                print(f"\n{same_node[0]}\n-\nCONNECTED TO\n-\n{other_node[0]}")
+        self.__send_feedback(packet_source, feedback)
 
     def __str__(self) -> str:
         to_return: str = ""

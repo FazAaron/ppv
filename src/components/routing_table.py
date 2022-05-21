@@ -52,22 +52,6 @@ class RoutingTable:
     def __init__(self) -> None:
         self.routes: List[Route] = []
 
-    def get_routes(self, destination: str) -> List[Route]:
-        """
-        Find the Routes that match the argument
-
-        Parameters:
-        destination (str): The destination IP to match against
-
-        Returns:
-        List[Route]: The Routes that match the destination
-        """
-        found: List[Route] = []
-        for route in self.routes:
-            if destination == route.destination:
-                found.append(route)
-        return found
-
     def set_route(self, to_set: Route) -> None:
         """
         Overrides the corresponding Route with the one passed as an argument\n
@@ -94,21 +78,6 @@ class RoutingTable:
         Resets the RoutingTable to a default state
         """
         self.routes = []
-
-    def list_routes(self) -> None:
-        """
-        Prints Routes contained in the RoutingTable in a formatted way
-        """
-        if len(self.routes) == 0:
-            print("The routing table is empty.")
-            return
-        curr_line: int = 1
-        for route in self.routes:
-            print(f"\nRoute {curr_line}")
-            first_row_len: int = len(route.destination) + len("Destination: ")
-            print("-" * first_row_len)
-            print(route)
-            curr_line += 1
 
     def __str__(self) -> str:
         if len(self.routes) == 0:

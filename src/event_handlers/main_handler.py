@@ -32,7 +32,6 @@ class MainHandler:
     logger                   (Logger): The logger object, logging neccessary actions
     hosts                    (List[Tuple[int, str]]): Host information stored
     routers                  (List[Tuple[int, str]]): Router information stored
-    interfaces               (List[Tuple[int, str, str]]): Interface information stored
     links                    (List[Tuple[int, str, str]]): Link information stored
     """
 
@@ -52,35 +51,12 @@ class MainHandler:
 
         self.hosts: List[Tuple[int, str]] = []
         self.routers: List[Tuple[int, str]] = []
-        self.interfaces: List[Tuple[int, str, str]] = []
         self.links: List[Tuple[int, str, str, str, str]] = []
-
-        # TODO: Move to object_canvas_handler
-        self.last_saved_x: int = 0
-        self.last_saved_y: int = 0
 
         # Setup the bindings to the Handlers
         self.__bind_to_object_frame_handler()
         self.__bind_to_object_canvas_handler()
 
-    # Bindings to Handlers
-    # ObjectFrameHandler specific bindings
-    def __bind_to_object_frame_handler(self) -> None:
-        self.object_frame_handler.bind_to_exit(self.__exit_prompt)
-
-    # ObjectCanvasHandler specific bindings
-    def __bind_to_object_canvas_handler(self) -> None:
-        self.object_canvas_handler.bind("<Motion>", self.__set_mouse_pos)
-        self.object_canvas_handler.bind("<Button-3>", self.__show_options_menu)
-        self.__setup_config_frames()
-        self.object_canvas_handler.bind(
-            "<Motion>", self.__handle_is_placing_motion)
-        self.object_canvas_handler.bind(
-            "<Button-1>", self.__handle_show_details_left_click)
-        self.object_canvas_handler.bind(
-            "<Button-1>", self.__handle_is_placing_left_click)
-
-    # ObjectFrame handlers
     def __exit_prompt(self) -> None:
         """
         Opens a pop-up prompt asking a yes/no question for the user, whether \
@@ -91,211 +67,63 @@ class MainHandler:
         if answer:
             self.main_window.exit()
 
-    def __change_text(self, curr_showing: str, text: str) -> None:
-        self.object_frame_handler.display_text(curr_showing, text)
+    def __bind_to_object_frame_handler(self) -> None:
+        """
+        Bind events to the ObjectFrame's Button Widget, prompting a yes/no
+        question when clicked
+        """
+        self.object_frame_handler.bind_to_exit(self.__exit_prompt)
 
-    # ObjectCanvas handlers
     def __set_mouse_pos(self, event: str) -> None:
         self.object_canvas_handler.mouse_pos_x = event.x
         self.object_canvas_handler.mouse_pos_y = event.y
 
-    # ----
     def __show_options_menu(self, event: str) -> None:
         self.object_canvas_handler.show_menu()
 
-    # ----
-    def __setup_cancel_button(self) -> None:
-        self.object_canvas_handler.bind_to_cancel_button()
+    def __show_and_log(self, comp: str, message: str, severity: str) -> None:
+        self.object_canvas_handler.show_message(message, 2000)
+        while not self.logger.write(comp, message, severity):
+            pass
 
-    def __setup_config_frames(self) -> None:
-        network_frames: List[str] = self.object_canvas_handler.get_network_config_menu_frames(
-        )
-        host_frames: List[str] = self.object_canvas_handler.get_host_config_menu_frames(
-        )
-        router_frames: List[str] = self.object_canvas_handler.get_router_config_menu_frames(
-        )
-        network_handlers: List[Callable] = self.__get_handlers("NETWORK")
-        host_handlers: List[Callable] = self.__get_handlers("HOST")
-        router_handlers: List[Callable] = self.__get_handlers("ROUTER")
-        self.object_canvas_handler.bind_to_options_menu_entries(
-            (network_frames, network_handlers), (host_frames, host_handlers), (router_frames, router_handlers), self.__handle_deletion_option)
-        self.__setup_cancel_button()
-
-    # ----
-    def __handle_is_placing_motion(self, event: str) -> None:
-        if self.object_canvas_handler.is_placing():
-            item_id: int = self.object_canvas_handler.draw(
-                self.object_canvas_handler.input_data[0], event.x, event.y, save=False)
-            if item_id != -1:
-                self.object_canvas_handler.set_last_saved_pos(event.x, event.y)
-
-    # ----
-    def __handle_is_placing_left_click(self, event: str) -> None:
-        if self.object_canvas_handler.is_placing():
-            user_input: List[str] = self.object_canvas_handler.input_data
-            if len(user_input) == 0:
-                return
-            created: bool = False
-            last_x: int = self.object_canvas_handler.last_saved_x
-            last_y: int = self.object_canvas_handler.last_saved_y
-            if user_input[0] == "COMPONENT/HOST":
-                created = self.network.create_host(
-                    user_input[1], user_input[2], int(user_input[3]))
-                if created:
-                    item_id: int = self.object_canvas_handler.draw(
-                        user_input[0], last_x, last_y)
-                    self.hosts.append((item_id, user_input[1]))
-                    self.object_canvas_handler.show_message(
-                        "Successfully created the Host.", 2000)
-                    while not self.logger.write(f"Host {user_input[1]} - {user_input[2]}", "Successful creation", "Information"):
-                        pass
-                else:
-                    self.object_canvas_handler.show_message(
-                        "Failed to create the Host: duplicate Node IP or Name.", 2000)
-                    while not self.logger.write(f"Host {user_input[1]} - {user_input[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
-                        pass
-            else:
-                created = self.network.create_router(
-                    user_input[1], user_input[2], int(user_input[3]), int(user_input[4]))
-                if created:
-                    item_id: int = self.object_canvas_handler.draw(
-                        user_input[0], last_x, last_y)
-                    self.routers.append((item_id, user_input[1]))
-                    self.object_canvas_handler.show_message(
-                        "Successfully created the Router.", 2000)
-                    while not self.logger.write(f"Router {user_input[1]} - {user_input[2]}", "Successful creation", "Information"):
-                        pass
-                else:
-                    self.object_canvas_handler.show_message(
-                        "Failed to create the Router: duplicate Node IP or Name.", 2000)
-                    while not self.logger.write(f"Router {user_input[1]} - {user_input[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
-                        pass
-            self.object_canvas_handler.placing = False
-            self.object_canvas_handler.redraw()
-
-    # ----
-    def __handle_show_details_left_click(self, event: str) -> None:
-        details: Tuple[str, int] = self.object_canvas_handler.intersects(
-            event.x, event.y, 1, 1)
-        if details[1] > 0:
-            if details[0] == "ROUTER":
-                for router in self.routers:
-                    if details[1] == router[0]:
-                        item: Router = self.network.get_router(router[1])
-                        self.__change_text(
-                            "Router Details:\n", item.__str__())
-            elif details[0] == "HOST":
-                for host in self.hosts:
-                    if details[1] == host[0]:
-                        item: Host = self.network.get_host(host[1])
-                        self.__change_text(
-                            "Host Details:\n", item.__str__())
-            else:
-                for interface in self.interfaces:
-                    if details[1] == interface[0]:
-                        self.__change_text(
-                            "Interface Details:\n", f"Interface {interface[1]} on Node {interface[2]}")
-        else:
-            self.__change_text("", self.object_frame_handler.start_display)
-
-    # ----
-    def __handle_deletion_option(self) -> None:
-        # TODO: check if any packets were lost / what happens with connections, application, sending, etc
-        x: int = self.object_canvas_handler.menu_x
-        y: int = self.object_canvas_handler.menu_y
-        details: Tuple[str, int] = self.object_canvas_handler.intersects(
-            x, y, 1, 1)
-        handler_success: bool = self.object_canvas_handler.delete_component(
-            details[0], details[1])
-        network_success: bool = False
-        link_success: bool = True
-        if details[0] == "ROUTER":
-            for router in self.routers:
-                if details[1] == router[0]:
-                    network_success = self.network.delete_router(router[1])
-                    for link in self.links:
-                        if router[1] == link[1] or router[1] == link[3]:
-                            self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(
-                                link[0])
-                    if handler_success and network_success and link_success:
-                        self.routers.remove(router)
-                        self.object_canvas_handler.show_message(
-                            f"Successfully deleted Router {router[1]}.", 2000)
-                        self.logger.write(
-                            f"Router {router[1]}", "Successful deletion", "Information")
-                    else:
-                        self.object_canvas_handler.show_message(
-                            f"Failed to delete Router {router[1]}.", 2000)
-                        self.logger.write(
-                            f"Router {router[1]}", "Failed deletion", "Error")
-        elif details[0] == "HOST":
-            for host in self.hosts:
-                if details[1] == host[0]:
-                    network_success = self.network.delete_host(host[1])
-                    for link in self.links:
-                        if host[1] == link[1] or host[1] == link[3]:
-                            self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(
-                                link[0])
-                    if handler_success and network_success and link_success:
-                        self.hosts.remove(host)
-                        self.object_canvas_handler.show_message(
-                            f"Successfully deleted Host {host[1]}.", 2000)
-                        self.logger.write(
-                            f"Host {host[1]}", "Successful deletion", "Information")
-                    else:
-                        self.object_canvas_handler.show_message(
-                            f"Failed to delete Host {host[1]}.", 2000)
-                        self.logger.write(
-                            f"Host {host[1]}", "Failed deletion", "Error")
-
-    # ----
     def __handle_component_add_submit(self) -> None:
         self.object_canvas_handler.submit_input()
 
     def __handle_interface_add_submit(self) -> None:
         x: int = self.object_canvas_handler.menu_x
         y: int = self.object_canvas_handler.menu_y
-        details = self.object_canvas_handler.intersects(x, y, 1, 1)
+        intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
+            x, y, 1, 1)
         self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
         if len(user_input) == 0:
             return
-        if details[0] == "HOST":
+        if intersection_details[0] == "HOST":
             for host in self.hosts:
-                if host[0] == details[1]:
+                if host[0] == intersection_details[1]:
                     created = self.network.add_interface(
                         host[1], user_input[0])
                     host_name = host[1]
                     interface_name = user_input[0]
                     if created:
-                        self.object_canvas_handler.show_message(
-                            f"Successfully created Interface {interface_name} on Host {host_name}.", 2000)
-                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Successful creation", "Information"):
-                            pass
+                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
+                                            f"Successfully created Interface {interface_name} on Host {host_name}.", "Information")
                     else:
-                        self.object_canvas_handler.show_message(
-                            f"Failed to create Interface {interface_name} on {host_name}: duplicate Interface name on Host.", 2000)
-                        while not self.logger.write(f"Host {host_name} -> Interface {interface_name}", "Failed creation: duplicate Interface name on Host", "Information"):
-                            pass
-        elif details[0] == "ROUTER":
+                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
+                                            f"Failed to create Interface {interface_name} on Host {host_name}: duplicate Interface name on Host.", "Information")
+        elif intersection_details[0] == "ROUTER":
             for router in self.routers:
-                if router[0] == details[1]:
+                if router[0] == intersection_details[1]:
                     created = self.network.add_interface(
                         router[1], user_input[0])
                     router_name = router[1]
                     interface_name = user_input[0]
                     if created:
-                        self.object_canvas_handler.show_message(
-                            f"Successfully created Interface {interface_name} on Router {router_name}.", 2000)
-                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Successful creation", "Information"):
-                            pass
+                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
+                                            f"Successfully created Interface {interface_name} on Router {router_name}", "Information")
                     else:
-                        self.object_canvas_handler.show_message(
-                            f"Failed to create Interface {interface_name} on {router_name}: duplicate Interface name on Router.", 2000)
-                        while not self.logger.write(f"Router {router_name} -> Interface {interface_name}", "Failed creation: duplicate Interface name on Router", "Information"):
-                            pass
+                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
+                                            f"Failed to create Interface {interface_name} on Router {router_name}: duplicate Interface name on Router.", "Information")
 
     def __handle_interface_delete_submit(self) -> None:
         # TODO: check if any packets were lost / what happens with connections, application, sending, etc
@@ -514,7 +342,6 @@ class MainHandler:
                         self.logger.write(
                             f"Router {router[1]} - Interface {user_input[0]}", f"Failed to disconnect: no such Interface on Router {router[1]}", "Error")
 
-    # -----
     def __get_handlers(self, menu_type: str) -> List[Callable]:
         if menu_type.upper() == "NETWORK":
             return [self.__handle_component_add_submit, self.__handle_component_add_submit]
@@ -525,3 +352,161 @@ class MainHandler:
         else:
             return [self.__handle_interface_add_submit, self.__handle_interface_delete_submit,
                     self.__handle_connect_submit, self.__handle_disconnect_submit]
+
+    def __get_menu_frames(self, menu_type: str) -> List[str]:
+        if menu_type.upper() == "ROUTER":
+            return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
+        elif menu_type.upper() == "HOST":
+            return ["ADDINTERFACE", "DELETEINTERFACE", "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
+        else:
+            return ["PLACEHOST", "PLACEROUTER"]
+
+    def __handle_deletion_option(self) -> None:
+        # TODO: check if any packets were lost / what happens with connections, application, sending, etc
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+        details: Tuple[str, int] = self.object_canvas_handler.intersects(
+            x, y, 1, 1)
+        handler_success: bool = self.object_canvas_handler.delete_component(
+            details[0], details[1])
+        network_success: bool = False
+        link_success: bool = True
+        if details[0] == "ROUTER":
+            for router in self.routers:
+                if details[1] == router[0]:
+                    network_success = self.network.delete_router(router[1])
+                    for link in self.links:
+                        if router[1] == link[1] or router[1] == link[3]:
+                            self.links.remove(link)
+                            link_success = link_success and self.object_canvas_handler.delete_link(
+                                link[0])
+                    if handler_success and network_success and link_success:
+                        self.routers.remove(router)
+                        self.object_canvas_handler.show_message(
+                            f"Successfully deleted Router {router[1]}.", 2000)
+                        self.logger.write(
+                            f"Router {router[1]}", "Successful deletion", "Information")
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to delete Router {router[1]}.", 2000)
+                        self.logger.write(
+                            f"Router {router[1]}", "Failed deletion", "Error")
+        elif details[0] == "HOST":
+            for host in self.hosts:
+                if details[1] == host[0]:
+                    network_success = self.network.delete_host(host[1])
+                    for link in self.links:
+                        if host[1] == link[1] or host[1] == link[3]:
+                            self.links.remove(link)
+                            link_success = link_success and self.object_canvas_handler.delete_link(
+                                link[0])
+                    if handler_success and network_success and link_success:
+                        self.hosts.remove(host)
+                        self.object_canvas_handler.show_message(
+                            f"Successfully deleted Host {host[1]}.", 2000)
+                        self.logger.write(
+                            f"Host {host[1]}", "Successful deletion", "Information")
+                    else:
+                        self.object_canvas_handler.show_message(
+                            f"Failed to delete Host {host[1]}.", 2000)
+                        self.logger.write(
+                            f"Host {host[1]}", "Failed deletion", "Error")
+
+    def __setup_cancel_button(self) -> None:
+        self.object_canvas_handler.bind_to_cancel_button()
+
+    def __setup_config_frames(self) -> None:
+        network_frames: List[str] = self.__get_menu_frames("NETWORK")
+        network_handlers: List[Callable] = self.__get_handlers("NETWORK")
+
+        host_frames: List[str] = self.__get_menu_frames("HOST")
+        host_handlers: List[Callable] = self.__get_handlers("HOST")
+
+        router_frames: List[str] = self.__get_menu_frames("ROUTER")
+        router_handlers: List[Callable] = self.__get_handlers("ROUTER")
+
+        self.object_canvas_handler.bind_to_options_menu_entries(
+            (network_frames, network_handlers), (host_frames, host_handlers), (router_frames, router_handlers), self.__handle_deletion_option)
+        self.__setup_cancel_button()
+
+    def __handle_is_placing_motion(self, event: str) -> None:
+        if self.object_canvas_handler.is_placing():
+            item_id: int = self.object_canvas_handler.draw(
+                self.object_canvas_handler.input_data[0], event.x, event.y, save=False)
+            if item_id != -1:
+                self.object_canvas_handler.set_last_saved_pos(event.x, event.y)
+
+    def __change_text(self, curr_showing: str, text: str) -> None:
+        self.object_frame_handler.display_text(curr_showing, text)
+
+    def __handle_show_details_left_click(self, event: str) -> None:
+        details: Tuple[str, int] = self.object_canvas_handler.intersects(
+            event.x, event.y, 1, 1)
+        if details[1] > 0:
+            if details[0] == "ROUTER":
+                for router in self.routers:
+                    if details[1] == router[0]:
+                        item: Router = self.network.get_router(router[1])
+                        self.__change_text(
+                            "Router Details:\n", item.__str__())
+            else:
+                for host in self.hosts:
+                    if details[1] == host[0]:
+                        item: Host = self.network.get_host(host[1])
+                        self.__change_text(
+                            "Host Details:\n", item.__str__())
+        else:
+            self.__change_text("", self.object_frame_handler.start_display)
+
+    def __handle_is_placing_left_click(self, event: str) -> None:
+        if self.object_canvas_handler.is_placing():
+            user_input: List[str] = self.object_canvas_handler.input_data
+            if len(user_input) == 0:
+                return
+            created: bool = False
+            last_x: int = self.object_canvas_handler.last_saved_x
+            last_y: int = self.object_canvas_handler.last_saved_y
+            if user_input[0] == "COMPONENT/HOST":
+                created = self.network.create_host(
+                    user_input[1], user_input[2], int(user_input[3]))
+                if created:
+                    item_id: int = self.object_canvas_handler.draw(
+                        user_input[0], last_x, last_y)
+                    self.hosts.append((item_id, user_input[1]))
+                    self.object_canvas_handler.show_message(
+                        "Successfully created the Host.", 2000)
+                    while not self.logger.write(f"Host {user_input[1]} - {user_input[2]}", "Successful creation", "Information"):
+                        pass
+                else:
+                    self.object_canvas_handler.show_message(
+                        "Failed to create the Host: duplicate Node IP or Name.", 2000)
+                    while not self.logger.write(f"Host {user_input[1]} - {user_input[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
+                        pass
+            else:
+                created = self.network.create_router(
+                    user_input[1], user_input[2], int(user_input[3]), int(user_input[4]))
+                if created:
+                    item_id: int = self.object_canvas_handler.draw(
+                        user_input[0], last_x, last_y)
+                    self.routers.append((item_id, user_input[1]))
+                    self.object_canvas_handler.show_message(
+                        "Successfully created the Router.", 2000)
+                    while not self.logger.write(f"Router {user_input[1]} - {user_input[2]}", "Successful creation", "Information"):
+                        pass
+                else:
+                    self.object_canvas_handler.show_message(
+                        "Failed to create the Router: duplicate Node IP or Name.", 2000)
+                    while not self.logger.write(f"Router {user_input[1]} - {user_input[2]}", "Failed creation: duplicate Node IP or Name", "Information"):
+                        pass
+            self.object_canvas_handler.placing = False
+
+    def __bind_to_object_canvas_handler(self) -> None:
+        self.object_canvas_handler.bind("<Motion>", self.__set_mouse_pos)
+        self.object_canvas_handler.bind("<Button-3>", self.__show_options_menu)
+        self.__setup_config_frames()
+        self.object_canvas_handler.bind(
+            "<Motion>", self.__handle_is_placing_motion)
+        self.object_canvas_handler.bind(
+            "<Button-1>", self.__handle_show_details_left_click)
+        self.object_canvas_handler.bind(
+            "<Button-1>", self.__handle_is_placing_left_click)

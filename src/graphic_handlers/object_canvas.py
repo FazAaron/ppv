@@ -24,9 +24,6 @@ class ObjectCanvas:
                                   the config_menu
     """
 
-# -----------------------------------------------------------------------------
-# CONSTRUCTOR
-# -----------------------------------------------------------------------------
     def __init__(self, parent: ttk.Frame) -> None:
         self.canvas: Canvas = Canvas(
             parent, background="lightgrey", bd=1, highlightthickness=1, relief="ridge")
@@ -74,10 +71,13 @@ class ObjectCanvas:
         # Set the position of this Frame inside the parent container
         self.canvas.grid(column=0, row=0, sticky="nsew")
 
-# -----------------------------------------------------------------------------
-# PRIVATE METHODS
-# -----------------------------------------------------------------------------
     def __setup_network_config_menu(self) -> Menu:
+        """
+        Sets up the Network configuration Menu
+
+        Returns:
+        Menu: The Network configuration Menu
+        """
         network_config_menu = Menu(self.canvas, tearoff=0)
         network_config_menu.add_command(label="Place Host")
         network_config_menu.add_command(label="Place Router")
@@ -86,6 +86,12 @@ class ObjectCanvas:
         return network_config_menu
 
     def __setup_host_config_menu(self) -> Menu:
+        """
+        Sets up the Host configuration Menu
+
+        Returns:
+        Menu: The Host configuration Menu
+        """
         host_config_menu = Menu(self.canvas, tearoff=0)
         host_config_menu.add_command(label="Add Interface")
         host_config_menu.add_command(label="Delete Interface")
@@ -99,6 +105,12 @@ class ObjectCanvas:
         return host_config_menu
 
     def __setup_router_config_menu(self) -> Menu:
+        """
+        Sets up the Router configuration Menu
+
+        Returns:
+        Menu: The Router configuration Menu
+        """
         router_config_menu = Menu(self.canvas, tearoff=0)
         router_config_menu.add_command(label="Add Interface")
         router_config_menu.add_command(label="Delete Interface")
@@ -109,9 +121,6 @@ class ObjectCanvas:
         router_config_menu.add_command(label="Close")
         return router_config_menu
 
-# -----------------------------------------------------------------------------
-# PUBLIC METHODS
-# -----------------------------------------------------------------------------
     def after(self, time: int, func: Callable) -> None:
         """
         Calls a function after a given time elapses\n
@@ -212,6 +221,17 @@ class ObjectCanvas:
             menu.tk_popup(x, y)
         finally:
             menu.grab_release()
+
+    def clear_frame(self) -> None:
+        """
+        Sets a Frame to it's default state, and hides it as well
+        """
+        self.config_frame.place_forget()
+        for widget in self.config_frame.winfo_children():
+            if widget.winfo_class() == "Entry":
+                widget.delete(0, "end")
+                widget.configure(state="disabled")
+            widget.place_forget()
 
     def setup_place_host_frame(self, x: int, y: int) -> None:
         """
@@ -542,14 +562,3 @@ class ObjectCanvas:
             relx=0.75, rely=0.9, relwidth=0.25, relheight=0.1)
         self.title_label.place(relx=0.25, rely=0.9,
                                relwidth=0.5, relheight=0.1)
-
-    def clear_frame(self) -> None:
-        """
-        Sets a Frame to it's default state, and hides it as well
-        """
-        self.config_frame.place_forget()
-        for widget in self.config_frame.winfo_children():
-            if widget.winfo_class() == "Entry":
-                widget.delete(0, "end")
-                widget.configure(state="disabled")
-            widget.place_forget()
