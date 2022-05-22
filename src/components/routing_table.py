@@ -64,13 +64,20 @@ class RoutingTable:
         to_set (Route): New Route to add or set
         """
         for route in self.routes:
+            # If there is already a Route that equals to the one we want to add,
+            # keep it as is
             if to_set == route:
                 return
+
+            # If there is a Route with the same destination and Interface,
+            # replace it with the new one
             if to_set.destination == route.destination and\
                to_set.interface == route.interface:
                 self.routes.remove(route)
                 self.routes.append(to_set)
                 return
+
+        # If the Route to add doesn't match any of the above, just add it
         self.routes.append(to_set)
 
     def reset_routes(self) -> None:

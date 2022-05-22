@@ -52,10 +52,13 @@ class Application:
         Returns:
         Packet: The Packet to send through the Network or None
         """
+        # Check if the Application can actually send
         if self.can_send():
+            # If yes, increase the sent Packets by 1, and return the Packet
             self.curr_sent += 1
             packet: Packet = Packet(self.ip, target_ip, ppv)
             return packet
+
         return None
 
     def receive(self, packet: Packet) -> None:

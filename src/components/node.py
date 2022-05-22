@@ -37,8 +37,8 @@ class Node:
         self.ip:            str = ip
         self.send_rate:     int = send_rate
         self.interfaces:    List[Interface] = []
-        self.connections:   List[(Interface, Node),
-                                 (Interface, Node)] = []
+        self.connections:   List[Tuple[Tuple[Interface, Node],
+                                 Tuple[Interface, Node]]] = []
         self.routing_table: RoutingTable = RoutingTable()
 
     def add_route(self, route: Route) -> None:
@@ -61,12 +61,16 @@ class Node:
         Route: The best route that matches the destination IP address or None
         """
         best_route: Route = None
+
+        # Check for the best possible Route, comparing metrics
+        # The first Route with the lowest metrics will be the best Route
         for route in self.routing_table.routes:
             if route.destination == destination:
                 if best_route is None:
                     best_route = route
                 elif best_route.metrics > route.metrics:
                     best_route = route
+
         return best_route
 
     def reset_routes(self):
@@ -86,9 +90,11 @@ class Node:
         Returns:
         bool: Whether adding the Interface was successful or not
         """
+        # Check if there is already an Interface with the given name
         for interface in self.interfaces:
             if interface.name == name:
                 return False
+
         self.interfaces.append(Interface(name))
         return True
 
@@ -105,6 +111,7 @@ class Node:
         for interface in self.interfaces:
             if interface.name == name:
                 return interface
+
         return None
 
     def delete_interface(self, name: str) -> Tuple[bool, int]:
@@ -122,12 +129,20 @@ class Node:
         """
         interface: Interface = self.get_interface(name)
         pack_dropped: int = 0
+
+        # Check if the given Interface is actually present on the Node
         if interface is None:
             return (False, pack_dropped)
+
+        # Disconnect the Interface, if it is connected
         for connection in self.connections:
             if connection[0][0] == interface:
+                # Check if any Packets were dropped
+                # No need to check the first (0) index of the return, since
+                # we already checked whether the Interface exists or not
                 pack_dropped = self.disconnect_interface(name)[1]
                 break
+
         self.interfaces.remove(interface)
         return (True, pack_dropped)
 
@@ -156,14 +171,24 @@ class Node:
                           and how many Packets were dropped
         """
         pack_dropped: int = 0
+
+        # Check if the __o Node is equal to the Node itself
         if self is __o:
             return (False, pack_dropped)
+
+        # Checks whether the given Interfaces are actually present on the Nodes
         self_interface:  Interface = self.get_interface(self_name)
         other_interface: Interface = __o.get_interface(other_name)
         if (self_interface and other_interface) is None:
             return (False, pack_dropped)
+
+        # Check if any Packets were dropped
+        # No need to check the first (0) index of the return, since
+        # we already checked whether the Interface exists or not
         pack_dropped = self.disconnect_interface(self_name)[1]
-        pack_dropped += __o.disconnect_interface(other_name)[1]
+        __o.disconnect_interface(other_name)
+
+        # Connect the Interfaces
         connection: Link = Link(speed, metrics)
         self_success: bool = self_interface.connect_link(connection,
                                                          connection.channels[0],
@@ -171,6 +196,9 @@ class Node:
         other_success: bool = other_interface.connect_link(connection,
                                                            connection.channels[1],
                                                            connection.channels[0])
+
+        # Check if connection was successful, if yes, add the new connection to
+        # both Nodes' connection table
         if (self_success and other_success):
             self_connection:  Tuple(Interface, Node) = (self_interface, self)
             other_connection: Tuple(Interface, Node) = (other_interface, __o)
@@ -179,6 +207,7 @@ class Node:
             __o.connections.append((other_connection,
                                     self_connection))
             return (True, pack_dropped)
+
         return (False, pack_dropped)
 
     def disconnect_interface(self, name: str) -> Tuple[bool, int]:
@@ -195,19 +224,30 @@ class Node:
         """
         self_interface: Interface = self.get_interface(name)
         pack_dropped: int = 0
+
+        # Check if the given Interface is actually present on the Node
         if self_interface is None:
             return (False, pack_dropped)
+
+        # Check if the Interface is connected
         for item in self.connections:
             if item[0][0] is self_interface:
+                # Get the other Node's information
                 other_interface: Interface = item[1][0]
                 other_node:      Node = item[1][1]
+
+                # Check if any Packets were dropped, and remove the connection
                 pack_dropped = self_interface.disconnect_link()
                 self.connections.remove(item)
+
+                # Check if any Packets were dropped, and remove the connection
+                # on the other Node as well
                 pack_dropped += other_interface.disconnect_link()
                 for connection in other_node.connections:
                     if connection[0][0] is other_interface:
                         other_node.connections.remove(connection)
                         return (True, pack_dropped)
+
         return (True, pack_dropped)
 
     def receive_feedback(self, packet_source: str, feedback: int) -> None:
@@ -259,6 +299,7 @@ class Host(Node):
         """
         self.application = \
             Application(name, self.ip, amount, send_rate, app_type)
+        # The Application and Host send rate should always be equal
         self.send_rate = send_rate
 
     def send_packet(self, destination: str) -> Tuple[str, str]:
@@ -269,26 +310,41 @@ class Host(Node):
         destination (str): IP address of the destination Node
 
         Returns:
-        Tuple(str, str): The next hop in the Route and the receiving Interface
+        Tuple[str, str]: The next hop in the Route and the receiving Interface
         """
+        # Check if the destination we would like to send to is equal to this Host
         if destination == self.ip:
             return None
+
+        # Only send, if the Application still have Packets to send
         if self.application.can_send():
+            # Get the PPV, and get the corresponding Packet
+            # Also fetch the best possible Route to the destination
             ppv: int = self.calculate_ppv()
             packet: Packet = self.application.send(destination, ppv)
             route: Route = self.get_best_route(destination)
+
+            # Check if the destination can be reached, and the Packet was created
             if (route and packet) is None:
-                print(f"Can't send packet to {destination}, dropping it.")
                 return None
+
+            # Go through the Interfaces until we find the one that matches the
+            # one given by the Route
             for interface in self.interfaces:
                 if route.interface == interface.name:
+                    # Go through the connections, so that we can actually get
+                    # the Interface the Packet will be received on for future use
                     for connection in self.connections:
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
+
+                    # Put the Packet to the Link
                     interface.put_to_link(packet)
-                    print(f"Sent packet from {self.name}")
+
+                    # Return the next hop and it's corresponding receiver Interface
                     return route.gateway, receiver_interface
+
         return None
 
     def receive_packet(self, name: str) -> bool:
@@ -302,12 +358,20 @@ class Host(Node):
         bool: Whether receiving the Packet was a success or not
         """
         interface: Interface = self.get_interface(name)
+
+        # Check if the Interface actually exists on the Host
         if interface is None:
             return False
+
+        # Get the Packet from the Link connected to the Interface        
         packet: Packet = interface.receive_from_link()
+
+        # Check if there was actually a Packet to receive
         if packet is not None:
+            # Pass the Packet to the Application
             self.application.receive(packet)
             return True
+
         return False
 
     def __handle_feedback(self, feedback: int) -> None:
@@ -317,9 +381,13 @@ class Host(Node):
         Parameters:
         feedback (int): The feedback received from the Router
         """
+        # If the feedback was positive (the buffer was not full), we can increase
+        # the speed
         if feedback == 1:
             self.send_rate += 1
             self.application.send_rate += 1
+        # If the feedback was negative (the buffer was full), we need to decrease
+        # the speed the Host is sending at
         elif feedback == -1:
             self.send_rate //= 2
             self.application.send_rate //= 2
@@ -333,13 +401,15 @@ class Host(Node):
         packet_source (str): This Node's IP address
         feedback      (int): The feedback data being sent back
         """
+        # Check if the Host's type is equal to AIMD or not - only that type of
+        # Host has an use for the feedback mechanism
         if self.application.app_type == "AIMD":
+            # Only handle the feedback when the Packet was sent from here
+            # (should always be the case, unless some logical error occurs)
             if packet_source == self.ip:
                 self.__handle_feedback(feedback)
-            else:
-                print("Something went wrong during routing.")
 
-    # TODO make it so that packages' PPV are not randomly generated
+    # TODO make it so that packages' PPV are not randomly generated + comments
     def calculate_ppv(self) -> int:
         """
         Calculates the PPV for the next Packet.
@@ -408,15 +478,18 @@ class Router(Node):
 
     def lowest_buffer_ppv(self) -> Packet:
         """
-        Gets the lowest PPV Packet in the buffer, or nothing
+        Gets the lowest PPV Packet in the buffer if there is any
 
         Returns:
         Packet: The lowest PPV Packet or None
         """
         min_packet: Packet = None
+
+        # Go through the buffer to check for the lowest PPV Packet
         for packet in self.buffer:
             if min_packet is None or packet.ppv < min_packet.ppv:
                 min_packet = packet
+
         return min_packet
 
     def send_packet(self) -> Tuple[str, str]:
@@ -424,22 +497,36 @@ class Router(Node):
         Takes a Packet from the buffer, or nothing
 
         Returns:
-        str: The next hop in the Route, or None
+        Tuple[str, str]: The next hop in the Route and the receiving Interface
         """
+        # Check if the buffer has any Packet to send
         if len(self.buffer) > 0:
+            # Get the next Packet to send, and the best Route for it to send it
+            # through
             packet: Packet = self.buffer.pop()
             route: Route = self.get_best_route(packet.target_ip)
+
+            # Check if the destination can be reached, and the Packet was popped
             if (route and packet) is None:
                 return None
+
+            # Go through the Interfaces until we find the one that matches the
+            # one given by the Route
             for interface in self.interfaces:
                 if route.interface == interface.name:
                     for connection in self.connections:
+                        # Go through the connections, so that we can actually get
+                        # the Interface the Packet will be received on for future use
                         if connection[0][0].name == interface.name:
                             receiver_interface = connection[1][0].name
                             break
+
+                    # Put the Packet to the Link
                     interface.put_to_link(packet)
-                    print(f"Sent packet from {self.name}")
+
+                    # Return the next hop and it's corresponding receiver Interface
                     return route.gateway, receiver_interface
+
         return None
 
     def receive_packet(self, name: str) -> Tuple[bool, bool]:
@@ -459,25 +546,39 @@ class Router(Node):
         """
         dropped_pack: bool = False
         interface: Interface = self.get_interface(name)
+
+        # Check if the Interface actually exists on the Router
         if interface is None:
             return (False, dropped_pack)
+
+        # Get the Packet from the Link connected to the Interface        
         packet: Packet = interface.receive_from_link()
+
+        # Check if there was actually a Packet to receive
         if packet is not None:
+            # Check if there is still space in the buffer
             if len(self.buffer) < self.buffer_size:
+                # If there is, simply just add it to the buffer, and send a
+                # positive feedback
                 self.buffer.append(packet)
                 self.__send_feedback(packet.source_ip, 1)
                 return (True, dropped_pack)
             if len(self.buffer) == self.buffer_size:
+                # If there is none, get the lowest PPV Packet from the Buffer
                 buffer_packet: Packet = self.lowest_buffer_ppv()
+
+                # Drop the Packet from the buffer or the incoming one, based on
+                # which one has a lower PPV
                 if buffer_packet.ppv < packet.ppv:
                     self.buffer.remove(buffer_packet)
                     self.buffer.append(packet)
-                    print(f"Dropped from buffer:\n{buffer_packet}")
-                else:
-                    print(f"Dropped incoming packet:\n{packet}.")
+
                 dropped_pack = True
+
+                # Send a negative feedback to the source of the Packet
                 self.__send_feedback(packet.source_ip, -1)
                 return (True, dropped_pack)
+
         return (False, dropped_pack)
 
     def __send_feedback(self, packet_source: str, feedback: int) -> None:
@@ -488,7 +589,13 @@ class Router(Node):
         packet (Packet): The received Packet's source IP
         feedback  (int): The feedback data being sent back
         """
-        from_ip: str = self.get_best_route(packet_source).gateway
+        route: Route = self.get_best_route(packet_source)
+        if route is None:
+            return
+        from_ip: str = route.gateway
+
+        # Send the feedback to a neighbouring Node, so that it can keep passing
+        # it on, or handle it
         for connection in self.connections:
             if connection[1][1].ip == from_ip:
                 connection[1][1].receive_feedback(packet_source, feedback)

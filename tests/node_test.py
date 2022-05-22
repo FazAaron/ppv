@@ -383,7 +383,7 @@ def test_host_send_packet_self_ip():
         "Host.send_packet() failure"
 
 
-def test_host_receive_packet_invalid_interface():
+def test_host_receive_packet():
     """
     Test the receive_packet() method of the Host
     """

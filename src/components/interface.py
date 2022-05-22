@@ -35,13 +35,16 @@ class Interface:
         send_channel    (Channel): The Channel to set as the sending Channel
         receive_channel (Channel): The Channel to set as the receiving Channel
         """
+        # Checks if the Link given as a parameter has everything set up
+        # This by default should not happen, but better to check it
         if (link and send_channel and receive_channel) is None:
-            print("Failed to connect Link")
             return False
+
+        # Set the Link and the Channels
         self.link = link
         self.send_channel = send_channel
         self.receive_channel = receive_channel
-        print("Successfully connected Link")
+
         return True
 
     def disconnect_link(self) -> int:
@@ -52,11 +55,15 @@ class Interface:
         int: The Packets contained inside the send_channel and receive_channel \
              before disconnecting the Link
         """
-        to_return: int = len(self.receive_channel.payload)
+        # Get the amount of Packets dropped
+        packets_dropped: int = len(self.receive_channel.payload)
+
+        # Set the Link and Channels to the default state
         self.link = None
         self.send_channel = None
         self.receive_channel = None
-        return to_return
+
+        return packets_dropped
 
     def receive_from_link(self) -> Packet:
         """
@@ -65,9 +72,10 @@ class Interface:
         Returns:
         Packet: The first Packet in the payload of the Channel or None
         """
+        # Only receive from the Link if its payload is not empty
         if len(self.receive_channel.payload) != 0:
-            print("Received packet from link")
             return self.receive_channel.pop_payload()
+
         return None
 
     def put_to_link(self, packet: Packet) -> None:
@@ -77,7 +85,6 @@ class Interface:
         Parameters:
         packet (Packet): The Packet to send through the sending Channel
         """
-        print("Put Packet on Link")
         self.send_channel.fill_payload(packet)
 
     def __str__(self) -> str:

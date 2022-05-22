@@ -42,6 +42,9 @@ class Channel:
         Returns:
         Packet: The Packet added first or None if the payload is empty
         """
+        # The try-except block is needed in case there is no item present in the
+        # payload, because the List default behaviour throws an exception in that
+        # case
         try:
             return self.payload.pop(0)
         except IndexError:

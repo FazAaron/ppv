@@ -45,48 +45,6 @@ class Network:
         """
         return self.hosts + self.routers
 
-    def get_applications(self) -> List[Application]:
-        """
-        Gets the Application on every Host in the Network
-
-        Returns:
-        List[Application]: The Applications running in the Network
-        """
-        applications: List[Application] = []
-        for host in self.hosts:
-            applications.append(host.application)
-        return applications
-
-    def get_interfaces(self) -> List[Interface]:
-        """
-        Gets the Interface(s) on every Node in the Network
-
-        Returns:
-        List[Interface]: Every available Interface in the network
-        """
-        interfaces: List[Interface] = []
-        for node in self.get_nodes():
-            interfaces += node.interfaces
-        return interfaces
-
-    def get_connections(self) -> List[Tuple[Node, Link, Node]]:
-        """
-        Gets the connections between Nodes in the Network
-
-        Returns:
-        List[Tuple[Node, Link, Node]]: Every connection in the Network, which \
-                                       corresponds to a (Node, Link, Node) trio
-        """
-        connections: List[Tuple[Node, Link, Node]] = []
-        for node in self.get_nodes():
-            for connection in node.connections:
-                node_1: Node = connection[0][1]
-                link: Link = connection[0][0].link
-                node_2: Node = connection[1][1]
-                to_add: Tuple(Node, Link, Node) = (node_1, link, node_2)
-                connections.append(to_add)
-        return connections
-
     def get_host(self, host_name_or_ip: str) -> Host:
         """
         Gets the Host corresponding to the name
@@ -111,15 +69,27 @@ class Network:
         bool: Whether the updating was successful or not
         """
         nodes: List[Node] = self.get_nodes()
+
+        # Creates the Graph out of the Node components
         self.graph.update_graph(nodes)
+
+        # Go through the Nodes
         for source in nodes:
+            # Empty their Routes
             source.reset_routes()
+            # Go through every single Node for every Node
             for destination in nodes:
                 if source.ip != destination.ip:
+                    # This can only return False when an error occurs
+                    # Only done like this because there should always be a branch
+                    # whenever False is returned
                     try:
+                        # Run Dijkstra's algorithm on the source and destination
+                        # IPs
                         route_tuple: Tuple[str, str, str, int] = \
                             self.graph.dijkstra(source.ip,
                                                 destination.ip)
+                        # If there is a Route between the two, then add it
                         if route_tuple is not None:
                             source.add_route(Route(route_tuple[0],
                                                    route_tuple[1],
@@ -142,8 +112,11 @@ class Network:
         bool: Whether the given Node is already part of the Network
         """
         for node in self.get_nodes():
+            # A Node is a duplicate if there is already a Node with the given
+            # IP or name present
             if node.ip == ip or node.name == node_name:
                 return True
+
         return False
 
     def create_host(self, host_name: str, ip: str, send_rate: int) -> bool:
@@ -158,8 +131,11 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
+        # Check if the Node would be a duplicate if created
         if self.__is_duplicate_node(host_name, ip):
             return False
+
+        # If not, create it, and then update the RoutingTable of every Node
         self.hosts.append(Host(host_name, ip, send_rate))
         return self.__update_routing_tables()
 
@@ -173,16 +149,26 @@ class Network:
         Returns:
         bool: Whether the deletion was a success or not
         """
+        # Go through the Hosts to get the proper Host
         for host in self.hosts:
+            # If either the IP or name matches
             if host_name_or_ip in (host.name, host.ip):
+                # Go through all of its Interfaces
                 for interface in host.interfaces:
+                    # Disconnect them one by one
                     ret_val: Tuple[bool, int] = host.disconnect_interface(
                         interface.name)
+                    # Get the amount of Packets dropped due to the disconnection
                     self.dropped_pack += ret_val[1]
+                    # If the disconnect failed, return with False
                     if not ret_val[0]:
                         return ret_val[0]
+
+                # If everything succeeded, remove the Host, and update the
+                # RoutingTable of every Node
                 self.hosts.remove(host)
                 return self.__update_routing_tables()
+
         return False
 
     def get_router(self, router_name_or_ip: str) -> Router:
@@ -196,6 +182,8 @@ class Network:
         Router: The Router corresponding to the name or None
         """
         for router in self.routers:
+            # A Node is a duplicate if there is already a Node with the given
+            # IP or name present
             if router_name_or_ip in (router.name, router.ip):
                 return router
         return None
@@ -217,8 +205,11 @@ class Network:
         Returns:
         bool: Whether the creation was a success or not
         """
+        # Check if the Node would be a duplicate if created
         if self.__is_duplicate_node(router_name, ip):
             return False
+
+        # If not, create it, and then update the RoutingTable of every Node
         self.routers.append(Router(router_name, ip, send_rate, buffer_size))
         return self.__update_routing_tables()
 
@@ -232,17 +223,31 @@ class Network:
         Returns:
         bool: Whether the deletion was a success or not
         """
+        # Go through the Hosts to get the proper Router
         for router in self.routers:
+            # If either the IP or name matches
             if router_name_or_ip in (router.name, router.ip):
+                # Go through all of its Interfaces
                 for interface in router.interfaces:
+                    # Disconnect them one by one
                     ret_val: Tuple[bool, int] = router.disconnect_interface(
                         interface.name)
+
+                    # Get the amount of Packets dropped due to the disconnection
                     self.dropped_pack += ret_val[1]
+                    # If the disconnect failed, return with False
                     if not ret_val[0]:
                         return ret_val[0]
+
+                # Also take the buffer into consideration when counting dropped
+                # packets
                 self.dropped_pack += router.get_buffer_length()
+
+                # If everything succeeded, remove the Router, and update the
+                # RoutingTable of every Node
                 self.routers.remove(router)
                 return self.__update_routing_tables()
+
         return False
 
     def add_interface(self, node_name_or_ip: str, interface_name: str) -> bool:
@@ -259,10 +264,15 @@ class Network:
         Returns:
         bool: Whether adding the Interface was a success or not
         """
+        # Get the Node - either a Host or a Router
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
+
+        # If no such Node was found, return with False
         if node is None:
             return False
+
+        # Else return with whether adding the Interface was successful or not
         return node.add_interface(interface_name)
 
     def delete_interface(self,
@@ -281,14 +291,25 @@ class Network:
         Returns:
         bool: Whether the deletion of the Interface was a success or not
         """
+        # Get the Node - either a Host or a Router
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
+
+        # If no such Node was found, return with False
         if node is None:
             return False
+
+        # Delete the Interface, and save if it failed or not, and the Packets
+        # dropped into a variable
         ret_val: Tuple[bool, int] = node.delete_interface(interface_name)
         self.dropped_pack += ret_val[1]
+
+        # If it succeeded, update RoutingTables, and return whether it happened
+        # or not
         if ret_val[0]:
             return self.__update_routing_tables()
+
+        # Else just return with False
         return ret_val[0]
 
     def set_application(self,
@@ -312,10 +333,16 @@ class Network:
         Returns:
         bool: Whether setting the Application was a success or not
         """
+        # Get the Host
         host: Host = self.get_host(host_name_or_ip)
+
+        # If no such Host was found, return with False
         if host is None:
             return False
+
+        # Set the Application, and in this case, it can't fail
         host.set_application(app_name, amount, send_rate, app_type)
+
         return True
 
     def connect_node_interfaces(self,
@@ -340,20 +367,33 @@ class Network:
         Returns:
         bool: Whether the creation of the connection was a success or not
         """
+        # Get both Nodes - either of them can be either a Host or Router
         first_node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
         snd_node:   Node = self.get_host(o_node_name_or_ip) or \
             self.get_router(o_node_name_or_ip)
+
+        # If any of the two does not exist, return with False
         if (first_node and snd_node) is None:
             return False
+
+        # Try connecting the Interfaces
         ret_val: Tuple[bool, int] = first_node.connect_to_interface(snd_node,
                                                                     interface_name,
                                                                     o_interface_name,
                                                                     speed,
                                                                     metrics)
+
+        # Since this also disconnects, we need to take dropped Packets into
+        # consideration
         self.dropped_pack += ret_val[1]
+
+        # If it succeeded, update RoutingTables, and return whether it happened
+        # or not
         if ret_val[0]:
             return self.__update_routing_tables()
+
+        # Else just return with False
         return ret_val[0]
 
     def disconnect_node_interface(self,
@@ -372,14 +412,26 @@ class Network:
         Returns:
         bool: Whether the Interface was disconnected or not
         """
+        # Get the Node - either a Host or a Router
         node: Node = self.get_host(node_name_or_ip) or \
             self.get_router(node_name_or_ip)
+
+        # If no such Node was found, return with False
         if node is None:
             return False
+
+        # Try disconnecting the Interface
         ret_val: Tuple[bool, int] = node.disconnect_interface(interface_name)
+
+        # Take dropped Packets into consideration
         self.dropped_pack += ret_val[1]
+
+        # If it succeeded, update RoutingTables, and return whether it happened
+        # or not
         if ret_val[0]:
             return self.__update_routing_tables()
+
+        # Else just return with False
         return ret_val[0]
 
     def send_packet(self,
@@ -403,21 +455,39 @@ class Network:
         Returns:
         Tuple[str, str, str]: A (gateway, receiver_interface, destination) trio
         """
+        # This needs to be done separately, because there is a branch that needs
+        # checking the type of the Node
         host:             Host = self.get_host(node_name_or_ip)
         router:           Router = self.get_router(node_name_or_ip)
+
+        # Get the source Node
         node:             Node = host or router
+
+        # Get the destination Node
         destination_node: Node = self.get_host(destination_name_or_ip) or \
             self.get_router(destination_name_or_ip)
+
+        # If either of them is None, return with False
         if (node and destination_node) is None:
             return None
+
+        # If the source Node is a Host, we need to add a parameter when using
+        # the method
         if router is None:
             next_hop: Tuple[str, str] = node.send_packet(destination_node.ip)
             self.total_pack += 1
+        # If it is a Router, it just pops a Packet from its buffer
         else:
             next_hop: Tuple[str, str] = node.send_packet()
+
+        # Check if there is a Route (or in this case, a next hop), and if there
+        # is none, then increase the dropped Packets and return None
         if next_hop is None:
             self.dropped_pack += 1
             return None
+
+        # Else return the next hop, the next hop's receiver interface and the
+        # actual destination of the Packet, for future use by other classes
         return (next_hop[0], next_hop[1], destination_name_or_ip)
 
     def receive_packet(self,
@@ -441,13 +511,26 @@ class Network:
         Returns:
         bool: Whether the Packet could be received or not
         """
+        # Needs to be done separately, since the behaviour of Host and Router
+        # differs
         router: Router = self.get_router(node_name_or_ip)
         node: Node = (self.get_host(node_name_or_ip) or router)
+
+        # Check if the Node is present at all
         if node is None:
             return False
+
+        # If the Node is a Host, we are done
         if router is None:
             return node.receive_packet(interface_name)
+
+        # In the other case, we need to handle the dropped Packet and the
+        # success separately
         ret_val: Tuple[bool, bool] = node.receive_packet(interface_name)
+
+        # If it dropped a Packet, increase the counter
         if ret_val[1]:
             self.dropped_pack += 1
+
+        # Return the success / failure
         return ret_val[0]
