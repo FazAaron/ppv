@@ -208,7 +208,7 @@ class Node:
                     if connection[0][0] is other_interface:
                         other_node.connections.remove(connection)
                         return (True, pack_dropped)
-        return (False, pack_dropped)
+        return (True, pack_dropped)
 
     def receive_feedback(self, packet_source: str, feedback: int) -> None:
         """
