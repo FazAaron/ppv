@@ -180,12 +180,12 @@ def test_node_disconnect_interface():
     success_1 = node_1.disconnect_interface("eth3")
     success_2 = node_1.disconnect_interface("eth2")
 
-    # Disconnect the Interface successfully
+    # Disconnect the Interface successfully, which is connected
     success_3 = node_1.disconnect_interface("eth1")
 
     assert not success_1[0] and \
         success_1[1] == 0 and \
-        not success_2[0] and \
+        success_2[0] and \
         success_2[1] == 0 and \
         success_3[0] and \
         success_3[1] == 1 and \
