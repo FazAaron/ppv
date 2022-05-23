@@ -37,10 +37,12 @@ class ObjectFrame:
 
         # Setup the Widgets
         self.exit_button: Button = Button(
-            self.object_frame, image=self.exit_button_image, bd=0, highlightthickness=0)
+            self.object_frame, image=self.exit_button_image,
+            bd=0, highlightthickness=0)
         Hovertip(self.exit_button, "Exit")
         self.display_text_box: ScrolledText = ScrolledText(
-            self.object_frame, width=10, height=10, font=("JetBrainsMono NF", 10), bg="lightgrey", relief="ridge")
+            self.object_frame, width=10, height=10,
+            font=("JetBrainsMono NF", 10), bg="lightgrey", relief="ridge")
 
         # Set the grid configuration for the Widgets
         self.exit_button.grid(column=1, row=0, sticky="nsew")
@@ -54,7 +56,14 @@ class ObjectFrame:
         Parameters:
         to_display (str): The string to display
         """
+        # Set the state of the ScrolledText to normal, so we can change the text
         self.display_text_box.config(state="normal")
+
+        # Clear the ScrolledText, and then add the text that is supposed to be
+        # displayed
+        # 1.0 means 1. line, 0. character
         self.display_text_box.delete("1.0", "end")
         self.display_text_box.insert("end", to_display)
+
+        # Disable it, so it can't be cleared by users
         self.display_text_box.config(state="disabled")

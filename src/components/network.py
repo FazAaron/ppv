@@ -79,24 +79,23 @@ class Network:
             source.reset_routes()
             # Go through every single Node for every Node
             for destination in nodes:
-                if source.ip != destination.ip:
-                    # This can only return False when an error occurs
-                    # Only done like this because there should always be a branch
-                    # whenever False is returned
-                    try:
-                        # Run Dijkstra's algorithm on the source and destination
-                        # IPs
-                        route_tuple: Tuple[str, str, str, int] = \
-                            self.graph.dijkstra(source.ip,
-                                                destination.ip)
-                        # If there is a Route between the two, then add it
-                        if route_tuple is not None:
-                            source.add_route(Route(route_tuple[0],
-                                                   route_tuple[1],
-                                                   route_tuple[2],
-                                                   route_tuple[3]))
-                    except:
-                        return False
+                # This can only return False when an error occurs
+                # Only done like this because there should always be a branch
+                # whenever False is returned
+                try:
+                    # Run Dijkstra's algorithm on the source and destination
+                    # IPs
+                    route_tuple: Tuple[str, str, str, int] = \
+                        self.graph.dijkstra(source.ip,
+                                            destination.ip)
+                    # If there is a Route between the two, then add it
+                    if route_tuple is not None:
+                        source.add_route(Route(route_tuple[0],
+                                                route_tuple[1],
+                                                route_tuple[2],
+                                                route_tuple[3]))
+                except:
+                    return False
         return True
 
     def __is_duplicate_node(self, node_name: str, ip: str) -> bool:

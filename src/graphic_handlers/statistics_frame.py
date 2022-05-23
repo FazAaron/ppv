@@ -41,7 +41,11 @@ class StatisticsFrame:
         self.packets_dropped_label.grid(column=0, row=1, sticky="nsw")
         self.packets_received_label.grid(column=0, row=2, sticky="nsw")
 
-    def update_labels(self, packets_sent: str, packets_dropped: str, packets_received: str) -> None:
+    def update_labels(self,
+                      packets_sent: str,
+                      packets_dropped: str,
+                      packets_received: str
+                      ) -> None:
         """
         Update the Labels of the Frame
 
@@ -50,6 +54,7 @@ class StatisticsFrame:
         packets_dropped  (str): The string to display in the packets_dropped_label
         packets_received (str): The string to display in the packets_received_label
         """
+        # Set the Labels to the given text
         self.packets_sent_label.config(text=packets_sent)
         self.packets_dropped_label.config(text=packets_dropped)
         self.packets_received_label.config(text=packets_received)

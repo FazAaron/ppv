@@ -13,4 +13,6 @@ def regex_matches(regex_pattern: str, to_match: str) -> bool:
     to_match      (str): The data to match against
     """
     found = search(regex_pattern, to_match)
+
+    # If the pattern matched anything, return True, else False
     return found is not None

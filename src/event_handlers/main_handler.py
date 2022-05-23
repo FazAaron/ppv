@@ -24,12 +24,18 @@ class MainHandler:
     a user-interactive graphical interface
 
     Data members:
-    main_window              (MainWindow): The main window of the GUI, containing everything
-    network                  (Network): The main object of the components, containing everything
-    object_canvas_handler    (ObjectCanvasHandler): The object canvas handling object
-    object_frame_handler     (ObjectFrameHandler): The object frame handling object
-    statistics_frame_handler (StatisticsFrameHandler): The statistics frame handling object
-    logger                   (Logger): The logger object, logging neccessary actions
+    main_window              (MainWindow): The main window of the GUI, \
+                             containing everything
+    network                  (Network): The main object of the components, \
+                             containing everything
+    object_canvas_handler    (ObjectCanvasHandler): The ObjectCanvas handling\
+                             object
+    object_frame_handler     (ObjectFrameHandler): The object frame handling \
+                             object
+    statistics_frame_handler (StatisticsFrameHandler): The statistics frame \
+                             handling object
+    logger                   (Logger): The logger object, logging neccessary \
+                             actions
     hosts                    (List[Tuple[int, str]]): Host information stored
     routers                  (List[Tuple[int, str]]): Router information stored
     links                    (List[Tuple[int, str, str]]): Link information stored
@@ -39,6 +45,7 @@ class MainHandler:
         self.main_window: MainWindow = main_window
         self.network: Network = network
 
+        # Create the Handlers for every single GUI component
         content: WidgetContainer = self.main_window.content
         self.object_canvas_handler: ObjectCanvasHandler = ObjectCanvasHandler(
             content.object_canvas)
@@ -47,8 +54,12 @@ class MainHandler:
         self.statistics_frame_handler: StatisticsFrameHandler = StatisticsFrameHandler(
             content.statistics_frame)
 
+        # Create a Logger object
         self.logger = Logger("conf/logger_config.json")
 
+        # Setup the List of Hosts, Routers and Links - needed to connect
+        # the GUI and Network, storing information that helps identify them
+        # in either
         self.hosts: List[Tuple[int, str]] = []
         self.routers: List[Tuple[int, str]] = []
         self.links: List[Tuple[int, str, str, str, str]] = []
@@ -62,8 +73,11 @@ class MainHandler:
         Opens a pop-up prompt asking a yes/no question for the user, whether \
         they want to exit or not
         """
+        # Create a prompt asking for an answer
         answer: bool = messagebox.askyesno(title="Exit application",
-                                           message="Are you sure you want to exit the application?")
+                                           message="Are you sure you want to"
+                                           "exit the application?")
+        # If the answer was yes, exit the application
         if answer:
             self.main_window.exit()
 
@@ -72,6 +86,7 @@ class MainHandler:
         Bind events to the ObjectFrame's Button Widget, prompting a yes/no
         question when clicked
         """
+        # Bind to the ObjectFrame's exit Button
         self.object_frame_handler.bind_to_exit(self.__exit_prompt)
 
     def __show_options_menu(self, event: str) -> None:
@@ -83,6 +98,7 @@ class MainHandler:
         Parameters:
         event (str): The event that happens
         """
+        # This is going to be binded to the right-click on the Canvas
         self.object_canvas_handler.show_menu(event.x, event.y)
 
     def __show_and_log(self, comp: str, message: str, severity: str) -> None:
@@ -95,6 +111,7 @@ class MainHandler:
         message  (str): The message
         severity (str): The severity of the message, can be information or error
         """
+        # Shows a message, and then logs it to the log file
         self.object_canvas_handler.show_message(message, 2000)
         while not self.logger.write(comp, message, severity):
             pass
@@ -103,49 +120,88 @@ class MainHandler:
         """
         Handles the component placement Frame's submit Button event
         """
+        # Used whenever we are in the Host or Router placement Frame, and
+        # this handles pressing the submit Button
         self.object_canvas_handler.submit_input()
 
     def __handle_interface_add_submit(self) -> None:
         """
         Handles the add Interface Frame's submit Button event
         """
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
         x: int = self.object_canvas_handler.menu_x
         y: int = self.object_canvas_handler.menu_y
-        intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
-            x, y, 1, 1)
-        self.object_canvas_handler.submit_input()
+
+        # Check what intersects with the mouse (or the Menu in this case)
+        intersection_details: Tuple[str, int] = \
+            self.object_canvas_handler.intersects(x, y, 1, 1)
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
-        if len(user_input) == 0:
+
+        # If the regex failed, do nothing
+        if not success:
             return
+
+        # Logic based on whether the intersection happened on a Host or a
+        # Router
         if intersection_details[0] == "HOST":
             for host in self.hosts:
+                # If the item_id matches
                 if host[0] == intersection_details[1]:
-                    created = self.network.add_interface(
-                        host[1], user_input[0])
                     host_name = host[1]
                     interface_name = user_input[0]
+
+                    # Create the Interface
+                    created = self.network.add_interface(
+                        host_name, interface_name)
+
+                    # If it was created / not created, show a message and log it
+                    # accordingly
                     if created:
-                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                            f"Successfully created Interface {interface_name} on Host {host_name}.",
+                        self.__show_and_log(f"Host {host_name} - Interface"
+                                            f" {interface_name}",
+                                            "Successfully created Interface "
+                                            f"{interface_name} on Host {host_name}.",
                                             "Information")
                     else:
-                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                            f"Failed to create Interface {interface_name} on Host {host_name}: duplicate Interface name on Host.",
+                        self.__show_and_log(f"Host {host_name} - Interface"
+                                            f" {interface_name}",
+                                            "Failed to create Interface "
+                                            f"{interface_name} on Host "
+                                            f"{host_name}: duplicate Interface"
+                                            " name on Host.",
                                             "Information")
         elif intersection_details[0] == "ROUTER":
             for router in self.routers:
+                # If the item_id matches
                 if router[0] == intersection_details[1]:
-                    created = self.network.add_interface(
-                        router[1], user_input[0])
                     router_name = router[1]
                     interface_name = user_input[0]
+
+                    # Create the Interface
+                    created = self.network.add_interface(
+                        router_name, interface_name)
+
+                    # If it was created / not created, show a message and log it
+                    # accordingly
                     if created:
-                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                            f"Successfully created Interface {interface_name} on Router {router_name}.",
+                        self.__show_and_log(f"Router {router_name} - Interface"
+                                            f" {interface_name}",
+                                            "Successfully created Interface "
+                                            f"{interface_name} on Router "
+                                            f"{router_name}.",
                                             "Information")
                     else:
-                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                            f"Failed to create Interface {interface_name} on Router {router_name}: duplicate Interface name on Router.",
+                        self.__show_and_log(f"Router {router_name} - Interface"
+                                            f" {interface_name}",
+                                            "Failed to create Interface "
+                                            f"{interface_name} on Router "
+                                            f"{router_name}: duplicate "
+                                            "Interface name on Router.",
                                             "Information")
 
     def __handle_interface_delete_submit(self) -> None:
@@ -291,10 +347,8 @@ class MainHandler:
                         link[0])
                     break
             if link_success:
-                coords: Tuple[int, int, int, int] = self.object_canvas_handler.get_link_endpoints(
-                    node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
                 item_id: int = self.object_canvas_handler.draw(
-                    "LINK", coords[0], coords[1], coords[2], coords[3])
+                    "LINK", node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
                 self.links.append(
                     (item_id, node_1.name, interface_1_name, node_2.name, interface_2_name))
                 self.__show_and_log(f"Node {node_1.name} - {node_1.ip} - {interface_1_name} <-> Node {node_2.name} - {node_2.ip} - {interface_2_name}",
@@ -331,11 +385,12 @@ class MainHandler:
                     interface_name: str = user_input[0]
                     if network_success:
                         for link in self.links:
-                            if (link[1] == host[1] and link[2] == user_input[0]) or \
-                                    (link[3] == host[1] and link[4] == user_input[0]):
+                            if (link[1] == host_name and link[2] == interface_name) or \
+                                    (link[3] == host_name and link[4] == interface_name):
                                 link_success = self.object_canvas_handler.delete_link(
                                     link[0])
                                 self.links.remove(link)
+                                break
                         if link_success:
                             self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
                                                 f"Successfully disconnected Interface {interface_name} on Host {host_name}.",
@@ -358,11 +413,12 @@ class MainHandler:
                     interface_name: str = user_input[0]
                     if network_success:
                         for link in self.links:
-                            if (link[1] == router[1] and link[2] == user_input[0]) or \
-                                    (link[3] == router[1] and link[4] == user_input[0]):
+                            if (link[1] == router_name and link[2] == interface_name) or \
+                                    (link[3] == router_name and link[4] == interface_name):
                                 link_success = self.object_canvas_handler.delete_link(
                                     link[0])
                                 self.links.remove(link)
+                                break
                         if link_success:
                             self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
                                                 f"Successfully disconnected Interface {interface_name} on Router {router_name}.",
@@ -432,13 +488,17 @@ class MainHandler:
         if intersection_details[0] == "HOST":
             for host in self.hosts:
                 if intersection_details[1] == host[0]:
-                    network_success = self.network.delete_host(host[1])
                     host_name: str = host[1]
+                    network_success = self.network.delete_host(host_name)
+                    links_to_remove: List[int, str, str, str, str] = []
                     for link in self.links:
-                        if host[1] == link[1] or host[1] == link[3]:
-                            self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(
+                        if host_name == link[1] or host_name == link[3]:
+                            links_to_remove.append(link)
+                            new_success: bool = self.object_canvas_handler.delete_link(
                                 link[0])
+                            link_success = link_success and new_success
+                    for link in links_to_remove:
+                        self.links.remove(link)
                     if handler_success and network_success and link_success:
                         self.hosts.remove(host)
                         self.__show_and_log(f"Host {host_name}",
@@ -452,13 +512,17 @@ class MainHandler:
         elif intersection_details[0] == "ROUTER":
             for router in self.routers:
                 if intersection_details[1] == router[0]:
-                    network_success = self.network.delete_router(router[1])
                     router_name: str = router[1]
+                    network_success = self.network.delete_router(router_name)
+                    links_to_remove: List[int, str, str, str, str] = []
                     for link in self.links:
-                        if router[1] == link[1] or router[1] == link[3]:
-                            self.links.remove(link)
-                            link_success = link_success and self.object_canvas_handler.delete_link(
+                        if router_name == link[1] or router_name == link[3]:
+                            links_to_remove.append(link)
+                            new_success: bool = self.object_canvas_handler.delete_link(
                                 link[0])
+                            link_success = link_success and new_success
+                    for link in links_to_remove:
+                        self.links.remove(link)
                     if handler_success and network_success and link_success:
                         self.routers.remove(router)
                         self.__show_and_log(f"Router {router_name}",

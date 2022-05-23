@@ -16,6 +16,8 @@ class ObjectCanvas:
     router_config_menu  (Menu): The Menu to configure a Router
     config_menu         (ttk.Frame): The Frame to access certain features of \
                                      the Network
+    title_label         (Label): The title of the Frame - what option we pressed
+    information_label   (Label): The syntactic requirements of the input
     label_[1..5]        (Label): The Labels to be used inside the config_menu
     entry_[1..5]        (Entry): The Entries to be used inside the config_menu
     submit_button       (Button): The Button to be used for submission inside \
@@ -78,11 +80,15 @@ class ObjectCanvas:
         Returns:
         Menu: The Network configuration Menu
         """
+        # Create a pop-up Menu for the Network configuration
         network_config_menu = Menu(self.canvas, tearoff=0)
+
+        # Add the proper Entries to it
         network_config_menu.add_command(label="Place Host")
         network_config_menu.add_command(label="Place Router")
         network_config_menu.add_separator()
         network_config_menu.add_command(label="Close")
+
         return network_config_menu
 
     def __setup_host_config_menu(self) -> Menu:
@@ -92,7 +98,10 @@ class ObjectCanvas:
         Returns:
         Menu: The Host configuration Menu
         """
+        # Create the pop-up Menu for the Host configuration
         host_config_menu = Menu(self.canvas, tearoff=0)
+
+        # Add the proper Entries to it
         host_config_menu.add_command(label="Add Interface")
         host_config_menu.add_command(label="Delete Interface")
         host_config_menu.add_command(label="Set Application")
@@ -102,6 +111,7 @@ class ObjectCanvas:
         host_config_menu.add_command(label="Delete Component")
         host_config_menu.add_separator()
         host_config_menu.add_command(label="Close")
+
         return host_config_menu
 
     def __setup_router_config_menu(self) -> Menu:
@@ -111,7 +121,10 @@ class ObjectCanvas:
         Returns:
         Menu: The Router configuration Menu
         """
+        # Create the pop-up Menu for the Router configuration
         router_config_menu = Menu(self.canvas, tearoff=0)
+
+        # Add the proper Entries to it
         router_config_menu.add_command(label="Add Interface")
         router_config_menu.add_command(label="Delete Interface")
         router_config_menu.add_command(label="Connect to Node")
@@ -119,6 +132,7 @@ class ObjectCanvas:
         router_config_menu.add_command(label="Delete Component")
         router_config_menu.add_separator()
         router_config_menu.add_command(label="Close")
+
         return router_config_menu
 
     def after(self, time: int, func: Callable) -> None:
@@ -150,9 +164,17 @@ class ObjectCanvas:
         Returns:
         Tuple[int, int]: The Canvas dimensions in the form of width x height
         """
+        # Needed to properly calculate coordinates on the Canvas during
+        # user interaction
         return (self.canvas.winfo_width(), self.canvas.winfo_height())
 
-    def draw_component(self, x: int, y: int, width: int, height: int, component_type: str) -> int:
+    def draw_component(self,
+                       x: int,
+                       y: int,
+                       width: int,
+                       height: int,
+                       component_type: str
+                       ) -> int:
         """
         Draws a Node component onto the Canvas
 
@@ -166,6 +188,9 @@ class ObjectCanvas:
         Returns:
         int: The ID of the drawn item
         """
+        # The Host and Router only differs in colour, but this can be easily
+        # changed to a Picture as well, by specifying canvas.create_image instead
+        # of canvas.create_rectangle
         if component_type.upper() == "ROUTER":
             return self.canvas.create_rectangle(
                 x, y, x + width, y + height, fill="lightblue")
@@ -175,7 +200,7 @@ class ObjectCanvas:
 
     def draw_link(self, x1: int, y1: int, x2: int, y2: int) -> int:
         """
-        Draws a Link onto the Canvas
+        Draws a Link onto the Canvas between the given points
 
         Parameters:
         x1 (int): The x coordinate of the starting point
@@ -200,6 +225,7 @@ class ObjectCanvas:
         Returns:
         int: The ID of the drawn item
         """
+        # Anchor is needed to make it right (east) aligned
         self.canvas.create_text(x, y, text=text, anchor="e")
 
     def clear_canvas(self) -> None:
@@ -226,11 +252,18 @@ class ObjectCanvas:
         """
         Sets a Frame to it's default state, and hides it as well
         """
+        # Hide the configuration Frame
         self.config_frame.place_forget()
+
+        # Go through it's children Widgets
         for widget in self.config_frame.winfo_children():
+            # If the given Widget is an Entry, clear it, and set all it to
+            # disabled
             if widget.winfo_class() == "Entry":
                 widget.delete(0, "end")
                 widget.configure(state="disabled")
+
+            # Also hide the children Widgets
             widget.place_forget()
 
     def setup_place_host_frame(self, x: int, y: int) -> None:
@@ -241,12 +274,18 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Place Host")
-        self.information_label.config(text=("Host Name:\nbetween 1 and 15 characters"
-                                            "\nIP address:\n[0-255].[0-255].[0-255].[0-255]"
+        self.information_label.config(text=("Host Name:\n"
+                                            "between 1 and 15 characters"
+                                            "\nIP address:\n"
+                                            "[0-255].[0-255].[0-255].[0-255]"
                                             "\nSend Rate:\n1-99"), fg="black")
 
         self.label_1.config(text="Host Name")
@@ -258,6 +297,7 @@ class ObjectCanvas:
         self.label_3.config(text="Send Rate")
         self.entry_3.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
@@ -285,12 +325,18 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Place Router")
-        self.information_label.config(text=("Router Name:\nbetween 1 and 15 characters"
-                                            "\nIP address:\n[0-255].[0-255].[0-255].[0-255]"
+        self.information_label.config(text=("Router Name:\n"
+                                            "between 1 and 15 characters"
+                                            "\nIP address:\n"
+                                            "[0-255].[0-255].[0-255].[0-255]"
                                             "\nSend Rate: 1-99"
                                             "\nBuffer Size: 1-99"), fg="black")
 
@@ -306,6 +352,7 @@ class ObjectCanvas:
         self.label_4.config(text="Buffer size")
         self.entry_4.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
@@ -336,16 +383,22 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Add Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
+        self.information_label.config(text="Interface Name:\n"
+                                      "between 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface name")
         self.entry_1.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
@@ -366,16 +419,22 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Delete Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
+        self.information_label.config(text="Interface Name:\n"
+                                      "between 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface name")
         self.entry_1.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
@@ -397,14 +456,20 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Set Application")
-        self.information_label.config(text=("Application Name:\nbetween 1 and 15 characters"
+        self.information_label.config(text="Application Name:\n"
+                                            "between 1 and 15 characters"
                                             "\nPacket Amount: 1-99"
                                             "\nSend Rate: 1-99"
-                                            "\nApplication Type: CONST/AIMD"), fg="black")
+                                            "\nApplication Type: CONST/AIMD",
+                                      fg="black")
 
         self.label_1.config(text="Application Name")
         self.entry_1.config(state="normal")
@@ -418,6 +483,7 @@ class ObjectCanvas:
         self.label_4.config(text="Application Type")
         self.entry_4.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
@@ -448,18 +514,23 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Start Sending")
-        self.information_label.config(text=("Target Host IP or Name:\n"
+        self.information_label.config(text="Target Host IP or Name:\n"
                                             "[0-255].[0-255].[0-255].[0-255]\nOR\n"
-                                            "between 1 and 15 characters"),
+                                            "between 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Target Host IP or Name")
         self.entry_1.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.6, relheight=0.1)
         self.entry_1.place(relx=0.6, rely=0.0, relwidth=0.4, relheight=0.1)
 
@@ -481,16 +552,24 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Connect to Node")
-        self.information_label.config(text=("Target Node IP or Name:\n[0-255].[0-255].[0-255].[0-255]"
+        self.information_label.config(text="Target Node IP or Name:\n"
+                                            "[0-255].[0-255].[0-255].[0-255]"
                                             "\nOR\nbetween 1 and 15 characters"
-                                            "\nInterface Name:\nbetween 1 and 15 characters"
-                                            "\nTarget Interface Name:\nbetween 1 and 15 characters"
+                                            "\nInterface Name:\n"
+                                            "between 1 and 15 characters"
+                                            "\nTarget Interface Name:\n"
+                                            "between 1 and 15 characters"
                                             "\nSpeed of Link: 1-99"
-                                            "\nMetrics of Link: 1-99"), fg="black")
+                                            "\nMetrics of Link: 1-99",
+                                      fg="black")
 
         self.label_1.config(text="Target Node IP or Name")
         self.entry_1.config(state="normal")
@@ -507,6 +586,7 @@ class ObjectCanvas:
         self.label_5.config(text="Metrics of Link")
         self.entry_5.config(state="normal")
 
+        # Place every single Widget, relative to the containing Frame
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.6, relheight=0.1)
         self.entry_1.place(relx=0.6, rely=0.0, relwidth=0.4, relheight=0.1)
 
@@ -540,11 +620,16 @@ class ObjectCanvas:
         x (int): The x coordinate to show the Frame at
         y (int): The y coordinate to show the Frame at
         """
+        # Sets the Frame to a default state
         self.clear_frame()
+
+        # Places the new Frame at the given position
         self.config_frame.place(x=x, y=y, width=350, height=350)
 
+        # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Disconnect Interface")
-        self.information_label.config(text="Interface Name:\nbetween 1 and 15 characters",
+        self.information_label.config(text="Interface Name:\n"
+                                      "between 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Interface Name")
@@ -553,6 +638,7 @@ class ObjectCanvas:
         self.label_1.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=0.1)
         self.entry_1.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=0.1)
 
+        # Place every single Widget, relative to the containing Frame
         self.information_label.place(
             relx=0.1, rely=0.4, relwidth=0.8, relheight=0.5)
 

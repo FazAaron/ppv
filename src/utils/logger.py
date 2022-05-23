@@ -17,6 +17,7 @@ class Logger:
                        Full path is configured in conf/logger_config.json
                        The log file's name contains the initialization time,
                        along with the configured name
+    opened   (bool): Whether the file is open or not
     """
 
     def __init__(self, config_file_path: str) -> None:
@@ -39,15 +40,26 @@ class Logger:
         Returns:
         bool: Whether the writing to the file was successful or not
         """
+        # If the File to log to is opened, return False
         if self.opened:
             return False
+
+        # Else, set the opened to True, and open the File
         self.opened = True
         log_to: TextIO = open(self.log_file, "a", encoding="utf-8")
+
+        # Construct the fields to log
         to_log: str = (f"Component: {component}\n"
                        f"Severity: {severity}\n"
                        f"Message: {message}\n"
                        f"Time: {datetime.now()}")
+
+        # Write to the File, and then close it
         log_to.write(to_log + "\n" + "---\n")
         log_to.close()
+
+        # After we are done, set the opened to False
         self.opened = False
+
+        # If everything succeeded, return True
         return True

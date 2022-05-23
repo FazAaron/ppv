@@ -17,11 +17,18 @@ class WidgetContainer:
 
     def __init__(self, parent: Tk) -> None:
         self.root: Tk = parent
+
+        # Widget container
         self.content: ttk.Frame = ttk.Frame(parent)
+
+        # The Widgets the container includes
         self.object_canvas: ObjectCanvas = ObjectCanvas(self.content)
         self.object_frame: ObjectFrame = ObjectFrame(self.content)
         self.statistics_frame: StatisticsFrame = StatisticsFrame(self.content)
 
+        # The position of the Widget container (fill the window), and set
+        # the given columns and rows to cover the filled window in the below
+        # specified ratio
         self.content.grid(column=0, row=0, sticky="nsew")
         self.content.columnconfigure(0, weight=3)
         self.content.columnconfigure(1, weight=1)

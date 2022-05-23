@@ -2,6 +2,7 @@
 This module makes ObjectCanvasHandler objects available for use when imported
 """
 # Built-in modules
+from ast import boolop
 from tkinter import Menu
 from typing import Callable, List, Tuple
 
@@ -83,10 +84,14 @@ class ObjectCanvasHandler:
         frame_type (str): The Frame to show
         func       (Callable): The function to bind to the submit Button
         """
-        aligned_coords: Tuple[int, int] = self.re_align_coords(
+        # Re-align the coordinates to prevent the Frame from going out of bounds
+        aligned_coords: Tuple[int, int] = self.__re_align_coords(
             self.menu_x, self.menu_y, self.frame_width, self.frame_height)
         x: int = aligned_coords[0]
         y: int = aligned_coords[1]
+
+        # Show the proper Frame, and bind the intended behaviour to the submit
+        # Button as well
         if frame_type == "PLACEHOST":
             self.object_canvas.setup_place_host_frame(x, y)
             self.__bind_to_submit_button(func)
@@ -113,9 +118,12 @@ class ObjectCanvasHandler:
             self.__bind_to_submit_button(func)
 
     def bind_to_options_menu_entries(self,
-                                     network_conf_options: Tuple[List[str], List[Callable]],
-                                     host_conf_options: Tuple[List[str], List[Callable]],
-                                     router_conf_options: Tuple[List[str], List[Callable]],
+                                     network_conf_options: Tuple[List[str],
+                                                                 List[Callable]],
+                                     host_conf_options: Tuple[List[str],
+                                                              List[Callable]],
+                                     router_conf_options: Tuple[List[str],
+                                                                List[Callable]],
                                      deletion_option: Callable
                                      ) -> None:
         """
@@ -134,21 +142,36 @@ class ObjectCanvasHandler:
         deletion_option (Callable): The function to bind to the Delete \
                                     Component entry of the Menu
         """
+        # Bind to the Network pop-up Menu's Entries
         for i in range(len(network_conf_options[0])):
             self.object_canvas.network_config_menu.entryconfigure(
-                i, command=lambda i=i: self.__show_frame(network_conf_options[0][i], network_conf_options[1][i]))
+                i,
+                command=lambda i=i:
+                    self.__show_frame(network_conf_options[0][i],
+                                      network_conf_options[1][i]))
 
+        # Bind to the Host pop-up Menu's Entries
         for i in range(len(host_conf_options[0])):
             self.object_canvas.host_config_menu.entryconfigure(
-                i, command=lambda i=i: self.__show_frame(host_conf_options[0][i], host_conf_options[1][i]))
+                i,
+                command=lambda i=i:
+                    self.__show_frame(host_conf_options[0][i],
+                                      host_conf_options[1][i]))
+
+        # Get the last Entry that needs binding, and set the proper command to it
         last_index = len(host_conf_options[0])
         self.object_canvas.host_config_menu.entryconfigure(
             last_index, command=deletion_option)
 
+        # Bind to the Router pop-up Menu's Entries
         for i in range(len(router_conf_options[0])):
             self.object_canvas.router_config_menu.entryconfigure(
-                i, command=lambda i=i: self.__show_frame(router_conf_options[0][i], router_conf_options[1][i]))
+                i,
+                command=lambda i=i:
+                    self.__show_frame(router_conf_options[0][i],
+                                      router_conf_options[1][i]))
 
+        # Get the last Entry that needs binding, and set the proper command to it
         last_index = len(router_conf_options[0])
         self.object_canvas.router_config_menu.entryconfigure(
             last_index, command=deletion_option)
@@ -202,15 +225,20 @@ class ObjectCanvasHandler:
         """
         Redraws every component present on the Canvas
         """
+        # Remove everything drawn on the Canvas
         self.object_canvas.clear_canvas()
-        for _, x1, y1, x2, y2 in self.links:
-            self.object_canvas.draw_link(x1, y1, x2, y2)
+
+        # Redraw every single element on the Canvas that needs to be redrawn
         for _, x, y in self.hosts:
             self.object_canvas.draw_component(
                 x, y, self.node_width, self.node_height, "HOST")
         for _, x, y in self.routers:
             self.object_canvas.draw_component(
                 x, y, self.node_width, self.node_height, "ROUTER")
+        for _, x1, y1, x2, y2 in self.links:
+            self.object_canvas.draw_link(x1, y1, x2, y2)
+
+        # Only redraw the message, if there is actually a message to show
         if (self.shown_message != ()):
             self.object_canvas.draw_string(
                 self.shown_message[0], self.shown_message[1], self.shown_message[2])
@@ -220,6 +248,7 @@ class ObjectCanvasHandler:
         Hides the bottom right-hand side message by setting the shown_message \
         variable to an empty tuple, and redrawing the components
         """
+        # Remove the message and redraw
         self.shown_message = ()
         self.redraw()
 
@@ -232,13 +261,27 @@ class ObjectCanvasHandler:
         text (str): The message to show
         time (int): The time elapsed needed to hide the message
         """
+        # Get the position to draw the message to - right-hand bottom side of
+        # the Canvas
         x: int = self.object_canvas.get_geometry()[0] - 3
         y: int = self.object_canvas.get_geometry()[1] - 10
+
+        # Show the message, and then redraw
         self.shown_message = (x, y, text)
         self.redraw()
+
+        # After the time elapses, hide the message
+        # This also hides messages that were shown for less time than the needed
+        # time, due to the fact, that the counter does not restart when a new
+        # message is shown - this can be improved as a feature
         self.object_canvas.after(time, self.__hide_message)
 
-    def re_align_coords(self, x: int, y: int, width: int, height: int) -> Tuple[int, int]:
+    def __re_align_coords(self,
+                          x: int,
+                          y: int,
+                          width: int,
+                          height: int
+                          ) -> Tuple[int, int]:
         """
         Properly aligns coordinates, preventing behaviour where the item with \
         the given parameters would get out of bounds of the Canvas
@@ -291,6 +334,7 @@ class ObjectCanvasHandler:
         # 9
         bottom_right: bool = (x + width > max_x and y + height > max_y)
 
+        # The magic numbers are because the ridge (border) takes up a few pixels
         if upper_left:
             coords = (2, 2)
         elif upper_right:
@@ -312,7 +356,12 @@ class ObjectCanvasHandler:
 
         return coords
 
-    def intersects(self, x: int, y: int, width: int, height: int) -> Tuple[str, int]:
+    def intersects(self,
+                   x: int,
+                   y: int,
+                   width: int,
+                   height: int
+                   ) -> Tuple[str, int]:
         """
         Check whether the item with the given parameters intersects with an \
         other, already present item
@@ -327,17 +376,35 @@ class ObjectCanvasHandler:
         Tuple[str, int]: Intersection information, containing a \
                          (component_type, item_id) pair
         """
+        # Checks if there is an intersection with any Host
         for host in self.hosts:
-            if (host[1] <= x + width and host[2] <= y + height and \
-                host[1] + self.node_width >= x and host[2] + self.node_height >= y):
+            if host[1] <= x + width and host[2] <= y + height and \
+                host[1] + self.node_width >= x and \
+                host[2] + self.node_height >= y:
+                # if yes, returns the type of the intersecting component and the
+                # item_id
                 return ("HOST", host[0])
+
+        # Checks if there is an intersection with any Router
         for router in self.routers:
-            if (router[1] <= x + width and router[2] <= y + height and \
-                router[1] + self.node_width >= x and router[2] + self.node_height >= y):
+            if router[1] <= x + width and router[2] <= y + height and \
+                router[1] + self.node_width >= x and \
+                router[2] + self.node_height >= y:
+                # If yes, returns the type of the intersecting component and the
+                # item_id
                 return ("ROUTER", router[0])
+
+        # If there was none, returns a -1 item_id
         return ("", -1)
 
-    def draw(self, comp_type: str, x1: int, y1: int, x2: int = 0, y2: int = 0, save: bool = True) -> int:
+    def draw(self,
+             comp_type: str,
+             x1: int,
+             y1: int,
+             x2: int = 0,
+             y2: int = 0,
+             save: bool = True
+             ) -> int:
         """
         Draws a component on the Canvas, and saves it if needed for future \
         re-drawing
@@ -357,29 +424,52 @@ class ObjectCanvasHandler:
         item_id: int = -1
         aligned_coords: Tuple[int, int] = (x1, y1)
 
-        if comp_type.upper() == "COMPONENT/ROUTER" or comp_type.upper() == "COMPONENT/HOST":
-            aligned_coords = self.re_align_coords(
+        # If we are drawing a Router or a Host, check for intersection, and
+        # also re-align
+        if comp_type.upper() == "COMPONENT/ROUTER" or \
+            comp_type.upper() == "COMPONENT/HOST":
+            aligned_coords = self.__re_align_coords(
                 x1, y1, self.node_width, self.node_width)
-            if aligned_coords is None or self.intersects(aligned_coords[0], aligned_coords[1], self.node_width, self.node_height)[1] != -1:
+
+            if aligned_coords is None or \
+                self.intersects(aligned_coords[0], aligned_coords[1], 
+                                self.node_width, self.node_height)[1] != -1:
                 return item_id
 
+        # This is needed to remove items that aren't permanent, because this
+        # method is also used by the <Motion> event
         self.redraw()
 
+        # Draw the components with the aligned coordinates, and save them, if
+        # needed - so when placing has occured
         if comp_type.upper() == "COMPONENT/ROUTER":
             item_id: int = self.object_canvas.draw_component(
-                aligned_coords[0], aligned_coords[1], self.node_width, self.node_height, "ROUTER")
+                aligned_coords[0], aligned_coords[1],
+                self.node_width, self.node_height, "ROUTER")
+
             if save:
                 self.routers.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "COMPONENT/HOST":
             item_id: int = self.object_canvas.draw_component(
-                aligned_coords[0], aligned_coords[1], self.node_width, self.node_height, "HOST")
+                aligned_coords[0], aligned_coords[1],
+                self.node_width, self.node_height, "HOST")
+
             if save:
                 self.hosts.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
         elif comp_type.upper() == "LINK":
-            item_id: int = self.object_canvas.draw_link(x1, y1, x2, y2)
-            self.links.append((item_id, x1, y1, x2, y2))
+            # Links work in a slightly different way, because they need 4
+            # coordinates, and they aren't directly controlled by the users,
+            # rather by an underlying logic, that connects Nodes
+            link_coords: Tuple[int, int, int,
+                               int] = self.__get_link_endpoints(x1, y1, x2, y2)
+            item_id: int = self.object_canvas.draw_link(
+                link_coords[0], link_coords[1], link_coords[2], link_coords[3])
+            self.links.append(
+                (item_id,
+                 link_coords[0], link_coords[1],
+                 link_coords[2], link_coords[3]))
 
         return item_id
 
@@ -394,18 +484,25 @@ class ObjectCanvasHandler:
         Returns:
         bool: Whether the deletion was successful or not
         """
+        # Based on what we are trying to delete, goes through it's List
         if comp_type == "HOST":
             for host in self.hosts:
                 if host[0] == item_id:
+                    # Remove it from the List and redraw everythin, then return
+                    # True
                     self.hosts.remove(host)
                     self.redraw()
                     return True
         elif comp_type == "ROUTER":
             for router in self.routers:
                 if router[0] == item_id:
+                    # Remove it from the List and redraw everything, then return
+                    # True
                     self.routers.remove(router)
                     self.redraw()
                     return True
+
+        # If there was no match, return False
         return False
 
     def delete_link(self, item_id: int) -> bool:
@@ -418,11 +515,16 @@ class ObjectCanvasHandler:
         Returns:
         bool: Whether the deletion was successful or not
         """
+        # Goes through the List of Links
         for link in self.links:
             if link[0] == item_id:
+                # Remove it from the List and redraw everything, then return
+                # True
                 self.links.remove(link)
                 self.redraw()
                 return True
+
+        # If there was no match, return False
         return False
 
     def show_menu(self, x: int, y: int) -> None:
@@ -433,16 +535,28 @@ class ObjectCanvasHandler:
         x (int): The x coordinate to show the Menu at
         y (int): The y coordinate to show the Menu at
         """
-        menu_type: Tuple[str, int] = self.intersects(x, y, 1, 1)
-        if menu_type[0].upper() == "ROUTER":
+        # Get the details of the intersection, and more precisely the component
+        # it intersects with
+        menu_type: str = self.intersects(x, y, 1, 1)[0]
+
+        # Get the Menu for the given component
+        if menu_type.upper() == "ROUTER":
             menu: Menu = self.object_canvas.router_config_menu
-        elif menu_type[0].upper() == "HOST":
+        elif menu_type.upper() == "HOST":
             menu: Menu = self.object_canvas.host_config_menu
         else:
             menu: Menu = self.object_canvas.network_config_menu
+
+        # Save the current x and y to a variable, so that it can be used in
+        # other methods and handlers, since event.x and event.y is not entirely
+        # reliable in this context
         self.menu_x = x
         self.menu_y = y
+
+        # Hide any Frame that is being shown beforehand
         self.__hide_frame()
+
+        # Show the pop-up Menu at the given coordinates
         self.object_canvas.show_menu(menu, x, y)
 
     def __check_regex(self, title_label: str) -> bool:
@@ -453,9 +567,15 @@ class ObjectCanvasHandler:
         title_label (str): The title of the current Frame, used to identify \
                     the current Frame
         """
+        # name_regex is used for word-based names
+        # ip_regex is used for IPs
+        # digit_regex is used for anything that only consists of numbers
         name_regex: str = "^.{1,15}$"
         ip_regex: str = "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$"
         digit_regex: str = "^\d{1,2}$"
+
+        # Check the regex against the Entry fields based on what text the title
+        # Label is currently showing
         if title_label.upper() == "PLACE HOST":
             frst: bool = regex_matches(
                 name_regex, self.object_canvas.entry_1.get())
@@ -514,25 +634,47 @@ class ObjectCanvasHandler:
                 name_regex, self.object_canvas.entry_1.get())
             return frst
 
-    def submit_input(self) -> None:
+    def submit_input(self) -> bool:
         """
         Gets the data that was input by the user in the Entry fields
+
+        Returns:
+        bool: Whether the regex failed or not
         """
+        # Empty the input_data to avoid errors because previous input was left
+        # inside
         self.input_data = []
+
+        # Get the title Label's text
         title_label: str = self.object_canvas.title_label.cget("text")
+
+        # Check the Entry fields against the proper regex
         if self.__check_regex(title_label):
+            # If we are placing, append a special field to the input_data,
+            # and set placing to True
             if title_label.upper() == "PLACE HOST":
                 self.placing = True
                 self.input_data.append("COMPONENT/HOST")
             elif title_label.upper() == "PLACE ROUTER":
                 self.placing = True
                 self.input_data.append("COMPONENT/ROUTER")
+
+            # Get the data from the Entry fields that are set to normal state
             for widget in self.object_canvas.config_frame.winfo_children():
-                if widget.winfo_class() == "Entry" and widget["state"] == "normal":
+                if widget.winfo_class() == "Entry" and \
+                    widget["state"] == "normal":
                     self.input_data.append(widget.get())
+
+            # Hide the Frame afterwards, setting everything neccessary to default,
+            # and return True
             self.__hide_frame()
+            return True
+
         else:
+            # If the regex didn't match, set the foreground colour of the text
+            # to red, to highlight the error, and return False
             self.object_canvas.information_label.config(fg="red")
+            return False
 
     def get_node_coords(self, item_id: int) -> Tuple[int, int]:
         """
@@ -544,12 +686,21 @@ class ObjectCanvasHandler:
         Returns:
         Tuple[int, int]: The coordinates of the Node
         """
+        # Go through all of the Nodes
         for node in (self.hosts + self.routers):
             if node[0] == item_id:
+                # If the item_id matches, get the x and y coordinates of the Node
                 return (node[1], node[2])
+
+        # If none matched, return None
         return None
 
-    def get_link_endpoints(self, x1: int, y1: int, x2: int, y2: int) -> Tuple[int, int, int, int]:
+    def __get_link_endpoints(self,
+                             x1: int,
+                             y1: int,
+                             x2: int,
+                             y2: int
+                             ) -> Tuple[int, int, int, int]:
         """
         Gets the Link's starting and ending coordinates\n
         Used to connect Nodes
@@ -576,31 +727,38 @@ class ObjectCanvasHandler:
         #   -----------------------
         # 4            5            6
 
+        # Get the conditions based on the above shown ascii illustration
         above: bool = y2 + self.node_height <= y1
         # 1
         above_left: bool = above and x2 < x1 + self.node_width // 4
         # 2
-        above_middle: bool = above and (x2 + self.node_width >= x1 + self.node_width //
-                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)
+        above_middle: bool = above and \
+            (x2 + self.node_width >= x1 + self.node_width // 4 and \
+             x2 <= x1 + self.node_width - self.node_width // 4)
         # 3
-        above_right: bool = above and x2 > x1 + self.node_width - self.node_width // 4
+        above_right: bool = above and \
+            x2 > x1 + self.node_width - self.node_width // 4
 
         below: bool = y2 >= y1 + self.node_height
         # 4
-        below_left: bool = below and x2 + self.node_width < x1 + self.node_width // 4
+        below_left: bool = below and \
+            x2 + self.node_width < x1 + self.node_width // 4
         # 5
-        below_middle: bool = below and (x2 + self.node_width >= x1 + self.node_width //
-                                        4 and x2 <= x1 + self.node_width - self.node_width // 4)
+        below_middle: bool = below and \
+            (x2 + self.node_width >= x1 + self.node_width // 4 and \
+             x2 <= x1 + self.node_width - self.node_width // 4)
         # 6
-        below_right: bool = below and x2 > x1 + self.node_width - self.node_width // 4
+        below_right: bool = below and \
+            x2 > x1 + self.node_width - self.node_width // 4
 
         # 7
-        left: bool = y2 + self.node_height > y1 and y2 < y1 + \
-            self.node_height and x2 + self.node_width <= x1
-
+        left: bool = y2 + self.node_height > y1 and \
+            y2 < y1 + self.node_height and x2 + self.node_width <= x1
         # 8 - unneccessary, since the "else" branch will always cover this case
 
         coords: Tuple[int, int, int, int] = None
+
+        # Change the coordinates according to what condition is matched
         if above_middle:
             coords = (x1 + self.node_width // 2, y1, x2 +
                       self.node_width // 2, y2 + self.node_height)
@@ -625,4 +783,7 @@ class ObjectCanvasHandler:
         else:
             coords = (x1 + self.node_width, y1 + self.node_height //
                       2, x2, y2 + self.node_height // 2)
+
+        # If no such condition was met, return None, else return the new coordinates
+        # None should never occur, though
         return coords
