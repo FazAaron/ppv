@@ -156,7 +156,7 @@ class MainHandler:
                     interface_name = user_input[0]
 
                     # Create the Interface
-                    created = self.network.add_interface(
+                    created: bool = self.network.add_interface(
                         host_name, interface_name)
 
                     # If it was created / not created, show a message and log it
@@ -183,7 +183,7 @@ class MainHandler:
                     interface_name = user_input[0]
 
                     # Create the Interface
-                    created = self.network.add_interface(
+                    created: bool = self.network.add_interface(
                         router_name, interface_name)
 
                     # If it was created / not created, show a message and log it
@@ -209,57 +209,100 @@ class MainHandler:
         Handles the delete Interface Frame's submit Button event
         """
         # TODO: check if any packets were lost / what happens with connections, application, sending, etc
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
         x: int = self.object_canvas_handler.menu_x
         y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
         intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
             x, y, 1, 1)
-        self.object_canvas_handler.submit_input()
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
-        if len(user_input) == 0:
+
+        # If the regex failed, do nothing
+        if not success:
             return
+
+        # Logic based on whether the intersection happened on a Host or a
+        # Router
         if intersection_details[0] == "HOST":
             for host in self.hosts:
+                # If the item_id matches
                 if host[0] == intersection_details[1]:
-                    deleted = self.network.delete_interface(
-                        host[1], user_input[0])
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
-                    for link in self.links:
-                        if (host_name == link[1] and interface_name == link[2]) \
-                                or (host_name == link[3] and interface_name == link[4]):
-                            self.links.remove(link)
-                            self.object_canvas_handler.delete_link(
-                                link[0])
-                            break
+
+                    # Delete the Interface
+                    deleted: bool = self.network.delete_interface(
+                        host_name, interface_name)
+
+                    # If it was deleted / not deleted, show a message and log it
+                    # accordingly, and delete the Link connected to it, if
+                    # the deletion succeeded
                     if deleted:
-                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                            f"Successfully deleted Interface {interface_name} on Host {host_name}.",
+                        for link in self.links:
+                            if (host_name == link[1] and
+                                interface_name == link[2]) \
+                                or (host_name == link[3] and
+                                    interface_name == link[4]):
+                                self.links.remove(link)
+                                self.object_canvas_handler.delete_link(
+                                    link[0])
+                                break
+                        self.__show_and_log(f"Host {host_name} - Interface "
+                                            f"{interface_name}",
+                                            f"Successfully deleted Interface "
+                                            f"{interface_name} on Host "
+                                            f"{host_name}.",
                                             "Information")
                     else:
-                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                            f"Failed to delete Interface {interface_name} on Host {host_name}: no such Interface on Host.",
+                        self.__show_and_log(f"Host {host_name} - Interface "
+                                            f"{interface_name}",
+                                            f"Failed to delete Interface "
+                                            f"{interface_name} on Host "
+                                            f"{host_name}: no such Interface on Host.",
                                             "Information")
         elif intersection_details[0] == "ROUTER":
             for router in self.routers:
+                # If the item_id matches
                 if router[0] == intersection_details[1]:
-                    deleted = self.network.delete_interface(
-                        router[1], user_input[0])
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
-                    for link in self.links:
-                        if (router_name == link[1] and interface_name == link[2]) \
-                                or (router_name == link[3] and interface_name == link[4]):
-                            self.links.remove(link)
-                            self.object_canvas_handler.delete_link(
-                                link[0])
-                            break
+
+                    # Delete the Interface
+                    deleted: bool = self.network.delete_interface(
+                        router_name, interface_name)
+
+                    # If it was deleted / not deleted, show a message and log it
+                    # accordingly, and delete the Link connected to it, if
+                    # the deletion succeeded
                     if deleted:
-                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                            f"Successfully deleted Interface {interface_name} on Router {router_name}.",
+                        for link in self.links:
+                            if (router_name == link[1] and
+                                interface_name == link[2]) \
+                                or (router_name == link[3] and
+                                    interface_name == link[4]):
+                                self.links.remove(link)
+                                self.object_canvas_handler.delete_link(
+                                    link[0])
+                                break
+                        self.__show_and_log(f"Router {router_name} - Interface"
+                                            f" {interface_name}",
+                                            f"Successfully deleted Interface "
+                                            f"{interface_name} on Router "
+                                            f"{router_name}.",
                                             "Information")
                     else:
-                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                            f"Failed to delete Interface {interface_name} on Router {router_name}: no such Interface on Host.",
+                        self.__show_and_log(f"Router {router_name} - Interface"
+                                            f" {interface_name}",
+                                            f"Failed to delete Interface "
+                                            f"{interface_name} on Router "
+                                            f"{router_name}: no such Interface"
+                                            " on Host.",
                                             "Information")
 
     def __handle_set_application_submit(self) -> None:
@@ -267,33 +310,55 @@ class MainHandler:
         Handles the set Application Frame's submit Button event
         """
         # TODO: keep sending if it was sending or just stop?
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
         x: int = self.object_canvas_handler.menu_x
         y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
         intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
             x, y, 1, 1)
-        self.object_canvas_handler.submit_input()
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
-        if len(user_input) == 0:
+
+        # If the regex failed, do nothing
+        if not success:
             return
+
         for host in self.hosts:
+            # If the item_id matches
             if host[0] == intersection_details[1]:
-                applied = self.network.set_application(
-                    host[1], user_input[0], user_input[1], user_input[2], user_input[3])
                 app_name: str = user_input[0]
                 host_name: str = host[1]
+
+                # Set the Application
+                applied = self.network.set_application(
+                    host_name, app_name, user_input[1], user_input[2], user_input[3])
+
+                # If it was set / not set, show a message and log it
+                # accordingly
+                # The else branch can only happen if some kind of error occurs
                 if applied:
-                    self.__show_and_log(f"Host {host_name} - Application {app_name}",
-                                        f"Successfully set Application {app_name} on Host {host_name}.",
+                    self.__show_and_log(f"Host {host_name} - Application "
+                                        f"{app_name}",
+                                        f"Successfully set Application "
+                                        f"{app_name} on Host {host_name}.",
                                         "Information")
                 else:
-                    self.__show_and_log(f"Host {host_name} - Application {app_name}",
-                                        f"Failed to set Application {app_name} on Host {host_name}.",
+                    self.__show_and_log(f"Host {host_name} - Application "
+                                        f"{app_name}",
+                                        f"Failed to set Application "
+                                        f"{app_name} on Host {host_name}.",
                                         "Error")
 
     def __handle_send_submit(self) -> None:
         """
         Handles the start sending Frame's submit Button event
         """
+        # TODO implement
         print("Sending")
         self.object_canvas_handler.submit_input()
         print(self.object_canvas_handler.input_data)
@@ -303,65 +368,127 @@ class MainHandler:
         Handles the connect to Node Frame's submit Button event
         """
         # TODO check packets dropped / how sending is affected, etc. when connecting (since this disconnects then connects the links)
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
         intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
-            self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
-        self.object_canvas_handler.submit_input()
+            x, y, 1, 1)
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
-        if len(user_input) == 0:
+
+        # If the regex failed, do nothing
+        if not success:
             return
-        node_1: Node = None  # The Node to connect
-        node_1_coords: Tuple[int, int] = None
-        node_2: Node = self.network.get_host(user_input[0]) or self.network.get_router(
-            user_input[0])  # The Node to connect to
-        node_2_coords: Tuple[int, int] = None
+
+        # Setup the variables for the Node that the method was called on
+        to_connect: Node = None
+        to_connect_coords: Tuple[int, int] = None
+
+        # Setup the variables for the other Node, and get the actual Node
+        other_node: Node = self.network.get_host(user_input[0]) or \
+            self.network.get_router(user_input[0])
+        other_node_coords: Tuple[int, int] = None
+
+        # Get the Nodes, combining Hosts and Routers
         nodes: List[Tuple[int, str]] = self.hosts + self.routers
+
+        # Get the first Node and its coordinates
         for node in nodes:
+            # If the item_id matches
             if node[0] == intersection_details[1]:
-                node_1 = self.network.get_host(
-                    node[1]) or self.network.get_router(node[1])
-                node_1_coords = self.object_canvas_handler.get_node_coords(
+                to_connect = self.network.get_host(node[1]) or \
+                    self.network.get_router(node[1])
+                to_connect_coords = self.object_canvas_handler.get_node_coords(
                     node[0])
                 break
-        if node_2 is None:
+
+        # If the second Node is not present in the Network, show a message
+        # and log accordingly, and then return
+        if other_node is None:
+            # Get the name or the IP of the Node
             node_2_name_or_ip: str = user_input[0]
-            self.__show_and_log(f"Node {node_1.name} - {node_1.ip} <-> Node {node_2_name_or_ip}",
-                                f"Failed to connect {node_1.name} - {node_1.ip} to {node_2_name_or_ip}: no such Node.",
+
+            self.__show_and_log(f"Node {to_connect.name} - {to_connect.ip}"
+                                f" <-> Node {node_2_name_or_ip}",
+                                f"Failed to connect {to_connect.name} - "
+                                f"{to_connect.ip} to {node_2_name_or_ip}: no "
+                                "such Node.",
                                 "Information")
+
             return
+
+        # Get the second Node's coordinates
         for node in nodes:
-            if node[1] == node_2.name:
-                node_2_coords = self.object_canvas_handler.get_node_coords(
+            # If the item_id matches
+            if node[1] == other_node.name:
+                other_node_coords = self.object_canvas_handler.get_node_coords(
                     node[0])
                 break
-        connect_success: bool = self.network.connect_node_interfaces(
-            node_1.name, user_input[0], user_input[1], user_input[2], user_input[3], user_input[4])
-        link_success: bool = True
+
+        # Connect the Nodes using the given input
         interface_1_name: str = user_input[1]
         interface_2_name: str = user_input[2]
+        connect_success: bool = self.network.connect_node_interfaces(
+            to_connect.name, user_input[0], interface_1_name, interface_2_name, user_input[3], user_input[4])
+
+        # If connecting succeded
         if connect_success:
+            # Delete the Link that was connected to either of the Interfaces
             for link in self.links:
-                if (node_1.name == link[1] and user_input[1] == link[2]) or (node_1.name == link[3] and user_input[1] == link[4]) or \
-                        (node_2.name == link[1] and user_input[2] == link[2]) or (node_2.name == link[3] and user_input[2] == link[4]):
+                if (to_connect.name == link[1] and interface_1_name == link[2]) \
+                        or (to_connect.name == link[3] and interface_1_name == link[4]) \
+                        or (other_node.name == link[1] and interface_2_name == link[2]) \
+                        or (other_node.name == link[3] and interface_2_name == link[4]):
                     self.links.remove(link)
-                    link_success = self.object_canvas_handler.delete_link(
-                        link[0])
+                    self.object_canvas_handler.delete_link(link[0])
                     break
-            if link_success:
-                item_id: int = self.object_canvas_handler.draw(
-                    "LINK", node_1_coords[0], node_1_coords[1], node_2_coords[0], node_2_coords[1])
-                self.links.append(
-                    (item_id, node_1.name, interface_1_name, node_2.name, interface_2_name))
-                self.__show_and_log(f"Node {node_1.name} - {node_1.ip} - {interface_1_name} <-> Node {node_2.name} - {node_2.ip} - {interface_2_name}",
-                                    f"Successfully connected {node_1.name} - {node_1.ip} - {interface_1_name} to {node_2.name} - {node_2.ip} - {interface_2_name}.",
-                                    "Information")
+
+            # Draw the Link
+            item_id: int = self.object_canvas_handler.draw(
+                "LINK", to_connect_coords[0], to_connect_coords[1], other_node_coords[0], other_node_coords[1])
+
+            # Add the new Link
+            self.links.append((item_id, to_connect.name, interface_1_name,
+                               other_node.name, interface_2_name))
+
+            # Show a message and log accordingly
+            self.__show_and_log(f"Node {to_connect.name} - {to_connect.ip} - "
+                                f"{interface_1_name} <-> Node "
+                                f"{other_node.name} - {other_node.ip} - "
+                                f"{interface_2_name}",
+                                f"Successfully connected {to_connect.name} - "
+                                f"{to_connect.ip} - {interface_1_name} to "
+                                f"{other_node.name} - {other_node.ip} - "
+                                f"{interface_2_name}.",
+                                "Information")
+        # If it failed to connect
         else:
-            if node_1 == node_2:
-                self.__show_and_log(f"Node {node_1.name} - {node_1.ip} <-> Node {node_2.name} - {node_2.ip}",
-                                    f"Failed to connect {node_1.name} - {node_1.ip} to {node_2.name} - {node_2.ip}: can't connect to self.",
+            # If the two Nodes are identical, show a message and log accordingly
+            if to_connect == other_node:
+                self.__show_and_log(f"Node {to_connect.name} - {to_connect.ip}"
+                                    f" <-> Node {other_node.name} - "
+                                    f"{other_node.ip}",
+                                    f"Failed to connect {to_connect.name} - "
+                                    f"{to_connect.ip} to {other_node.name} - "
+                                    f"{other_node.ip}: can't connect to self.",
                                     "Information")
+            # This occurs when there is an issue with the given Interfaces,
+            # meaning that either of them does not exist on the given Node
             else:
-                self.__show_and_log(f"Node {node_1.name} - {node_1.ip} - {interface_1_name} <-> Node {node_2.name} - {node_2.ip} - {interface_2_name}",
-                                    f"Failed to connect {node_1.name} - {node_1.ip} - {interface_1_name} to {node_2.name} - {node_2.ip} - {interface_2_name}: invalid Interface.",
+                self.__show_and_log(f"Node {to_connect.name} - {to_connect.ip}"
+                                    f" - {interface_1_name} <-> Node "
+                                    f"{other_node.name} - {other_node.ip} - "
+                                    f"{interface_2_name}",
+                                    f"Failed to connect {to_connect.name} - "
+                                    f"{to_connect.ip} - {interface_1_name} to "
+                                    f"{other_node.name} - {other_node.ip} - "
+                                    f"{interface_2_name}: invalid Interface(s).",
                                     "Information")
 
     def __handle_disconnect_submit(self) -> None:
@@ -369,67 +496,103 @@ class MainHandler:
         Handles the disconnect Interface Frame's submit Button event
         """
         # TODO check packets dropped / how sending is affected, etc.
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
         intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
-            self.object_canvas_handler.menu_x, self.object_canvas_handler.menu_y, 1, 1)
-        self.object_canvas_handler.submit_input()
+            x, y, 1, 1)
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
         user_input: List[str] = self.object_canvas_handler.input_data
-        if len(user_input) == 0:
+
+        # If the regex failed, do nothing
+        if not success:
             return
+
+        # Logic based on whether the intersection happened on a Host or a
+        # Router
         if intersection_details[0] == "HOST":
             for host in self.hosts:
+                # If the item_id matches
                 if host[0] == intersection_details[1]:
-                    network_success: bool = self.network.disconnect_node_interface(
-                        host[1], user_input[0])
-                    link_success: bool = True
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
+
+                    # Try disconnecting the given Interface
+                    network_success: bool = self.network.disconnect_node_interface(
+                        host_name, interface_name)
+
+                    # If the disconnecting succeeded
                     if network_success:
+                        # Delete the Link that was connected to the disconnected
+                        # Interface - if there was any
                         for link in self.links:
-                            if (link[1] == host_name and link[2] == interface_name) or \
-                                    (link[3] == host_name and link[4] == interface_name):
-                                link_success = self.object_canvas_handler.delete_link(
-                                    link[0])
+                            if (link[1] == host_name and
+                                link[2] == interface_name) or \
+                               (link[3] == host_name and
+                                    link[4] == interface_name):
+                                self.object_canvas_handler.delete_link(link[0])
                                 self.links.remove(link)
                                 break
-                        if link_success:
-                            self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                                f"Successfully disconnected Interface {interface_name} on Host {host_name}.",
-                                                "Information")
-                        else:
-                            self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                                f"Failed to disconnect Interface {interface_name} on Host {host_name}: no corresponding Link.",
-                                                "Error")
+
+                        # Show a message and log accordingly
+                        self.__show_and_log(f"Host {host_name} - Interface "
+                                            f"{interface_name}",
+                                            f"Successfully disconnected "
+                                            f"Interface {interface_name} on "
+                                            f"Host {host_name}.",
+                                            "Information")
+                    # If it failed, show a message and log accordingly
                     else:
-                        self.__show_and_log(f"Host {host_name} - Interface {interface_name}",
-                                            f"Failed to disconnect Interface {interface_name} on Host {host_name}: no such Interface.",
+                        self.__show_and_log(f"Host {host_name} - Interface "
+                                            f"{interface_name}",
+                                            f"Failed to disconnect Interface "
+                                            f"{interface_name} on Host "
+                                            f"{host_name}: no such Interface.",
                                             "Information")
         else:
             for router in self.routers:
+                # If the item_id matches
                 if router[0] == intersection_details[1]:
-                    network_success: bool = self.network.disconnect_node_interface(
-                        router[1], user_input[0])
-                    link_success: bool = True
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
+
+                    # Try disconnecting the given Interface
+                    network_success: bool = self.network.disconnect_node_interface(
+                        router_name, interface_name)
+
+                    # If the disconnecting succeeded
                     if network_success:
+                        # Delete the Link that was connected to the disconnected
+                        # Interface - if there was any
                         for link in self.links:
-                            if (link[1] == router_name and link[2] == interface_name) or \
-                                    (link[3] == router_name and link[4] == interface_name):
-                                link_success = self.object_canvas_handler.delete_link(
-                                    link[0])
+                            if (link[1] == router_name and
+                                link[2] == interface_name) or \
+                               (link[3] == router_name and
+                                    link[4] == interface_name):
+                                self.object_canvas_handler.delete_link(link[0])
                                 self.links.remove(link)
                                 break
-                        if link_success:
-                            self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                                f"Successfully disconnected Interface {interface_name} on Router {router_name}.",
-                                                "Information")
-                        else:
-                            self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                                f"Failed to disconnect Interface {interface_name} on Router {router_name}: no corresponding Link.",
-                                                "Error")
+
+                        # Show a message and log accordingly
+                        self.__show_and_log(f"Router {router_name} - Interface "
+                                            f" {interface_name}",
+                                            f"Successfully disconnected "
+                                            f"Interface {interface_name} on "
+                                            f"Router {router_name}.",
+                                            "Information")
+                    # If it failed, show a message and log accordingly
                     else:
-                        self.__show_and_log(f"Router {router_name} - Interface {interface_name}",
-                                            f"Failed to disconnect Interface {interface_name} on Router {router_name}: no such Interface.",
+                        self.__show_and_log(f"Router {router_name} - Interface"
+                                            f" {interface_name}",
+                                            f"Failed to disconnect Interface"
+                                            f" {interface_name} on Router "
+                                            f"{router_name}: no such Interface.",
                                             "Information")
 
     def __get_handlers(self, menu_type: str) -> List[Callable]:
@@ -443,15 +606,22 @@ class MainHandler:
         Returns:
         List[Callable]: The event handlers for the submit buttons
         """
+        # Get the submit Button handlers for every single pop-up Menu type
         if menu_type.upper() == "NETWORK":
-            return [self.__handle_component_add_submit, self.__handle_component_add_submit]
+            return [self.__handle_component_add_submit,
+                    self.__handle_component_add_submit]
         elif menu_type.upper() == "HOST":
-            return [self.__handle_interface_add_submit, self.__handle_interface_delete_submit,
-                    self.__handle_set_application_submit, self.__handle_send_submit,
-                    self.__handle_connect_submit, self.__handle_disconnect_submit]
+            return [self.__handle_interface_add_submit,
+                    self.__handle_interface_delete_submit,
+                    self.__handle_set_application_submit,
+                    self.__handle_send_submit,
+                    self.__handle_connect_submit,
+                    self.__handle_disconnect_submit]
         else:
-            return [self.__handle_interface_add_submit, self.__handle_interface_delete_submit,
-                    self.__handle_connect_submit, self.__handle_disconnect_submit]
+            return [self.__handle_interface_add_submit,
+                    self.__handle_interface_delete_submit,
+                    self.__handle_connect_submit,
+                    self.__handle_disconnect_submit]
 
     def __get_menu_frames(self, menu_type: str) -> List[str]:
         """
@@ -464,10 +634,13 @@ class MainHandler:
         Returns:
         List[str]: The Frame types for the given menu_type
         """
+        # Get the Frame types for every single pop-up Menu type
         if menu_type.upper() == "ROUTER":
-            return ["ADDINTERFACE", "DELETEINTERFACE", "CONNECT", "DISCONNECT"]
+            return ["ADDINTERFACE", "DELETEINTERFACE",
+                    "CONNECT", "DISCONNECT"]
         elif menu_type.upper() == "HOST":
-            return ["ADDINTERFACE", "DELETEINTERFACE", "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
+            return ["ADDINTERFACE", "DELETEINTERFACE",
+                    "SETAPPLICATION", "SEND", "CONNECT", "DISCONNECT"]
         else:
             return ["PLACEHOST", "PLACEROUTER"]
 
@@ -477,61 +650,100 @@ class MainHandler:
         the pop-up Menu
         """
         # TODO: check if any packets were lost / what happens with connections, application, sending, etc
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
         x: int = self.object_canvas_handler.menu_x
         y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
         intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
             x, y, 1, 1)
+
+        # Try deleting the component from the Canvas
         handler_success: bool = self.object_canvas_handler.delete_component(
             intersection_details[0], intersection_details[1])
         network_success: bool = False
-        link_success: bool = True
+
+        # Logic based on whether the intersection happened on a Host or a
+        # Router
         if intersection_details[0] == "HOST":
             for host in self.hosts:
+                # If the item_id matches
                 if intersection_details[1] == host[0]:
                     host_name: str = host[1]
                     network_success = self.network.delete_host(host_name)
+
+                    # Create a List for the Links to remove
+                    # This is needed because removing while iterating
+                    # invalidates the iterator on the List
                     links_to_remove: List[int, str, str, str, str] = []
+
+                    # Delete the Link from the Canvas
                     for link in self.links:
                         if host_name == link[1] or host_name == link[3]:
                             links_to_remove.append(link)
-                            new_success: bool = self.object_canvas_handler.delete_link(
-                                link[0])
-                            link_success = link_success and new_success
+                            self.object_canvas_handler.delete_link(link[0])
+
+                    # And also delete the Link from the storage used to connect
+                    # together the network and handler / GUI components
                     for link in links_to_remove:
                         self.links.remove(link)
-                    if handler_success and network_success and link_success:
+
+                    # If both succeeded, remove the Host, and show a message and
+                    # log accordingly
+                    if handler_success and network_success:
                         self.hosts.remove(host)
                         self.__show_and_log(f"Host {host_name}",
-                                            f"Successfully deleted Host {host_name}.",
+                                            f"Successfully deleted Host"
+                                            f" {host_name}.",
                                             "Information")
+                    # This can only happen if an error occurs
                     else:
                         self.__show_and_log(f"Host {host_name}",
-                                            f"Failed to delete Host {host_name}.",
+                                            f"Failed to delete Host "
+                                            f"{host_name}.",
                                             "Error")
+                    # Return, because we found our Host
                     return
         elif intersection_details[0] == "ROUTER":
             for router in self.routers:
+                # If the item_id matches
                 if intersection_details[1] == router[0]:
                     router_name: str = router[1]
                     network_success = self.network.delete_router(router_name)
+
+                    # Create a List for the Links to remove
+                    # This is needed because removing while iterating
+                    # invalidates the iterator on the List
                     links_to_remove: List[int, str, str, str, str] = []
+
+                    # Delete the Link from the Canvas
                     for link in self.links:
                         if router_name == link[1] or router_name == link[3]:
                             links_to_remove.append(link)
-                            new_success: bool = self.object_canvas_handler.delete_link(
-                                link[0])
-                            link_success = link_success and new_success
+                            self.object_canvas_handler.delete_link(link[0])
+
+                    # And also delete the Link from the storage used to connect
+                    # together the network and handler / GUI components
                     for link in links_to_remove:
                         self.links.remove(link)
-                    if handler_success and network_success and link_success:
+
+                    # If both succeeded, remove the Router, and show a message
+                    # and log accordingly
+                    if handler_success and network_success:
                         self.routers.remove(router)
                         self.__show_and_log(f"Router {router_name}",
-                                            f"Successfully deleted Router {router_name}.",
+                                            f"Successfully deleted Router "
+                                            f"{router_name}.",
                                             "Information")
+                    # This can only happen if an error occurs
                     else:
                         self.__show_and_log(f"Router {router_name}",
-                                            f"Failed to delete Router {router_name}.",
+                                            f"Failed to delete Router "
+                                            f"{router_name}.",
                                             "Error")
+                    # Return, because we found our Router
                     return
 
     def __setup_cancel_button(self) -> None:
@@ -546,17 +758,26 @@ class MainHandler:
         The event handler for when the "Cancel" Button is pressed in any of the \
         available Frames
         """
+        # Get the specific handlers and Frames for the Network pop-up Menu
         network_frames: List[str] = self.__get_menu_frames("NETWORK")
         network_handlers: List[Callable] = self.__get_handlers("NETWORK")
 
+        # Get the specific handlers and Frames for the Host pop-up Menu
         host_frames: List[str] = self.__get_menu_frames("HOST")
         host_handlers: List[Callable] = self.__get_handlers("HOST")
 
+        # Get the specific handlers and Frames for the Router pop-up Menu
         router_frames: List[str] = self.__get_menu_frames("ROUTER")
         router_handlers: List[Callable] = self.__get_handlers("ROUTER")
 
+        # Apply these to the entries, setting up what Frames to show, and what
+        # behaviour has to be done when the submit Button is pressed
         self.object_canvas_handler.bind_to_options_menu_entries(
-            (network_frames, network_handlers), (host_frames, host_handlers), (router_frames, router_handlers), self.__handle_deletion_option)
+            (network_frames, network_handlers), (host_frames, host_handlers),
+            (router_frames, router_handlers), self.__handle_deletion_option)
+
+        # Also setup the cancel Button for every Frame - shares behaviour in
+        # every Frame
         self.__setup_cancel_button()
 
     def __handle_is_placing_motion(self, event: str) -> None:
@@ -567,9 +788,14 @@ class MainHandler:
         Parameters:
         event (str): The event occuring, providing mouse coordinates
         """
+        # If we are currently placing
         if self.object_canvas_handler.is_placing():
+            # Draw the component, but don't save it for redraws
             item_id: int = self.object_canvas_handler.draw(
-                self.object_canvas_handler.input_data[0], event.x, event.y, save=False)
+                self.object_canvas_handler.input_data[0],
+                event.x, event.y, save=False)
+            # If there was no intersection, save the coordinates, so that when
+            # there is an actual intersection, we can use these coordinates
             if item_id != -1:
                 self.object_canvas_handler.set_last_saved_pos(event.x, event.y)
 
@@ -590,22 +816,34 @@ class MainHandler:
         Parameters:
         event (str): The event occuring, providing mouse coordinates
         """
-        details: Tuple[str, int] = self.object_canvas_handler.intersects(
+        # Check what intersects with the mouse
+        intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
             event.x, event.y, 1, 1)
-        if details[1] > 0:
-            if details[0] == "ROUTER":
-                for router in self.routers:
-                    if details[1] == router[0]:
-                        item: Router = self.network.get_router(router[1])
-                        self.__change_text(
-                            "Router Details:\n", item.__str__())
-            else:
-                for host in self.hosts:
-                    if details[1] == host[0]:
-                        item: Host = self.network.get_host(host[1])
-                        self.__change_text(
-                            "Host Details:\n", item.__str__())
+
+        # Logic based on whether the intersection happened on a Host, Router or
+        # there was no intersection
+        if intersection_details[0] == "HOST":
+            for host in self.hosts:
+                # If the item_id matches
+                if intersection_details[1] == host[0]:
+                    # Fetch the Host
+                    item: Host = self.network.get_host(host[1])
+
+                    # Show its attributes in the left-hand side Frame
+                    self.__change_text(
+                        "Host Details:\n", item.__str__())
+        elif intersection_details[0] == "ROUTER":
+            for router in self.routers:
+                # If the item_id matches
+                if intersection_details[1] == router[0]:
+                    # Fetch the Router
+                    item: Router = self.network.get_router(router[1])
+
+                    # Show its attributes in the left-hand side Frame
+                    self.__change_text(
+                        "Router Details:\n", item.__str__())
         else:
+            # If nothing intersected, show the starting text
             self.__change_text("", self.object_frame_handler.start_display)
 
     def __handle_is_placing_left_click(self, event: str) -> None:
@@ -615,45 +853,84 @@ class MainHandler:
         Parameters:
         event (str): The event occuring
         """
+        # If we are currently placing
         if self.object_canvas_handler.is_placing():
+            # Fetch the data previously set from the Entries in the placing
+            # Frame
             user_input: List[str] = self.object_canvas_handler.input_data
+
+            # If there wasn't any set, return
             if len(user_input) == 0:
                 return
+
+            # created will be used to check if creating was successful or not
+            # last_x and last_y is needed because event.x and event.y does
+            # not provide the neccessary logic when trying to place
             created: bool = False
             last_x: int = self.object_canvas_handler.last_saved_x
             last_y: int = self.object_canvas_handler.last_saved_y
+
+            # Logic based on whether the component we are placing is a Host or a
+            # Router
             if user_input[0] == "COMPONENT/HOST":
-                created = self.network.create_host(
-                    user_input[1], user_input[2], int(user_input[3]))
                 host_name: str = user_input[1]
                 host_ip: str = user_input[2]
+
+                # Try creating the Host
+                created = self.network.create_host(
+                    host_name, host_ip, int(user_input[3]))
+
+                # If it succeeded
                 if created:
+                    # Draw the component and save it for future redraws
                     item_id: int = self.object_canvas_handler.draw(
                         user_input[0], last_x, last_y)
                     self.hosts.append((item_id, host_name))
+
+                    # Show a message and log accordingly
                     self.__show_and_log(f"Host {host_name} - {host_ip}",
-                                        f"Successfully created Host {host_name} - {host_ip}.",
+                                        f"Successfully created Host "
+                                        f"{host_name} - {host_ip}.",
                                         "Information")
+                # If it was a duplicate name or IP, show a message and log
+                # accordingly
                 else:
                     self.__show_and_log(f"Host {host_name} - {host_ip}",
-                                        f"Failed to create Host {host_name} - {host_ip}: duplicate Node IP or Name.",
+                                        f"Failed to create Host "
+                                        f"{host_name} - {host_ip}: "
+                                        "duplicate Node IP or Name.",
                                         "Information")
             else:
-                created = self.network.create_router(
-                    user_input[1], user_input[2], int(user_input[3]), int(user_input[4]))
                 router_name: str = user_input[1]
                 router_ip: str = user_input[2]
+
+                # Try creating the Router
+                created = self.network.create_router(
+                    router_name, router_ip, 
+                    int(user_input[3]), int(user_input[4]))
+
+                # If it succeeded
                 if created:
+                    # Draw the component and save it for future redraws
                     item_id: int = self.object_canvas_handler.draw(
                         user_input[0], last_x, last_y)
                     self.routers.append((item_id, router_name))
+
+                    # Show a message and log accordingly
                     self.__show_and_log(f"Router {router_name} - {router_ip}",
-                                        f"Successfully created Router {router_name} - {router_ip}.",
+                                        f"Successfully created Router "
+                                        f"{router_name} - {router_ip}.",
                                         "Information")
+                # If it was a duplicate name or IP, show a message and log
+                # accordingly
                 else:
                     self.__show_and_log(f"Router {router_name} - {router_ip}",
-                                        f"Failed to create Router {router_name} - {router_ip}: duplicate Node IP or Name.",
+                                        f"Failed to create Router "
+                                        f"{router_name} - {router_ip}: "
+                                        "duplicate Node IP or Name.",
                                         "Information")
+
+            # Set the placing to False, indicating, that we are finished
             self.object_canvas_handler.placing = False
 
     def __bind_to_object_canvas_handler(self) -> None:
@@ -661,11 +938,21 @@ class MainHandler:
         Binds event handlers to the ObjectCanvas, providing the needed \
         functionality for the simulation
         """
+        # Bind to the right-click event of the Canvas, adding the option to
+        # show pop-up Menus
         self.object_canvas_handler.bind("<Button-3>", self.__show_options_menu)
+
+        # Configure the Entries of above mentioned Menus
         self.__setup_config_frames()
+
+        # Add drawing the component to the Motion event if we are placing
         self.object_canvas_handler.bind(
             "<Motion>", self.__handle_is_placing_motion)
+
+        # Add getting the details of a component to the left-click event
         self.object_canvas_handler.bind(
             "<Button-1>", self.__handle_show_details_left_click)
+
+        # Add placing a component to the left-click event
         self.object_canvas_handler.bind(
             "<Button-1>", self.__handle_is_placing_left_click)
