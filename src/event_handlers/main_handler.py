@@ -241,14 +241,16 @@ class MainHandler:
         """
         # Gets the statistics - no locking needed, because this should be called
         # instantly after the Network's method was called, to provide 100% precision
-        total_packets:   int = self.network.total_pack
-        packets_dropped: int = self.network.dropped_pack
+        total_packets:    int = self.network.total_pack
+        packets_dropped:  int = self.network.dropped_pack
+        packets_received: int = self.network.received_pack
 
         # Lock the StatisticsFrame object's access to avoid race conditions
         with self.statistics_lock:
             # Updates the statistics in the StatisticsFrame
             self.statistics_frame_handler.update_labels(total_packets,
-                                                        packets_dropped)
+                                                        packets_dropped,
+                                                        packets_received)
 
     def __handle_interface_delete_submit(self) -> None:
         """
@@ -390,8 +392,6 @@ class MainHandler:
                 app_name: str = user_input[0]
                 host_name: str = host[1]
 
-                idx: int = self.hosts.index(host)
-
                 # To avoid race conditions on the host_sending variables
                 with self.sending_lock:
                     self.host_sending[host[0]] = False
@@ -420,6 +420,7 @@ class MainHandler:
                                         "Error")
 
     def __packet_thread(self, next_hop: str, interface_name: str) -> None:
+        # TODO check the actual link speed - redo it, because the speed does not match
         with self.network_lock:
             sleep_time: float = 1 / int(self.network.get_link_speed(next_hop,
                                                           interface_name))
@@ -434,7 +435,7 @@ class MainHandler:
                     return
                 else:
                     self.network.receive_packet(next_hop, interface_name)
-        self.__update_statistics()
+            self.__update_statistics()
 
     def __host_thread(self,
                       host_name: str,
@@ -445,8 +446,10 @@ class MainHandler:
                             f"{host_name} to Host {target_name_or_ip}",
                             "Information")
 
+        host = self.network.get_host(host_name)
+
         with self.network_lock:
-            send_rate: int = int(self.network.get_host(host_name).send_rate)
+            send_rate: int = int(host.send_rate)
             is_sending: bool = self.network.can_send(host_name)
 
         if not is_sending:
@@ -462,7 +465,6 @@ class MainHandler:
 
         receiver_data: Tuple[str, str, str] = None
         sleep_time: float = 1 / send_rate
-
         
         while is_sending:
 
@@ -476,11 +478,15 @@ class MainHandler:
                         break
                     receiver_data = self.network.send_packet(host_name,
                                                              target_name_or_ip)
+                    if receiver_data[0] == target.ip:
+                        host.receive_feedback(host.ip, 1)
                     is_sending = self.network.can_send(host_name)
-                self.__update_statistics()
+                    self.__update_statistics()
+                    send_rate = int(host.send_rate)
                 if receiver_data is not None:
                     Thread(target=self.__packet_thread,
-                        args=(receiver_data[0], receiver_data[1])).start()
+                        args=(receiver_data[0], receiver_data[1]), daemon=True).start()
+                sleep_time = 1 / send_rate
 
             time.sleep(sleep_time)
 
@@ -492,12 +498,8 @@ class MainHandler:
                             f"{host_name} to Host {target_name_or_ip}",
                             "Information")
 
-    def __router_thread(self, router_name_or_ip: str) -> None:
+    def __router_thread(self, router: Router) -> None:
         while True:
-            with self.network_lock:
-                router: Router = self.network.get_router(router_name_or_ip)
-            if router is None:
-                break
             if router.get_buffer_length() != 0:
 
                 sleep_time: int = 1 / router.send_rate
@@ -922,8 +924,6 @@ class MainHandler:
                 if intersection_details[1] == host[0]:
                     host_name: str = host[1]
 
-                    idx: int = self.hosts.index(host)
-
                     # To avoid race conditions on the host_sending variable
                     with self.sending_lock:
                         del self.host_sending[host[0]]
@@ -1099,6 +1099,7 @@ class MainHandler:
                 if intersection_details[1] == host[0]:
 
                     # To avoid race conditions on the Network object
+                    # TODO check if actually needed
                     with self.network_lock:
                         # Fetch the Host
                         item: Host = self.network.get_host(host[1])

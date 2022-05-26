@@ -386,11 +386,17 @@ class Host(Node):
         if feedback == 1:
             self.send_rate += 1
             self.application.send_rate += 1
+            if self.send_rate > 99:
+                self.send_rate = 99
+                self.application.send_rate = 99
         # If the feedback was negative (the buffer was full), we need to decrease
         # the speed the Host is sending at
         elif feedback == -1:
             self.send_rate //= 2
             self.application.send_rate //= 2
+            if self.send_rate == 0:
+                self.send_rate = 1
+                self.application.send_rate = 1
 
     def receive_feedback(self, packet_source: str, feedback: int) -> None:
         """

@@ -28,11 +28,12 @@ class Network:
     """
 
     def __init__(self) -> None:
-        self.hosts:        List[Host] = []
-        self.routers:      List[Router] = []
-        self.graph:        Graph = Graph()
-        self.total_pack:   int = 0
-        self.dropped_pack: int = 0
+        self.hosts:         List[Host] = []
+        self.routers:       List[Router] = []
+        self.graph:         Graph = Graph()
+        self.total_pack:    int = 0
+        self.dropped_pack:  int = 0
+        self.received_pack: int = 0
 
     def get_nodes(self) -> List[Node]:
         """
@@ -565,6 +566,7 @@ class Network:
 
         # If the Node is a Host, we are done
         if router is None:
+            self.received_pack += 1
             return node.receive_packet(interface_name)
 
         # In the other case, we need to handle the dropped Packet and the
