@@ -352,6 +352,62 @@ def test_network_set_application():
         "Network.set_application() failure"
 
 
+def test_network_can_send():
+    """
+    Test the can_send() method of the Network
+    """
+    # Setup the Network object
+    network = Network()
+
+    # Create a Host
+    network.create_host("host_123", "192.168.1.1", 10)
+
+    # Check if it can send with no Application
+    can_send_no_app: bool = network.can_send("host_123")
+
+    # Set the Application on the Host
+    application_set_by_name_success = network.set_application(
+        "host_123", "app_123", 11, 11, "AIMD")
+
+    # Check if it can send with the Application now present
+    can_send_app: bool = network.can_send("192.168.1.1")
+
+    assert not can_send_no_app and \
+        can_send_app, \
+        "Network.can_send() failure"
+
+
+def test_network_get_link_speed():
+    """
+    Test the get_link_speed() method of the Network
+    """
+    # Setup the Network object
+    network = Network()
+
+    # Create Nodes
+    network.create_host("host_1", "192.168.1.1", 10)
+    network.create_router("router_1", "192.169.1.1", 10, 10)
+
+    # Add Interfaces
+    network.add_interface("host_1", "eth1_1")
+    network.add_interface("router_1", "eth1_2")
+
+    # Get the Link speed without connection
+    zero_speed: int = network.get_link_speed("host_1", "eth1_1")
+
+    # Connect the Nodes
+    connect = network.connect_node_interfaces(
+        "host_1", "router_1", "eth1_1", "eth1_2", 10, 10)
+
+    # Get the Link speed with a connection
+    normal_speed: int = network.get_link_speed("host_1", "eth1_1")
+
+    assert connect and \
+        zero_speed == 0 and \
+        normal_speed == 10, \
+        "Network.get_link_speed() failure"
+
+
 def test_network_connect_node_interfaces():
     """
     Test connecting Node Interfaces

@@ -2,7 +2,8 @@
 This module makes MainHandler objects available for use when imported
 """
 # Built-in modules
-from threading import Lock
+from threading import Lock, Thread
+import time
 from tkinter import messagebox
 from typing import Callable, List, Tuple
 
@@ -40,11 +41,13 @@ class MainHandler:
     hosts                    (List[Tuple[int, str]]): Host information stored
     routers                  (List[Tuple[int, str]]): Router information stored
     links                    (List[Tuple[int, str, str]]): Link information stored
+    host_sending             (List[bool]): Which Host is currently sending
     statistics_lock          (Lock): Locks for the StatisticsFrameHandler's \
                              label updating
     network_lock             (Lock): Lock for the Network object's access
     message_lock             (Lock): Lock for the ObjectCanvasHandler's message \
                              showing
+    sending_lock             (Lock): Lock for the host_sending object's access
     """
 
     def __init__(self, main_window: MainWindow, network: Network) -> None:
@@ -70,10 +73,14 @@ class MainHandler:
         self.routers: List[Tuple[int, str]] = []
         self.links: List[Tuple[int, str, str, str, str]] = []
 
+        # Keeping track of which Host is sending
+        self.host_sending: List[bool] = []
+
         # Locks for avoiding race conditions
         self.statistics_lock: Lock = Lock()
         self.network_lock: Lock = Lock()
         self.message_lock: Lock = Lock()
+        self.sending_lock: Lock = Lock()
 
         # Setup the bindings for the Handlers
         self.__bind_to_object_frame_handler()
@@ -223,6 +230,9 @@ class MainHandler:
                                             "Information")
 
     def __update_statistics(self) -> None:
+        """
+        Updates the statistics inside the StatisticsFrame
+        """
         # Gets the statistics - no locking needed, because this should be called
         # instantly after the Network's method was called, to provide 100% precision
         total_packets:   int = self.network.total_pack
@@ -238,7 +248,7 @@ class MainHandler:
         """
         Handles the delete Interface Frame's submit Button event
         """
-        # TODO: check if any packets were lost / what happens with connections, application, sending, etc
+        # TODO: check sending
         # Get the coordinates where the Menu was opened before the Frame
         # This is needed to avoid having to use the event.x and event.y
         # coordinates
@@ -351,7 +361,6 @@ class MainHandler:
         """
         Handles the set Application Frame's submit Button event
         """
-        # TODO: keep sending if it was sending or just stop?
         # Get the coordinates where the Menu was opened before the Frame
         # This is needed to avoid having to use the event.x and event.y
         # coordinates
@@ -376,6 +385,12 @@ class MainHandler:
                 app_name: str = user_input[0]
                 host_name: str = host[1]
 
+                idx: int = self.hosts.index(host)
+
+                # To avoid race conditions on the host_sending variables
+                with self.sending_lock:
+                    self.host_sending[idx] = False
+
                 # To avoid race conditions on the Network object
                 with self.network_lock:
                     # Set the Application
@@ -398,6 +413,32 @@ class MainHandler:
                                         f"Failed to set Application "
                                         f"{app_name} on Host {host_name}.",
                                         "Error")
+
+    def __link_thread(self, next_hop: str, interface: str) -> None:
+        pass
+
+    def __host_thread(self, host: Host, idx: int, target: Host) -> None:
+        with self.sending_lock:
+            self.host_sending[idx] = True
+        is_sending: bool = True
+        receiver_data: Tuple[str, str, str] = None
+        sleep_time: float = 1 / host.send_rate
+        while is_sending:
+
+            with self.sending_lock:
+                is_sending = self.host_sending[idx]
+
+            if is_sending:
+                with self.network_lock:
+                    receiver_data = self.network.send_packet(host.name, target.name)
+                    is_sending = self.network.can_send(host.name)
+
+            time.sleep(sleep_time) 
+
+    def __router_thread(self, router: Router) -> None:
+        while True:
+            if router.get_buffer_length() != 0:
+                pass
 
     def __handle_send_submit(self) -> None:
         """
@@ -436,9 +477,31 @@ class MainHandler:
                     self.__show_and_log(f"Host {host_name} <-> Host {target}",
                                         f"Failed to start sending from Host "
                                         f"{host_name} to Host {target}: "
-                                        "invalid target Host",
+                                        "invalid target Host.",
                                         "Information")
                     # Return, because there is no such Node
+                    return
+                elif host[1] == target_node.name or host[1] == target_node.ip:
+                    self.__show_and_log(f"Host {host_name} <-> Host {target}",
+                                        f"Failed to start sending from Host "
+                                        f"{host_name} to Host {target}: "
+                                        "can't send to self.",
+                                        "Information")
+                    # Return, because can't send to self
+                    return
+
+                # Get the index for the host_sending variable
+                idx: int = self.hosts.index(host)
+
+                # To avoid race conditions on the host_sending variable
+                with self.sending_lock:
+                    is_sending: bool = self.host_sending[idx]
+
+                # If the Host is already sending, just return, and let it send
+                if is_sending == True:
+                    self.__show_and_log(f"Host {host_name} <-> Host {target}",
+                                        f"Host {host_name} is already sending.",
+                                        "Information")
                     return
 
                 self.__show_and_log(f"Host {host_name} <-> Host {target}",
@@ -446,12 +509,14 @@ class MainHandler:
                                     f"{host_name} to Host {target}",
                                     "Information")
                 # Sending process / Threading
+                # If a Host is already sending, dont start sending again
+                # If we can start sending, create a Thread that handles the sending, along with timings
                 # If next_hop is None, refresh dropped packets and log
                 self.__show_and_log(f"Host {host_name} <-> Host {target}",
                                     f"Stopped sending from Host "
                                     f"{host_name} to Host {target}",
                                     "Information")
-                # Return, because we found our Host
+                # Return, because we found our Host, and we are done
                 return
 
     def __handle_connect_submit(self) -> None:
@@ -772,7 +837,6 @@ class MainHandler:
         The event handler for when the "delete component" Entry is pressed in \
         the pop-up Menu
         """
-        # TODO: check if any packets were lost / what happens with connections, application, sending, etc
         # Get the coordinates where the Menu was opened before the Frame
         # This is needed to avoid having to use the event.x and event.y
         # coordinates
@@ -795,6 +859,12 @@ class MainHandler:
                 # If the item_id matches
                 if intersection_details[1] == host[0]:
                     host_name: str = host[1]
+
+                    idx: int = self.hosts.index(host)
+
+                    # To avoid race conditions on the host_sending variable
+                    with self.sending_lock:
+                        del self.host_sending[idx]
 
                     # To avoid race conditions on the Network object
                     with self.network_lock:
@@ -1029,6 +1099,10 @@ class MainHandler:
 
                 # If it succeeded
                 if created:
+                    # To avoid race conditions on the host_sending object
+                    with self.sending_lock:
+                        self.host_sending.append(False)
+
                     # Draw the component and save it for future redraws
                     item_id: int = self.object_canvas_handler.draw(
                         user_input[0], last_x, last_y)

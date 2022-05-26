@@ -9,6 +9,7 @@ intended way
 from typing import List, Tuple
 
 # Self-made modules
+from src.components.interface import Interface
 from src.components.node import Host, Node, Router
 from src.components.routing_table import Route
 from src.utils.graph import Graph
@@ -320,7 +321,7 @@ class Network:
         If the Host does not exist, this does not do anything
 
         Parameters:
-        host_name_or_ip (str): The name of the Host
+        host_name_or_ip (str): The name or IP of the Host
         app_name        (str): The name of the Application to set on the Host
         amount          (int): Packet amount to send from the Application
         send_rate       (int): The sending rate of the application
@@ -340,6 +341,52 @@ class Network:
         host.set_application(app_name, amount, send_rate, app_type)
 
         return True
+
+    def can_send(self, host_name_or_ip: str) -> bool:
+        """
+        Gets whether the Host can send or not
+
+        Parameters:
+        host_name_or_ip (str): The name or IP of the Host
+
+        Returns:
+        bool: Whether the Host can send or not
+        """
+        # Get the Host
+        host: Host = self.get_host(host_name_or_ip)
+
+        # If no such Host was found, return with False
+        if host is None or host.application is None:
+            return False
+
+        # Else return with whether it can send or not
+        return host.application.can_send()
+
+    def get_link_speed(self, node_name_or_ip: str, interface_name: str) -> int:
+        """
+        Gets the speed of the Link connected to the given Interface
+
+        Parameters:
+        node_name_or_ip (str): The name or IP of the Node
+        interface_name  (str): The name of the Interface
+        """
+        # Get the Node
+        node: Node = self.get_host(node_name_or_ip) or \
+            self.get_router(node_name_or_ip)
+
+        # If no such Node was found, return with 0
+        if node is None:
+            return 0
+
+        # Get the Interface
+        interface: Interface = node.get_interface(interface_name)
+
+        # If no such Interface was found, or it's not connected, return with 0
+        if interface is None or interface.link is None:
+            return 0
+
+        # Else, return the speed
+        return interface.send_channel.speed
 
     def connect_node_interfaces(self,
                                 node_name_or_ip: str,
