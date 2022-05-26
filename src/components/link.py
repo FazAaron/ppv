@@ -52,8 +52,7 @@ class Channel:
 
     def __str__(self) -> str:
         return (f"Speed: {self.speed} packet / second\n"
-                f"Metrics: {self.metrics}\n"
-                f"Payload: {len(self.payload)} packets")
+                f"Metrics: {self.metrics}\n")
 
 
 class Link:

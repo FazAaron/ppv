@@ -463,7 +463,7 @@ class Router(Node):
                  send_rate: int,
                  buffer_size: int,
                  ) -> None:
-        super().__init__(name, ip, send_rate)
+        super().__init__(name, ip, int(send_rate))
         self.buffer:      List[Packet] = []
         self.buffer_size: int = 0 if buffer_size < 0 else buffer_size
 
