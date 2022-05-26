@@ -2,6 +2,7 @@
 This module makes MainHandler objects available for use when imported
 """
 # Built-in modules
+from threading import Lock
 from tkinter import messagebox
 from typing import Callable, List, Tuple
 
@@ -39,6 +40,11 @@ class MainHandler:
     hosts                    (List[Tuple[int, str]]): Host information stored
     routers                  (List[Tuple[int, str]]): Router information stored
     links                    (List[Tuple[int, str, str]]): Link information stored
+    statistics_lock          (Lock): Locks for the StatisticsFrameHandler's \
+                             label updating
+    network_lock             (Lock): Lock for the Network object's access
+    message_lock             (Lock): Lock for the ObjectCanvasHandler's message \
+                             showing
     """
 
     def __init__(self, main_window: MainWindow, network: Network) -> None:
@@ -63,6 +69,11 @@ class MainHandler:
         self.hosts: List[Tuple[int, str]] = []
         self.routers: List[Tuple[int, str]] = []
         self.links: List[Tuple[int, str, str, str, str]] = []
+
+        # Locks for avoiding race conditions
+        self.statistics_lock: Lock = Lock()
+        self.network_lock: Lock = Lock()
+        self.message_lock: Lock = Lock()
 
         # Setup the bindings for the Handlers
         self.__bind_to_object_frame_handler()
@@ -111,10 +122,13 @@ class MainHandler:
         message  (str): The message
         severity (str): The severity of the message, can be information or error
         """
-        # Shows a message, and then logs it to the log file
-        self.object_canvas_handler.show_message(message, 2000)
-        while not self.logger.write(comp, message, severity):
-            pass
+        # Lock the ObjectCanvasHandler's message showing, to avoid race
+        # conditions
+        with self.message_lock:
+            # Shows a message
+            self.object_canvas_handler.show_message(message, 2000)
+        # Logs the message to a file
+        self.logger.write(comp, message, severity)
 
     def __handle_component_add_submit(self) -> None:
         """
@@ -155,9 +169,11 @@ class MainHandler:
                     host_name = host[1]
                     interface_name = user_input[0]
 
-                    # Create the Interface
-                    created: bool = self.network.add_interface(
-                        host_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try creating the Interface
+                        created: bool = self.network.add_interface(
+                            host_name, interface_name)
 
                     # If it was created / not created, show a message and log it
                     # accordingly
@@ -182,9 +198,11 @@ class MainHandler:
                     router_name = router[1]
                     interface_name = user_input[0]
 
-                    # Create the Interface
-                    created: bool = self.network.add_interface(
-                        router_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try creating the Interface
+                        created: bool = self.network.add_interface(
+                            router_name, interface_name)
 
                     # If it was created / not created, show a message and log it
                     # accordingly
@@ -203,6 +221,18 @@ class MainHandler:
                                             f"{router_name}: duplicate "
                                             "Interface name on Router.",
                                             "Information")
+
+    def __update_statistics(self) -> None:
+        # Gets the statistics - no locking needed, because this should be called
+        # instantly after the Network's method was called, to provide 100% precision
+        total_packets:   int = self.network.total_pack
+        packets_dropped: int = self.network.dropped_pack
+
+        # Lock the StatisticsFrame object's access to avoid race conditions
+        with self.statistics_lock:
+            # Updates the statistics in the StatisticsFrame
+            self.statistics_frame_handler.update_labels(total_packets,
+                                                        packets_dropped)
 
     def __handle_interface_delete_submit(self) -> None:
         """
@@ -236,9 +266,15 @@ class MainHandler:
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
 
-                    # Delete the Interface
-                    deleted: bool = self.network.delete_interface(
-                        host_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try deleting the Interface
+                        deleted: bool = self.network.delete_interface(
+                            host_name, interface_name)
+
+                        # If deletion was successful, update the statistics
+                        if deleted:
+                            self.__update_statistics()
 
                     # If it was deleted / not deleted, show a message and log it
                     # accordingly, and delete the Link connected to it, if
@@ -273,9 +309,15 @@ class MainHandler:
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
 
-                    # Delete the Interface
-                    deleted: bool = self.network.delete_interface(
-                        router_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try deleting the Interface
+                        deleted: bool = self.network.delete_interface(
+                            router_name, interface_name)
+
+                        # If deletion was successful, we can update the statistics
+                        if deleted:
+                            self.__update_statistics()
 
                     # If it was deleted / not deleted, show a message and log it
                     # accordingly, and delete the Link connected to it, if
@@ -334,9 +376,12 @@ class MainHandler:
                 app_name: str = user_input[0]
                 host_name: str = host[1]
 
-                # Set the Application
-                applied = self.network.set_application(
-                    host_name, app_name, user_input[1], user_input[2], user_input[3])
+                # To avoid race conditions on the Network object
+                with self.network_lock:
+                    # Set the Application
+                    applied: bool = self.network.set_application(
+                        host_name, app_name, user_input[1], 
+                        user_input[2], user_input[3])
 
                 # If it was set / not set, show a message and log it
                 # accordingly
@@ -358,16 +403,62 @@ class MainHandler:
         """
         Handles the start sending Frame's submit Button event
         """
-        # TODO implement
-        print("Sending")
-        self.object_canvas_handler.submit_input()
-        print(self.object_canvas_handler.input_data)
+        # Get the coordinates where the Menu was opened before the Frame
+        # This is needed to avoid having to use the event.x and event.y
+        # coordinates
+        x: int = self.object_canvas_handler.menu_x
+        y: int = self.object_canvas_handler.menu_y
+
+        # Check what intersects with the mouse (or the Menu in this case)
+        intersection_details: Tuple[str, int] = self.object_canvas_handler.intersects(
+            x, y, 1, 1)
+
+        # Get the user input from the Frame's Entries
+        success: bool = self.object_canvas_handler.submit_input()
+        user_input: List[str] = self.object_canvas_handler.input_data
+
+        # If the regex failed, do nothing
+        if not success:
+            return
+
+        # We can only start sending from Hosts
+        for host in self.hosts:
+            # If the item_id matches
+            if host[0] == intersection_details[1]:
+                host_name: str = host[1]
+                target: str = user_input[0]
+
+                # To avoid race conditions on the Network object
+                with self.network_lock:
+                    target_node: Host = self.network.get_host(target)
+
+                if target_node is None:
+                    self.__show_and_log(f"Host {host_name} <-> Host {target}",
+                                        f"Failed to start sending from Host "
+                                        f"{host_name} to Host {target}: "
+                                        "invalid target Host",
+                                        "Information")
+                    # Return, because there is no such Node
+                    return
+
+                self.__show_and_log(f"Host {host_name} <-> Host {target}",
+                                    f"Started sending from Host "
+                                    f"{host_name} to Host {target}",
+                                    "Information")
+                # Sending process / Threading
+                # If next_hop is None, refresh dropped packets and log
+                self.__show_and_log(f"Host {host_name} <-> Host {target}",
+                                    f"Stopped sending from Host "
+                                    f"{host_name} to Host {target}",
+                                    "Information")
+                # Return, because we found our Host
+                return
 
     def __handle_connect_submit(self) -> None:
         """
         Handles the connect to Node Frame's submit Button event
         """
-        # TODO check packets dropped / how sending is affected, etc. when connecting (since this disconnects then connects the links)
+        # TODO check how sending is affected
         # Get the coordinates where the Menu was opened before the Frame
         # This is needed to avoid having to use the event.x and event.y
         # coordinates
@@ -391,8 +482,11 @@ class MainHandler:
         to_connect_coords: Tuple[int, int] = None
 
         # Setup the variables for the other Node, and get the actual Node
-        other_node: Node = self.network.get_host(user_input[0]) or \
-            self.network.get_router(user_input[0])
+        # To avoid race conditions on the Network object
+        with self.network_lock:
+            # Fetch the Node
+            other_node: Node = self.network.get_host(user_input[0]) or \
+                self.network.get_router(user_input[0])
         other_node_coords: Tuple[int, int] = None
 
         # Get the Nodes, combining Hosts and Routers
@@ -402,8 +496,11 @@ class MainHandler:
         for node in nodes:
             # If the item_id matches
             if node[0] == intersection_details[1]:
-                to_connect = self.network.get_host(node[1]) or \
-                    self.network.get_router(node[1])
+                # To avoid race conditions on the Network object
+                with self.network_lock:
+                    # Fetch the Node
+                    to_connect = self.network.get_host(node[1]) or \
+                        self.network.get_router(node[1])
                 to_connect_coords = self.object_canvas_handler.get_node_coords(
                     node[0])
                 break
@@ -434,8 +531,17 @@ class MainHandler:
         # Connect the Nodes using the given input
         interface_1_name: str = user_input[1]
         interface_2_name: str = user_input[2]
-        connect_success: bool = self.network.connect_node_interfaces(
-            to_connect.name, user_input[0], interface_1_name, interface_2_name, user_input[3], user_input[4])
+
+        # To avoid race conditions on the Network object
+        with self.network_lock:
+            # Try connecting the Interfaces
+            connect_success: bool = self.network.connect_node_interfaces(
+                to_connect.name, user_input[0], interface_1_name,
+                interface_2_name, user_input[3], user_input[4])
+
+            # If connecting was successful, we can update the statistics
+            if connect_success:
+                self.__update_statistics()
 
         # If connecting succeded
         if connect_success:
@@ -451,7 +557,8 @@ class MainHandler:
 
             # Draw the Link
             item_id: int = self.object_canvas_handler.draw(
-                "LINK", to_connect_coords[0], to_connect_coords[1], other_node_coords[0], other_node_coords[1])
+                "LINK", to_connect_coords[0], to_connect_coords[1],
+                other_node_coords[0], other_node_coords[1])
 
             # Add the new Link
             self.links.append((item_id, to_connect.name, interface_1_name,
@@ -495,7 +602,7 @@ class MainHandler:
         """
         Handles the disconnect Interface Frame's submit Button event
         """
-        # TODO check packets dropped / how sending is affected, etc.
+        # TODO check how sending is affected
         # Get the coordinates where the Menu was opened before the Frame
         # This is needed to avoid having to use the event.x and event.y
         # coordinates
@@ -523,9 +630,17 @@ class MainHandler:
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
 
-                    # Try disconnecting the given Interface
-                    network_success: bool = self.network.disconnect_node_interface(
-                        host_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try disconnecting the given Interface
+                        network_success: bool = \
+                        self.network.disconnect_node_interface(host_name, 
+                                                               interface_name)
+
+                        # If disconnecting was successful, we can update the
+                        # statistics
+                        if network_success:
+                            self.__update_statistics()
 
                     # If the disconnecting succeeded
                     if network_success:
@@ -562,9 +677,17 @@ class MainHandler:
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
 
-                    # Try disconnecting the given Interface
-                    network_success: bool = self.network.disconnect_node_interface(
-                        router_name, interface_name)
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try disconnecting the given Interface
+                        network_success: bool = \
+                            self.network.disconnect_node_interface(router_name,
+                                                                   interface_name)
+
+                        # If disconnecting was successful, we can update the
+                        # statistics
+                        if network_success:
+                            self.__update_statistics()
 
                     # If the disconnecting succeeded
                     if network_success:
@@ -672,7 +795,15 @@ class MainHandler:
                 # If the item_id matches
                 if intersection_details[1] == host[0]:
                     host_name: str = host[1]
-                    network_success = self.network.delete_host(host_name)
+
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try deleting the Host
+                        network_success = self.network.delete_host(host_name)
+
+                        # If deletion was successful, we can update the statistics
+                        if network_success:
+                            self.__update_statistics()
 
                     # Create a List for the Links to remove
                     # This is needed because removing while iterating
@@ -711,7 +842,15 @@ class MainHandler:
                 # If the item_id matches
                 if intersection_details[1] == router[0]:
                     router_name: str = router[1]
-                    network_success = self.network.delete_router(router_name)
+
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Try deleting the Router
+                        network_success = self.network.delete_router(router_name)
+
+                        # If deletion was successful, we can update the statistics
+                        if network_success:
+                            self.__update_statistics()
 
                     # Create a List for the Links to remove
                     # This is needed because removing while iterating
@@ -826,8 +965,11 @@ class MainHandler:
             for host in self.hosts:
                 # If the item_id matches
                 if intersection_details[1] == host[0]:
-                    # Fetch the Host
-                    item: Host = self.network.get_host(host[1])
+
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Fetch the Host
+                        item: Host = self.network.get_host(host[1])
 
                     # Show its attributes in the left-hand side Frame
                     self.__change_text(
@@ -836,8 +978,11 @@ class MainHandler:
             for router in self.routers:
                 # If the item_id matches
                 if intersection_details[1] == router[0]:
-                    # Fetch the Router
-                    item: Router = self.network.get_router(router[1])
+
+                    # To avoid race conditions on the Network object
+                    with self.network_lock:
+                        # Fetch the Router
+                        item: Router = self.network.get_router(router[1])
 
                     # Show its attributes in the left-hand side Frame
                     self.__change_text(
@@ -876,9 +1021,11 @@ class MainHandler:
                 host_name: str = user_input[1]
                 host_ip: str = user_input[2]
 
-                # Try creating the Host
-                created = self.network.create_host(
-                    host_name, host_ip, int(user_input[3]))
+                # To avoid race conditions on the Network object
+                with self.network_lock:
+                    # Try creating the Host
+                    created = self.network.create_host(
+                        host_name, host_ip, int(user_input[3]))
 
                 # If it succeeded
                 if created:
@@ -904,10 +1051,12 @@ class MainHandler:
                 router_name: str = user_input[1]
                 router_ip: str = user_input[2]
 
-                # Try creating the Router
-                created = self.network.create_router(
-                    router_name, router_ip, 
-                    int(user_input[3]), int(user_input[4]))
+                # To avoid race conditions on the Network object
+                with self.network_lock:
+                    # Try creating the Router
+                    created = self.network.create_router(
+                        router_name, router_ip,
+                        int(user_input[3]), int(user_input[4]))
 
                 # If it succeeded
                 if created:

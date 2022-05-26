@@ -2,7 +2,7 @@
 This module makes ObjectCanvasHandler objects available for use when imported
 """
 # Built-in modules
-from ast import boolop
+import time
 from tkinter import Menu
 from typing import Callable, List, Tuple
 
@@ -38,7 +38,6 @@ class ObjectCanvasHandler:
     node_height   (int): The height of the Nodes in pixels
     frame_width   (int): The width of the Frames in pixels
     frame_height  (int): The height of the Frames in pixels
-    TODO add remaining data members
     """
 
     def __init__(self, object_canvas: ObjectCanvas) -> None:
@@ -49,6 +48,7 @@ class ObjectCanvasHandler:
 
         self.hosts: List[Tuple[int, int, int]] = []
         self.routers: List[Tuple[int, int, int]] = []
+        #self.packets: List[List[int, int, int, int, int]] = []
         self.links: List[Tuple[int, int, int, int, int]] = []
 
         self.shown_message: Tuple[int, int, str] = ()
@@ -61,6 +61,9 @@ class ObjectCanvasHandler:
 
         self.node_width: int = 60
         self.node_height: int = 60
+
+        #self.packet_width: int = 10
+        #self.packet_height: int = 15
 
         self.frame_width: int = 350
         self.frame_height: int = 350
@@ -237,6 +240,10 @@ class ObjectCanvasHandler:
                 x, y, self.node_width, self.node_height, "ROUTER")
         for _, x1, y1, x2, y2 in self.links:
             self.object_canvas.draw_link(x1, y1, x2, y2)
+        #for _, x1, y1, x2, y2 in self.packets:
+            #self.object_canvas.draw_packet(x1, y1,
+                                           #self.packet_width,
+                                           #self.packet_height)
 
         # Only redraw the message, if there is actually a message to show
         if (self.shown_message != ()):
@@ -379,8 +386,8 @@ class ObjectCanvasHandler:
         # Checks if there is an intersection with any Host
         for host in self.hosts:
             if host[1] <= x + width and host[2] <= y + height and \
-                host[1] + self.node_width >= x and \
-                host[2] + self.node_height >= y:
+                    host[1] + self.node_width >= x and \
+                    host[2] + self.node_height >= y:
                 # if yes, returns the type of the intersecting component and the
                 # item_id
                 return ("HOST", host[0])
@@ -388,8 +395,8 @@ class ObjectCanvasHandler:
         # Checks if there is an intersection with any Router
         for router in self.routers:
             if router[1] <= x + width and router[2] <= y + height and \
-                router[1] + self.node_width >= x and \
-                router[2] + self.node_height >= y:
+                    router[1] + self.node_width >= x and \
+                    router[2] + self.node_height >= y:
                 # If yes, returns the type of the intersecting component and the
                 # item_id
                 return ("ROUTER", router[0])
@@ -411,7 +418,7 @@ class ObjectCanvasHandler:
 
         Parameters:
         comp_type (str): The type of the component, can be \
-                  "COMPONENT/ROUTER", "COMPONENT/HOST" or "LINK"
+                  "COMPONENT/ROUTER", "COMPONENT/HOST", "LINK"
         x1        (int): The first x coordinate of the item to draw
         y1        (int): The first y coordinate of the item to draw
         x2        (int): The second x coordinate of the item to draw (optional)
@@ -427,12 +434,12 @@ class ObjectCanvasHandler:
         # If we are drawing a Router or a Host, check for intersection, and
         # also re-align
         if comp_type.upper() == "COMPONENT/ROUTER" or \
-            comp_type.upper() == "COMPONENT/HOST":
+                comp_type.upper() == "COMPONENT/HOST":
             aligned_coords = self.__re_align_coords(
                 x1, y1, self.node_width, self.node_width)
 
             if aligned_coords is None or \
-                self.intersects(aligned_coords[0], aligned_coords[1], 
+                self.intersects(aligned_coords[0], aligned_coords[1],
                                 self.node_width, self.node_height)[1] != -1:
                 return item_id
 
@@ -446,7 +453,7 @@ class ObjectCanvasHandler:
             item_id: int = self.object_canvas.draw_component(
                 aligned_coords[0], aligned_coords[1],
                 self.node_width, self.node_height, "ROUTER")
-
+            # If we are saving, save the item_id and the coordinates
             if save:
                 self.routers.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
@@ -454,7 +461,7 @@ class ObjectCanvasHandler:
             item_id: int = self.object_canvas.draw_component(
                 aligned_coords[0], aligned_coords[1],
                 self.node_width, self.node_height, "HOST")
-
+            # If we are saving, save the item_id and the coordinates
             if save:
                 self.hosts.append(
                     (item_id, aligned_coords[0], aligned_coords[1]))
@@ -466,10 +473,14 @@ class ObjectCanvasHandler:
                                int] = self.__get_link_endpoints(x1, y1, x2, y2)
             item_id: int = self.object_canvas.draw_link(
                 link_coords[0], link_coords[1], link_coords[2], link_coords[3])
-            self.links.append(
-                (item_id,
-                 link_coords[0], link_coords[1],
-                 link_coords[2], link_coords[3]))
+            self.links.append((item_id,
+                               link_coords[0], link_coords[1],
+                               link_coords[2], link_coords[3]))
+        #elif comp_type.upper() == "PACKET":
+            #item_id: int = self.object_canvas.draw_packet(x1, y1,
+                                                          #self.packet_width,
+                                                          #self.packet_height)
+            #self.packets.append([item_id, x1, y1, x2, y2])
 
         return item_id
 
@@ -662,7 +673,7 @@ class ObjectCanvasHandler:
             # Get the data from the Entry fields that are set to normal state
             for widget in self.object_canvas.config_frame.winfo_children():
                 if widget.winfo_class() == "Entry" and \
-                    widget["state"] == "normal":
+                        widget["state"] == "normal":
                     self.input_data.append(widget.get())
 
             # Hide the Frame afterwards, setting everything neccessary to default,
@@ -733,7 +744,7 @@ class ObjectCanvasHandler:
         above_left: bool = above and x2 < x1 + self.node_width // 4
         # 2
         above_middle: bool = above and \
-            (x2 + self.node_width >= x1 + self.node_width // 4 and \
+            (x2 + self.node_width >= x1 + self.node_width // 4 and
              x2 <= x1 + self.node_width - self.node_width // 4)
         # 3
         above_right: bool = above and \
@@ -745,7 +756,7 @@ class ObjectCanvasHandler:
             x2 + self.node_width < x1 + self.node_width // 4
         # 5
         below_middle: bool = below and \
-            (x2 + self.node_width >= x1 + self.node_width // 4 and \
+            (x2 + self.node_width >= x1 + self.node_width // 4 and
              x2 <= x1 + self.node_width - self.node_width // 4)
         # 6
         below_right: bool = below and \

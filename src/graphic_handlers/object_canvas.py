@@ -211,7 +211,7 @@ class ObjectCanvas:
         Returns:
         int: The ID of the drawn item
         """
-        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2")
+        return self.canvas.create_line(x1, y1, x2, y2, fill="grey", width="2", smooth=True)
 
     def draw_string(self, x: int, y: int, text: str) -> None:
         """
@@ -227,6 +227,23 @@ class ObjectCanvas:
         """
         # Anchor is needed to make it right (east) aligned
         self.canvas.create_text(x, y, text=text, anchor="e")
+
+    #def draw_packet(self, x: int, y: int, width: int, height: int) -> int:
+        #"""
+        #Draws a Packet onto the Canvas
+
+        #Parameters:
+        #x      (int): The x coordinate of the starting point
+        #y      (int): The y coordinate of the starting point
+        #width  (int): The width of the Packet
+        #height (int): The height of the Packet
+
+        #Returns:
+        #int: The ID of the drawn item
+        #"""
+        #return self.canvas.create_rectangle(x, y,
+                                            #x + width, y + height,
+                                            #fill="black")
 
     def clear_canvas(self) -> None:
         """
@@ -465,10 +482,10 @@ class ObjectCanvas:
         # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Set Application")
         self.information_label.config(text="Application Name:\n"
-                                            "between 1 and 15 characters"
-                                            "\nPacket Amount: 1-99"
-                                            "\nSend Rate: 1-99"
-                                            "\nApplication Type: CONST/AIMD",
+                                      "between 1 and 15 characters"
+                                      "\nPacket Amount: 1-99"
+                                      "\nSend Rate: 1-99"
+                                      "\nApplication Type: CONST/AIMD",
                                       fg="black")
 
         self.label_1.config(text="Application Name")
@@ -523,8 +540,8 @@ class ObjectCanvas:
         # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Start Sending")
         self.information_label.config(text="Target Host IP or Name:\n"
-                                            "[0-255].[0-255].[0-255].[0-255]\nOR\n"
-                                            "between 1 and 15 characters",
+                                      "[0-255].[0-255].[0-255].[0-255]\nOR\n"
+                                      "between 1 and 15 characters",
                                       fg="black")
 
         self.label_1.config(text="Target Host IP or Name")
@@ -561,14 +578,14 @@ class ObjectCanvas:
         # Setup the Widget configuration to match the chosen Frame's
         self.title_label.config(text="Connect to Node")
         self.information_label.config(text="Target Node IP or Name:\n"
-                                            "[0-255].[0-255].[0-255].[0-255]"
-                                            "\nOR\nbetween 1 and 15 characters"
-                                            "\nInterface Name:\n"
-                                            "between 1 and 15 characters"
-                                            "\nTarget Interface Name:\n"
-                                            "between 1 and 15 characters"
-                                            "\nSpeed of Link: 1-99"
-                                            "\nMetrics of Link: 1-99",
+                                      "[0-255].[0-255].[0-255].[0-255]"
+                                      "\nOR\nbetween 1 and 15 characters"
+                                      "\nInterface Name:\n"
+                                      "between 1 and 15 characters"
+                                      "\nTarget Interface Name:\n"
+                                      "between 1 and 15 characters"
+                                      "\nSpeed of Link: 1-99"
+                                      "\nMetrics of Link: 1-99",
                                       fg="black")
 
         self.label_1.config(text="Target Node IP or Name")

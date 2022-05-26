@@ -9,9 +9,6 @@ intended way
 from typing import List, Tuple
 
 # Self-made modules
-from src.components.application import Application
-from src.components.interface import Interface
-from src.components.link import Link
 from src.components.node import Host, Node, Router
 from src.components.routing_table import Route
 from src.utils.graph import Graph
@@ -91,9 +88,9 @@ class Network:
                     # If there is a Route between the two, then add it
                     if route_tuple is not None:
                         source.add_route(Route(route_tuple[0],
-                                                route_tuple[1],
-                                                route_tuple[2],
-                                                route_tuple[3]))
+                                               route_tuple[1],
+                                               route_tuple[2],
+                                               route_tuple[3]))
                 except:
                     return False
         return True
@@ -456,17 +453,17 @@ class Network:
         """
         # This needs to be done separately, because there is a branch that needs
         # checking the type of the Node
-        host:             Host = self.get_host(node_name_or_ip)
-        router:           Router = self.get_router(node_name_or_ip)
+        host:   Host = self.get_host(node_name_or_ip)
+        router: Router = self.get_router(node_name_or_ip)
 
         # Get the source Node
-        node:             Node = host or router
+        node:   Node = host or router
 
         # Get the destination Node
         destination_node: Node = self.get_host(destination_name_or_ip) or \
             self.get_router(destination_name_or_ip)
 
-        # If either of them is None, return with False
+        # If either of them is None, return with None
         if (node and destination_node) is None:
             return None
 

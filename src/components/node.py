@@ -3,8 +3,8 @@ This module makes Node, Host and Router objects available for use when imported
 """
 
 # Built-in modules
-from __future__ import annotations
-
+from __future__ import annotations # Needed to be able to store
+                                   # the same object as the class itself
 import random
 from typing import List, Tuple
 
