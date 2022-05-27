@@ -2,7 +2,7 @@
 This module makes MainHandler objects available for use when imported
 """
 # Built-in modules
-from threading import Lock, Thread
+from threading import RLock, Thread
 import time
 from tkinter import messagebox
 from typing import Callable, List, Tuple, Dict
@@ -42,8 +42,11 @@ class MainHandler:
     hosts                    (List[Tuple[int, str]]): Host information stored
     routers                  (List[Tuple[int, str]]): Router information stored
     links                    (List[Tuple[int, str, str]]): Link information stored
-    host_sending             (List[bool]): Which Host is currently sending
-    router_last_sent         (List[float]): When was the last time the Router sent
+    host_sending             (Dict[int, bool]): Which Host is currently sending, \
+                             each one of them represented by their item_id
+    router_last_sent         (Dict[int, float]): When was the last time the \
+                             Router sent, each one of them represented by their \
+                             item_id
     statistics_lock          (Lock): Locks for the StatisticsFrameHandler's \
                              label updating
     network_lock             (Lock): Lock for the Network object's access
@@ -80,13 +83,13 @@ class MainHandler:
 
         # Keeping track of when was the last time the Router sent a Packet
         # Needed in case multiple Hosts are sending to the given Router
-        self.router_last_sent: List[float] = []
+        self.router_last_sent: Dict[int, float] = dict()
 
         # Locks for avoiding race conditions
-        self.statistics_lock: Lock = Lock()
-        self.network_lock: Lock = Lock()
-        self.message_lock: Lock = Lock()
-        self.sending_lock: Lock = Lock()
+        self.statistics_lock: RLock = RLock()
+        self.network_lock: RLock = RLock()
+        self.message_lock: RLock = RLock()
+        self.sending_lock: RLock = RLock()
 
         # Setup the bindings for the Handlers
         self.__bind_to_object_frame_handler()
@@ -419,15 +422,10 @@ class MainHandler:
                                         f"{app_name} on Host {host_name}.",
                                         "Error")
 
-    def __packet_thread(self, next_hop: str, interface_name: str) -> None:
-        # TODO check the actual link speed - redo it, because the speed does not match
+    def __packet_handling(self, next_hop: str, interface_name: str) -> None:
         with self.network_lock:
-            sleep_time: float = 1 / int(self.network.get_link_speed(next_hop,
-                                                          interface_name))
-        time.sleep(sleep_time)
-        with self.network_lock:
-            node: Node = self.network.get_host(next_hop) or \
-                self.network.get_router(next_hop)
+            router: Router = self.network.get_router(next_hop)
+            node: Node = self.network.get_host(next_hop) or router
             if node is not None:
                 interface: Interface = node.get_interface(interface_name)
                 if interface is None or interface.link is None:
@@ -474,18 +472,22 @@ class MainHandler:
             if is_sending:
                 with self.network_lock:
                     target: Host = self.network.get_host(target_name_or_ip)
-                    if target is None:
-                        break
                     receiver_data = self.network.send_packet(host_name,
                                                              target_name_or_ip)
+                    if target is None or receiver_data is None:
+                        break
+
                     if receiver_data[0] == target.ip:
                         host.receive_feedback(host.ip, 1)
                     is_sending = self.network.can_send(host_name)
                     self.__update_statistics()
                     send_rate = int(host.send_rate)
                 if receiver_data is not None:
-                    Thread(target=self.__packet_thread,
-                        args=(receiver_data[0], receiver_data[1]), daemon=True).start()
+                    wait_time: int = int(self.network.get_link_speed(receiver_data[0], receiver_data[1]))
+                    self.object_canvas_handler.object_canvas.after(wait_time,
+                                                                   lambda next_hop=receiver_data[0],
+                                                                   interface_name=receiver_data[1]: \
+                                                                       self.__packet_handling(next_hop, interface_name))
                 sleep_time = 1 / send_rate
 
             time.sleep(sleep_time)
@@ -498,15 +500,24 @@ class MainHandler:
                             f"{host_name} to Host {target_name_or_ip}",
                             "Information")
 
-    def __router_thread(self, router: Router) -> None:
-        while True:
+    def __router_thread(self,
+                        router: Router
+                        ) -> None:
+        is_present: bool = True
+        while is_present:
+            # TODO check if can send
+            sleep_time: int = 1 / router.send_rate
             if router.get_buffer_length() != 0:
-
-                sleep_time: int = 1 / router.send_rate
                 next_hop: Tuple[str, str] = router.send_packet()
-                Thread(target=self.__packet_thread,
-                       args=(next_hop[0], next_hop[1])).start()
-                time.sleep(sleep_time)
+                if next_hop is not None:
+                    wait_time: int = int(self.network.get_link_speed(next_hop[0], next_hop[1]))
+                    self.object_canvas_handler.object_canvas.after(wait_time,
+                                                                   lambda next_hop=next_hop[0],
+                                                                   interface_name=next_hop[1]: \
+                                                                       self.__packet_handling(next_hop, interface_name))
+            time.sleep(sleep_time)
+            with self.network_lock:
+                is_present = self.network.get_router(router.name) is not None
 
     def __handle_send_submit(self) -> None:
         """
@@ -1098,11 +1109,8 @@ class MainHandler:
                 # If the item_id matches
                 if intersection_details[1] == host[0]:
 
-                    # To avoid race conditions on the Network object
-                    # TODO check if actually needed
-                    with self.network_lock:
-                        # Fetch the Host
-                        item: Host = self.network.get_host(host[1])
+                    # Fetch the Host
+                    item: Host = self.network.get_host(host[1])
 
                     # Show its attributes in the left-hand side Frame
                     self.__change_text(
@@ -1112,10 +1120,8 @@ class MainHandler:
                 # If the item_id matches
                 if intersection_details[1] == router[0]:
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Fetch the Router
-                        item: Router = self.network.get_router(router[1])
+                    # Fetch the Router
+                    item: Router = self.network.get_router(router[1])
 
                     # Show its attributes in the left-hand side Frame
                     self.__change_text(
@@ -1195,6 +1201,7 @@ class MainHandler:
                     created = self.network.create_router(
                         router_name, router_ip,
                         int(user_input[3]), int(user_input[4]))
+                    router: Router = self.network.get_router(router_name)
 
                 # If it succeeded
                 if created:
@@ -1202,6 +1209,8 @@ class MainHandler:
                     item_id: int = self.object_canvas_handler.draw(
                         user_input[0], last_x, last_y)
                     self.routers.append((item_id, router_name))
+
+                    Thread(target=self.__router_thread, args=(router, ), daemon=True).start()
 
                     # Show a message and log accordingly
                     self.__show_and_log(f"Router {router_name} - {router_ip}",

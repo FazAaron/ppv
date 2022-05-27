@@ -13,7 +13,8 @@ class Channel:
     Abstract representation of a one-directional dataflow in a duplex Link
 
     Data members:
-    speed           (int): How many Packets / second can go through the Channel
+    speed           (int): 1 / speed is the time needed for the Packet to pass \
+                    through the Channel
     metrics         (int): Abstract immutable metric number set upon creation
     payload: List[Packet]: Packets currently traveling through the Channel
     """
@@ -51,7 +52,7 @@ class Channel:
             return None
 
     def __str__(self) -> str:
-        return (f"Speed: {self.speed} packet / second\n"
+        return (f"Speed: {1 / self.speed} second(s) / Packet\n"
                 f"Metrics: {self.metrics}\n")
 
 
@@ -61,7 +62,8 @@ class Link:
     different Node objects.
 
     Data members:
-    speed   (int): How many Packets / second can go through the Link
+    speed   (int): 1 / speed is the time needed for the Packet to pass through \
+            the Link
     metrics (int): Abstract immutable metric number set upon creation
     """
 
