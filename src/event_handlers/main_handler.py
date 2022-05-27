@@ -2,16 +2,15 @@
 This module makes MainHandler objects available for use when imported
 """
 # Built-in modules
-from threading import RLock, Thread
 import time
+from threading import Lock, Thread
 from tkinter import messagebox
-from typing import Callable, List, Tuple, Dict
+from typing import Callable, Dict, List, Tuple
 
 # Self-made modules
-from src.components.node import Node
-from src.components.network import Network
-from src.components.node import Host, Router
 from src.components.interface import Interface
+from src.components.network import Network
+from src.components.node import Host, Node, Router
 from src.event_handlers.object_canvas_handler import ObjectCanvasHandler
 from src.event_handlers.object_frame_handler import ObjectFrameHandler
 from src.event_handlers.statistics_frame_handler import StatisticsFrameHandler
@@ -44,12 +43,6 @@ class MainHandler:
     links                    (List[Tuple[int, str, str]]): Link information stored
     host_sending             (Dict[int, bool]): Which Host is currently sending, \
                              each one of them represented by their item_id
-    router_last_sent         (Dict[int, float]): When was the last time the \
-                             Router sent, each one of them represented by their \
-                             item_id
-    statistics_lock          (Lock): Locks for the StatisticsFrameHandler's \
-                             label updating
-    network_lock             (Lock): Lock for the Network object's access
     message_lock             (Lock): Lock for the ObjectCanvasHandler's message \
                              showing
     sending_lock             (Lock): Lock for the host_sending object's access
@@ -81,15 +74,9 @@ class MainHandler:
         # Keeping track of which Host is sending
         self.host_sending: Dict[int, bool] = dict()
 
-        # Keeping track of when was the last time the Router sent a Packet
-        # Needed in case multiple Hosts are sending to the given Router
-        self.router_last_sent: Dict[int, float] = dict()
-
         # Locks for avoiding race conditions
-        self.statistics_lock: RLock = RLock()
-        self.network_lock: RLock = RLock()
-        self.message_lock: RLock = RLock()
-        self.sending_lock: RLock = RLock()
+        self.message_lock: Lock = Lock()
+        self.sending_lock: Lock = Lock()
 
         # Setup the bindings for the Handlers
         self.__bind_to_object_frame_handler()
@@ -185,11 +172,9 @@ class MainHandler:
                     host_name = host[1]
                     interface_name = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try creating the Interface
-                        created: bool = self.network.add_interface(
-                            host_name, interface_name)
+                    # Try creating the Interface
+                    created: bool = self.network.add_interface(
+                        host_name, interface_name)
 
                     # If it was created / not created, show a message and log it
                     # accordingly
@@ -214,11 +199,8 @@ class MainHandler:
                     router_name = router[1]
                     interface_name = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try creating the Interface
-                        created: bool = self.network.add_interface(
-                            router_name, interface_name)
+                    created: bool = self.network.add_interface(
+                        router_name, interface_name)
 
                     # If it was created / not created, show a message and log it
                     # accordingly
@@ -248,12 +230,9 @@ class MainHandler:
         packets_dropped:  int = self.network.dropped_pack
         packets_received: int = self.network.received_pack
 
-        # Lock the StatisticsFrame object's access to avoid race conditions
-        with self.statistics_lock:
-            # Updates the statistics in the StatisticsFrame
-            self.statistics_frame_handler.update_labels(total_packets,
-                                                        packets_dropped,
-                                                        packets_received)
+        self.statistics_frame_handler.update_labels(total_packets,
+                                                    packets_dropped,
+                                                    packets_received)
 
     def __handle_interface_delete_submit(self) -> None:
         """
@@ -286,15 +265,13 @@ class MainHandler:
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try deleting the Interface
-                        deleted: bool = self.network.delete_interface(
-                            host_name, interface_name)
+                    # Try deleting the Interface
+                    deleted: bool = self.network.delete_interface(
+                        host_name, interface_name)
 
-                        # If deletion was successful, update the statistics
-                        if deleted:
-                            self.__update_statistics()
+                    # If deletion was successful, update the statistics
+                    if deleted:
+                        self.__update_statistics()
 
                     # If it was deleted / not deleted, show a message and log it
                     # accordingly, and delete the Link connected to it, if
@@ -329,15 +306,13 @@ class MainHandler:
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try deleting the Interface
-                        deleted: bool = self.network.delete_interface(
-                            router_name, interface_name)
+                    # Try deleting the Interface
+                    deleted: bool = self.network.delete_interface(
+                        router_name, interface_name)
 
-                        # If deletion was successful, we can update the statistics
-                        if deleted:
-                            self.__update_statistics()
+                    # If deletion was successful, we can update the statistics
+                    if deleted:
+                        self.__update_statistics()
 
                     # If it was deleted / not deleted, show a message and log it
                     # accordingly, and delete the Link connected to it, if
@@ -399,12 +374,10 @@ class MainHandler:
                 with self.sending_lock:
                     self.host_sending[host[0]] = False
 
-                # To avoid race conditions on the Network object
-                with self.network_lock:
-                    # Set the Application
-                    applied: bool = self.network.set_application(
-                        host_name, app_name, int(user_input[1]), 
-                        int(user_input[2]), user_input[3])
+                # Set the Application
+                applied: bool = self.network.set_application(
+                    host_name, app_name, int(user_input[1]), 
+                    int(user_input[2]), user_input[3])
 
                 # If it was set / not set, show a message and log it
                 # accordingly
@@ -423,33 +396,69 @@ class MainHandler:
                                         "Error")
 
     def __packet_handling(self, next_hop: str, interface_name: str) -> None:
-        with self.network_lock:
-            router: Router = self.network.get_router(next_hop)
-            node: Node = self.network.get_host(next_hop) or router
-            if node is not None:
-                interface: Interface = node.get_interface(interface_name)
-                if interface is None or interface.link is None:
-                    self.__update_statistics()
-                    return
-                else:
-                    self.network.receive_packet(next_hop, interface_name)
-            self.__update_statistics()
+        """
+        Handles a Packet traveling through a Link
+
+        Parameters:
+        next_hop       (str): The next Node's IP address
+        interface_name (str): The next Node's Interface to receive on
+        """
+        # Get the Node to receive on
+        node: Node = self.network.get_host(next_hop) or \
+            self.network.get_router(next_hop)
+
+        # If the Node is still present after waiting
+        if node is not None:
+            # Get the Interface to receive on
+            interface: Interface = node.get_interface(interface_name)
+
+            # Check if there is still an Interface and Link to receive from
+            if interface is None or interface.link is None:
+                # If not, just update the statistics, because deletion of
+                # a connection or Interface might change it
+                self.__update_statistics()
+                return
+            else:
+                # If yes, receive the Packet
+                self.network.receive_packet(next_hop, interface_name)
+
+        # Update the statistics in any case, since a Node deletion or a
+        # Packet receiving could result in a change
+        self.__update_statistics()
+
+    def __after(self, time: int, func: Callable) -> None:
+        """
+        Wrapper around the ObjectCanvas' after method
+
+        Parameters:
+        time (int): The time to wait until the function is called
+        func (Callable): The function to call
+        """
+        self.object_canvas_handler.object_canvas.after(time, func)
 
     def __host_thread(self,
                       host_name: str,
                       target_name_or_ip: str,
-                      item_id: int) -> None:
-        self.__show_and_log(f"Host {host_name} <-> Host {target_name_or_ip}",
-                            f"Started sending from Host "
-                            f"{host_name} to Host {target_name_or_ip}",
-                            "Information")
+                      item_id: int
+                      ) -> None:
+        """
+        The method used in a Host's Thread, simulating the behaviour of a \
+        Host sending
 
+        Parameters:
+        host_name         (str): The sending Host's name the Thread is handling
+        target_name_or_ip (str): The target Host's name or IP to send the \
+                          Packets to
+        item_id           (int): The item_id of the sending Host
+        """
+        # Get the Host we are sending from
         host = self.network.get_host(host_name)
+        # Then its send rate for future use
+        send_rate: int = int(host.send_rate)
+        # Needed to check if we are able to send at all
+        is_sending: bool = self.network.can_send(host_name)
 
-        with self.network_lock:
-            send_rate: int = int(host.send_rate)
-            is_sending: bool = self.network.can_send(host_name)
-
+        # If we are not, log and return
         if not is_sending:
             self.__show_and_log(f"Host {host_name} <-> Host {target_name_or_ip}",
                                 f"Can't send from "
@@ -458,43 +467,70 @@ class MainHandler:
                                 "Information")
             return
 
+        # Else, set the sending variables up
         with self.sending_lock:
             self.host_sending[item_id] = True
-
         receiver_data: Tuple[str, str, str] = None
-        sleep_time: float = 1 / send_rate
-        
+
+        # Log the start of sending
+        self.__show_and_log(f"Host {host_name} <-> Host {target_name_or_ip}",
+                            f"Started sending from Host "
+                            f"{host_name} to Host {target_name_or_ip}",
+                            "Information")
+
+        # Do it while we can send
         while is_sending:
 
+            # If, for example a set_application is called, we need to check for
+            # it, because it sets the host_sending to False
             with self.sending_lock:
                 is_sending = self.host_sending.get(item_id)
 
+            # If we are sending
             if is_sending:
-                with self.network_lock:
-                    target: Host = self.network.get_host(target_name_or_ip)
-                    receiver_data = self.network.send_packet(host_name,
-                                                             target_name_or_ip)
-                    if target is None or receiver_data is None:
-                        break
+                # Get the target
+                target: Host = self.network.get_host(target_name_or_ip)
 
-                    if receiver_data[0] == target.ip:
-                        host.receive_feedback(host.ip, 1)
-                    is_sending = self.network.can_send(host_name)
-                    self.__update_statistics()
-                    send_rate = int(host.send_rate)
+                # If it was deleted, we are done sending
+                if target is None:
+                    break
+
+                # Else, send a Packet
+                receiver_data = self.network.send_packet(host_name,
+                                                            target_name_or_ip)
+
+                # if it is not None, meaning, that there is a Route
                 if receiver_data is not None:
-                    wait_time: int = int(self.network.get_link_speed(receiver_data[0], receiver_data[1]))
-                    self.object_canvas_handler.object_canvas.after(wait_time,
-                                                                   lambda next_hop=receiver_data[0],
-                                                                   interface_name=receiver_data[1]: \
-                                                                       self.__packet_handling(next_hop, interface_name))
-                sleep_time = 1 / send_rate
+                    # Get the amount to sleep for every single Packet
+                    # (How much time a Packet needs to cross through the Link)
+                    wait_time: int = int(self.network.get_link_speed(receiver_data[0],
+                                                                     receiver_data[1]))
+                    # After the wait_time, receive the Packet on the other side
+                    self.__after(wait_time, lambda next_hop=receiver_data[0],
+                                 interface_name=receiver_data[1]: \
+                                     self.__packet_handling(next_hop,
+                                                            interface_name))
+                    
+                # Check if we can still send
+                is_sending = self.network.can_send(host_name)
+                # Check if there was a change in the send_rate
+                send_rate = int(host.send_rate)
+                # Update the statistics, because we have sent Packets,
+                # and there might not always be a Route to the target,
+                # so the packet_handler might not refresh it
+                self.__update_statistics()
 
-            time.sleep(sleep_time)
+                # Refresh the sleep time
+                sleep_time: float = 1 / send_rate
 
+                # Sleep for the given time
+                time.sleep(sleep_time)
+
+        # If we are done sending, set the variable to False
         with self.sending_lock:
             self.host_sending[item_id] = False
 
+        # Log that we finished sending
         self.__show_and_log(f"Host {host_name} <-> Host {target_name_or_ip}",
                             f"Stopped sending from Host "
                             f"{host_name} to Host {target_name_or_ip}",
@@ -503,21 +539,47 @@ class MainHandler:
     def __router_thread(self,
                         router: Router
                         ) -> None:
+        """
+        The method used in a Router's Thread, simulating the behaviour of a \
+        Router sending
+
+        Parameters:
+        router (Router): The Router object the Thread is handling
+        """
+        # By default, the Router is always present, because the Thread starts
+        # right after it's creation
         is_present: bool = True
+
+        # Check whether the Router is still up and running
         while is_present:
-            # TODO check if can send
-            sleep_time: int = 1 / router.send_rate
+            # If there is any Packet to send from the buffer
             if router.get_buffer_length() != 0:
-                next_hop: Tuple[str, str] = router.send_packet()
+                # Get the next hop's data from the Buffer's Packet
+                next_hop: Tuple[str, str] = self.network.send_packet(router.ip)
+
+                # If there is a Route
                 if next_hop is not None:
-                    wait_time: int = int(self.network.get_link_speed(next_hop[0], next_hop[1]))
-                    self.object_canvas_handler.object_canvas.after(wait_time,
-                                                                   lambda next_hop=next_hop[0],
-                                                                   interface_name=next_hop[1]: \
-                                                                       self.__packet_handling(next_hop, interface_name))
+                    # Get the wait time
+                    wait_time: int = int(self.network.get_link_speed(next_hop[0],
+                                                                     next_hop[1]))
+
+                    if wait_time != 0 :
+                        # After the wait time has passed, call the packet handling
+                        # method
+                        self.__after(wait_time, lambda next_hop=next_hop[0], 
+                                        interface_name=next_hop[1]: \
+                                            self.__packet_handling(next_hop,
+                                                                interface_name))
+            # Sleep for a bit
+            sleep_time: int = 1 / router.send_rate
             time.sleep(sleep_time)
-            with self.network_lock:
-                is_present = self.network.get_router(router.name) is not None
+
+            # And check if the Router is still present
+            is_present = self.network.get_router(router.name) is not None
+
+            # In any case, update statistics - if the Router disappeared, we
+            # need to make sure the statistics is up to date
+            self.__update_statistics()
 
     def __handle_send_submit(self) -> None:
         """
@@ -548,10 +610,8 @@ class MainHandler:
                 host_name: str = host[1]
                 target: str = user_input[0]
 
-                # To avoid race conditions on the Network object
-                with self.network_lock:
-                    start_node: Host = self.network.get_host(host_name)
-                    target_node: Host = self.network.get_host(target)
+                start_node: Host = self.network.get_host(host_name)
+                target_node: Host = self.network.get_host(target)
 
                 if target_node is None:
                     self.__show_and_log(f"Host {host_name} <-> Host {target}",
@@ -623,11 +683,9 @@ class MainHandler:
         to_connect_coords: Tuple[int, int] = None
 
         # Setup the variables for the other Node, and get the actual Node
-        # To avoid race conditions on the Network object
-        with self.network_lock:
-            # Fetch the Node
-            other_node: Node = self.network.get_host(user_input[0]) or \
-                self.network.get_router(user_input[0])
+        # Fetch the Node
+        other_node: Node = self.network.get_host(user_input[0]) or \
+            self.network.get_router(user_input[0])
         other_node_coords: Tuple[int, int] = None
 
         # Get the Nodes, combining Hosts and Routers
@@ -637,11 +695,9 @@ class MainHandler:
         for node in nodes:
             # If the item_id matches
             if node[0] == intersection_details[1]:
-                # To avoid race conditions on the Network object
-                with self.network_lock:
-                    # Fetch the Node
-                    to_connect = self.network.get_host(node[1]) or \
-                        self.network.get_router(node[1])
+                # Fetch the Node
+                to_connect = self.network.get_host(node[1]) or \
+                    self.network.get_router(node[1])
                 to_connect_coords = self.object_canvas_handler.get_node_coords(
                     node[0])
                 break
@@ -673,16 +729,14 @@ class MainHandler:
         interface_1_name: str = user_input[1]
         interface_2_name: str = user_input[2]
 
-        # To avoid race conditions on the Network object
-        with self.network_lock:
-            # Try connecting the Interfaces
-            connect_success: bool = self.network.connect_node_interfaces(
-                to_connect.name, user_input[0], interface_1_name,
-                interface_2_name, int(user_input[3]), int(user_input[4]))
+        # Try connecting the Interfaces
+        connect_success: bool = self.network.connect_node_interfaces(
+            to_connect.name, user_input[0], interface_1_name,
+            interface_2_name, int(user_input[3]), int(user_input[4]))
 
-            # If connecting was successful, we can update the statistics
-            if connect_success:
-                self.__update_statistics()
+        # If connecting was successful, we can update the statistics
+        if connect_success:
+            self.__update_statistics()
 
         # If connecting succeded
         if connect_success:
@@ -725,6 +779,16 @@ class MainHandler:
                                     f"Failed to connect {to_connect.name} - "
                                     f"{to_connect.ip} to {other_node.name} - "
                                     f"{other_node.ip}: can't connect to self.",
+                                    "Information")
+            # If the two Nodes are both Hosts
+            elif type(to_connect).__name__ == "Host" and \
+                type(other_node).__name__ == "Host":
+                self.__show_and_log(f"Node {to_connect.name} - {to_connect.ip}"
+                                    f" <-> Node {other_node.name} - "
+                                    f"{other_node.ip}",
+                                    f"Failed to connect {to_connect.name} - "
+                                    f"{to_connect.ip} to {other_node.name} - "
+                                    f"{other_node.ip}: can't connect two Hosts.",
                                     "Information")
             # This occurs when there is an issue with the given Interfaces,
             # meaning that either of them does not exist on the given Node
@@ -770,17 +834,15 @@ class MainHandler:
                     host_name: str = host[1]
                     interface_name: str = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try disconnecting the given Interface
-                        network_success: bool = \
-                        self.network.disconnect_node_interface(host_name, 
-                                                               interface_name)
+                    # Try disconnecting the given Interface
+                    network_success: bool = \
+                    self.network.disconnect_node_interface(host_name, 
+                                                            interface_name)
 
-                        # If disconnecting was successful, we can update the
-                        # statistics
-                        if network_success:
-                            self.__update_statistics()
+                    # If disconnecting was successful, we can update the
+                    # statistics
+                    if network_success:
+                        self.__update_statistics()
 
                     # If the disconnecting succeeded
                     if network_success:
@@ -817,17 +879,15 @@ class MainHandler:
                     router_name: str = router[1]
                     interface_name: str = user_input[0]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try disconnecting the given Interface
-                        network_success: bool = \
-                            self.network.disconnect_node_interface(router_name,
-                                                                   interface_name)
+                    # Try disconnecting the given Interface
+                    network_success: bool = \
+                        self.network.disconnect_node_interface(router_name,
+                                                                interface_name)
 
-                        # If disconnecting was successful, we can update the
-                        # statistics
-                        if network_success:
-                            self.__update_statistics()
+                    # If disconnecting was successful, we can update the
+                    # statistics
+                    if network_success:
+                        self.__update_statistics()
 
                     # If the disconnecting succeeded
                     if network_success:
@@ -939,14 +999,12 @@ class MainHandler:
                     with self.sending_lock:
                         del self.host_sending[host[0]]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try deleting the Host
-                        network_success = self.network.delete_host(host_name)
+                    # Try deleting the Host
+                    network_success = self.network.delete_host(host_name)
 
-                        # If deletion was successful, we can update the statistics
-                        if network_success:
-                            self.__update_statistics()
+                    # If deletion was successful, we can update the statistics
+                    if network_success:
+                        self.__update_statistics()
 
                     # Create a List for the Links to remove
                     # This is needed because removing while iterating
@@ -986,14 +1044,12 @@ class MainHandler:
                 if intersection_details[1] == router[0]:
                     router_name: str = router[1]
 
-                    # To avoid race conditions on the Network object
-                    with self.network_lock:
-                        # Try deleting the Router
-                        network_success = self.network.delete_router(router_name)
+                    # Try deleting the Router
+                    network_success = self.network.delete_router(router_name)
 
-                        # If deletion was successful, we can update the statistics
-                        if network_success:
-                            self.__update_statistics()
+                    # If deletion was successful, we can update the statistics
+                    if network_success:
+                        self.__update_statistics()
 
                     # Create a List for the Links to remove
                     # This is needed because removing while iterating
@@ -1160,11 +1216,9 @@ class MainHandler:
                 host_name: str = user_input[1]
                 host_ip: str = user_input[2]
 
-                # To avoid race conditions on the Network object
-                with self.network_lock:
-                    # Try creating the Host
-                    created = self.network.create_host(
-                        host_name, host_ip, int(user_input[3]))
+                # Try creating the Host
+                created = self.network.create_host(
+                    host_name, host_ip, int(user_input[3]))
 
                 # If it succeeded
                 if created:
@@ -1195,13 +1249,11 @@ class MainHandler:
                 router_name: str = user_input[1]
                 router_ip: str = user_input[2]
 
-                # To avoid race conditions on the Network object
-                with self.network_lock:
-                    # Try creating the Router
-                    created = self.network.create_router(
-                        router_name, router_ip,
-                        int(user_input[3]), int(user_input[4]))
-                    router: Router = self.network.get_router(router_name)
+                # Try creating the Router
+                created = self.network.create_router(
+                    router_name, router_ip,
+                    int(user_input[3]), int(user_input[4]))
+                router: Router = self.network.get_router(router_name)
 
                 # If it succeeded
                 if created:

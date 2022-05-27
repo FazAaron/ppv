@@ -412,13 +412,19 @@ class Network:
         bool: Whether the creation of the connection was a success or not
         """
         # Get both Nodes - either of them can be either a Host or Router
-        first_node: Node = self.get_host(node_name_or_ip) or \
+        host_1: Host = self.get_host(node_name_or_ip)
+        host_2: Host = self.get_host(o_node_name_or_ip)
+        first_node: Node = host_1 or \
             self.get_router(node_name_or_ip)
-        snd_node:   Node = self.get_host(o_node_name_or_ip) or \
+        snd_node:   Node = host_2 or \
             self.get_router(o_node_name_or_ip)
 
         # If any of the two does not exist, return with False
         if (first_node and snd_node) is None:
+            return False
+
+        # Don't let Hosts get connected
+        if (host_1 and host_2) is not None:
             return False
 
         # Try connecting the Interfaces
@@ -480,7 +486,7 @@ class Network:
 
     def send_packet(self,
                     node_name_or_ip: str,
-                    destination_name_or_ip: str
+                    destination_name_or_ip: str = ""
                     ) -> Tuple[str, str, str]:
         """
         Starts sending a Packet to the given destination from the given Node\n
@@ -512,7 +518,7 @@ class Network:
             self.get_router(destination_name_or_ip)
 
         # If either of them is None, return with None
-        if (node and destination_node) is None:
+        if ((host and destination_node) is None) and (router is None):
             return None
 
         # If the source Node is a Host, we need to add a parameter when using
