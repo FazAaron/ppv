@@ -305,7 +305,7 @@ def test_network_delete_interface():
 
     # Delete a connected Interface
     network.get_router("router_123").get_interface(
-        "eth2_2").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
+        "eth2_2").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10, 10))
     connected_interface_success = network.delete_interface(
         "router_123", "eth2_2")
 
@@ -504,7 +504,7 @@ def test_network_disconnect_node_interfaces():
 
     # Disconnect using multiple methods
     network.get_host("host_1").get_interface(
-        "eth1_1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10))
+        "eth1_1").receive_channel.fill_payload(Packet("127.0.0.1", "127.1.1.1", 10, 10))
     disconnect_by_name_success = network.disconnect_node_interface(
         "host_1", "eth1_1")
     disconnect_by_ip_success = network.disconnect_node_interface(

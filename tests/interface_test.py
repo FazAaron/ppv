@@ -66,7 +66,7 @@ def test_interface_disconnect_link():
     receive_channel = link.channels[1]
     success = interface.connect_link(link, send_channel, receive_channel)
     interface.receive_channel.fill_payload(
-        Packet("127.0.0.1", "127.1.1.1", 10))
+        Packet("127.0.0.1", "127.1.1.1", 10, 10))
 
     # Disconnect the Link from the Interface
     ret_val = interface.disconnect_link()
@@ -97,7 +97,7 @@ def test_interface_receive_from_link():
     interface_1.connect_link(link, send_channel, receive_channel)
 
     # Add a Packet to the receiving Channel of the Interface
-    p = Packet("192.168.1.1", "192.168.0.1", 10)
+    p = Packet("192.168.1.1", "192.168.0.1", 10, 10)
     interface_1.receive_channel.fill_payload(p)
 
     # Receive the Packet from the receiving Channel successfully
@@ -139,7 +139,7 @@ def test_interface_put_to_link():
     interface_1.connect_link(link, send_channel, receive_channel)
 
     # Put a single to the Link
-    packet_1 = Packet("192.168.1.1", "192.168.0.1", 10)
+    packet_1 = Packet("192.168.1.1", "192.168.0.1", 10, 10)
     interface_1.put_to_link(packet_1)
 
     # Setup the Interface object
@@ -156,7 +156,7 @@ def test_interface_put_to_link():
     steps = 10
     packet_2 = None
     for _ in range(steps):
-        packet_2 = Packet("192.168.1.1", "192.168.0.1", 10)
+        packet_2 = Packet("192.168.1.1", "192.168.0.1", 10, 10)
         interface_2.put_to_link(packet_2)
 
     # Get the length of the sending Channel's payload and the last Packet

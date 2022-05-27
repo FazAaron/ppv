@@ -172,7 +172,7 @@ def test_node_disconnect_interface():
         node_1.connections[0][1][1] == node_2.connections[0][0][1] and \
         node_1.connections[0][1][0] == node_2.connections[0][0][0]
     node_1.get_interface("eth1").receive_channel.fill_payload(
-        Packet("127.0.0.1", "127.1.1.1", 10))
+        Packet("127.0.0.1", "127.1.1.1", 10, 10))
 
     # Disconnect an Interface the following ways:
     # - the Interface is invalid
@@ -240,7 +240,7 @@ def test_node_delete_interface():
 
     # Delete the Interface
     node.get_interface("eth1").receive_channel.fill_payload(
-        Packet("127.0.0.1", "127.1.1", 10))
+        Packet("127.0.0.1", "127.1.1", 10, 10))
     success_4 = node.delete_interface("eth1")
 
     assert not success_1[0] and \
@@ -426,7 +426,7 @@ def test_host_receive_packet():
     received_packet_1 = host_1.receive_packet("eth1")
 
     # Setup the Packet object
-    p = Packet("192.166.1.1", "192.167.1.1", 10)
+    p = Packet("192.166.1.1", "192.167.1.1", 10, 10)
 
     # Fill the receiving channel of every single Interface
     for interface in host_1.interfaces:
@@ -501,8 +501,8 @@ def test_router_lowest_buffer_ppv():
 
     # Add Packets to the buffer
     for _ in range(buffer_size - 1):
-        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
-    min_packet = Packet("192.167.1.1", "192.169.1.1", 5)
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10, 10))
+    min_packet = Packet("192.167.1.1", "192.169.1.1", 5, 10)
     router.buffer.append(min_packet)
 
     # Get the lowest PPV Packet from the buffer, with a single match, and get
@@ -514,9 +514,9 @@ def test_router_lowest_buffer_ppv():
     # distributed PPV
     router.buffer = []
     for _ in range(buffer_size - 3):
-        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10))
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 10, 10))
     for _ in range(3):
-        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 5))
+        router.buffer.append(Packet("192.167.1.1", "192.169.1.1", 5, 10))
 
     # Get the lowest PPV packet from the buffer, with multiple matches,
     # getting only the first one, and get the buffer length as well
@@ -548,7 +548,7 @@ def test_router_send_packet():
     next_hop_1 = router_1.send_packet()
 
     # Add a Packet to the buffer
-    router_1.buffer.append(Packet("192.166.1.1", "192.167.1.1", 5))
+    router_1.buffer.append(Packet("192.166.1.1", "192.167.1.1", 5, 10))
     prev_buffer_len = len(router_1.buffer)
 
     # Send the Packet, getting the next hop - None, in this case, because the
@@ -574,7 +574,7 @@ def test_router_send_packet():
     router_1.add_route(Route("192.168.1.1", "192.168.1.1", "eth1", 10))
 
     # Add a Packet to the Router's buffer
-    packet = Packet("192.167.1.1", "192.168.1.1", 10)
+    packet = Packet("192.167.1.1", "192.168.1.1", 10, 10)
     router_1.buffer.append(packet)
 
     # Send the Packet, succeeding, and get the next hop and the sending and
@@ -640,7 +640,7 @@ def test_router_receive_packet():
     host_1.add_interface("eth1")
 
     # Add a Packet to the Router's buffer with maximum PPV
-    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 8))
+    router_2.buffer.append(Packet("192.167.1.1", "192.168.1.1", 8, 10))
 
     # Connect the Host and the Router
     host_1.connect_to_interface(router_2, "eth1", "eth2", 10, 10)
@@ -651,7 +651,7 @@ def test_router_receive_packet():
 
     # Put a Packet with lower PPV than the one in the buffer to the receiving
     # Channel of the Router
-    packet_1 = Packet("192.167.1.1", "192.168.1.1", 7)
+    packet_1 = Packet("192.167.1.1", "192.168.1.1", 7, 10)
     router_2.get_interface("eth2").receive_channel.fill_payload(packet_1)
 
     # Receive the Packet successfully, dropping the incoming Packet
@@ -662,7 +662,7 @@ def test_router_receive_packet():
 
     # Put a Packet with higher PPV than the one in the buffer to the receiving
     # Channel of the Router
-    packet_2 = Packet("192.167.1.1", "192.168.1.1", 9)
+    packet_2 = Packet("192.167.1.1", "192.168.1.1", 9, 10)
     router_2.get_interface("eth2").receive_channel.fill_payload(packet_2)
 
     # Receive the Packet successfully, dropping the Packet from the Buffer

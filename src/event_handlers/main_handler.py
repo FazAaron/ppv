@@ -1262,7 +1262,8 @@ class MainHandler:
                         user_input[0], last_x, last_y)
                     self.routers.append((item_id, router_name))
 
-                    Thread(target=self.__router_thread, args=(router, ), daemon=True).start()
+                    Thread(target=self.__router_thread, args=(router, ), 
+                           daemon=True).start()
 
                     # Show a message and log accordingly
                     self.__show_and_log(f"Router {router_name} - {router_ip}",

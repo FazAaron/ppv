@@ -40,7 +40,7 @@ class Application:
         """
         return self.curr_sent < self.amount
 
-    def send(self, target_ip: str, ppv: int) -> Packet:
+    def send(self, target_ip: str, ppv: int, size: int) -> Packet:
         """
         Creates a Packet that will be sent through the Network if the
         Application can send
@@ -56,7 +56,7 @@ class Application:
         if self.can_send():
             # If yes, increase the sent Packets by 1, and return the Packet
             self.curr_sent += 1
-            packet: Packet = Packet(self.ip, target_ip, ppv)
+            packet: Packet = Packet(self.ip, target_ip, ppv, size)
             return packet
 
         return None

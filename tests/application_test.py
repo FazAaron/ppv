@@ -37,10 +37,10 @@ def test_application_send():
 
     # Send while it can send (while the curr_sent is less than amount)
     while app.curr_sent < app.amount:
-        app.send("127.0.0.1", 1)
+        app.send("127.0.0.1", 1, 10)
 
     assert app.curr_sent == app.amount and \
-        app.send("127.0.0.1", 1) is None, \
+        app.send("127.0.0.1", 1, 10) is None, \
         "Application.send() failure"
 
 
@@ -58,7 +58,7 @@ def test_application_can_send():
 
     # Send amount - 1 amount of Packets, still making sending available
     for _ in range(amount - 1):
-        app_1.send("127.0.0.1", 1)
+        app_1.send("127.0.0.1", 1, 10)
 
     # Setup the Application object
     name = "test_app"
@@ -70,7 +70,7 @@ def test_application_can_send():
 
     # Send amount of Packets, making sending not available
     for _ in range(amount):
-        app_2.send("127.0.0.1", 1)
+        app_2.send("127.0.0.1", 1, 10)
 
     assert app_1.can_send() and app_1.curr_sent < amount and \
         not app_2.can_send() and app_2.curr_sent == amount, \
@@ -90,7 +90,7 @@ def test_application_receive(capsys):
     app = Application(name, ip, amount, send_rate, app_type)
 
     # Create the Packet to "receive"
-    p = Packet("127.0.1.1", "127.0.0.1", 10)
+    p = Packet("127.0.1.1", "127.0.0.1", 10, 10)
 
     # Receive the Packet and capture the output
     app.receive(p)

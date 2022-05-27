@@ -34,7 +34,7 @@ def test_channel_fill_payload():
     previous_len = len(channel.payload)
 
     # Add the Packet to the payload
-    p = Packet("127.0.0.1", "127.1.1.1", 10)
+    p = Packet("127.0.0.1", "127.1.1.1", 10, 10)
     channel.fill_payload(p)
 
     assert channel.payload[0] == p and \
@@ -53,8 +53,8 @@ def test_channel_pop_payload():
     channel_1 = Channel(speed, metrics)
 
     # Fill the payload of the Channel with Packets
-    p_1 = Packet("127.0.0.1", "127.1.1.1", 10)
-    p_2 = Packet("127.0.0.1", "127.1.1.1", 7)
+    p_1 = Packet("127.0.0.1", "127.1.1.1", 10, 10)
+    p_2 = Packet("127.0.0.1", "127.1.1.1", 7, 10)
     channel_1.fill_payload(p_1)
     channel_1.fill_payload(p_2)
 

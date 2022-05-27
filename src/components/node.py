@@ -320,8 +320,9 @@ class Host(Node):
         if self.application.can_send():
             # Get the PPV, and get the corresponding Packet
             # Also fetch the best possible Route to the destination
+            # TODO not random PPV and not random size
             ppv: int = self.calculate_ppv()
-            packet: Packet = self.application.send(destination, ppv)
+            packet: Packet = self.application.send(destination, ppv, random.randint(1, 10))
             route: Route = self.get_best_route(destination)
 
             # Check if the destination can be reached, and the Packet was created
