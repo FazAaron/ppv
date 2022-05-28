@@ -373,7 +373,7 @@ class Host(Node):
         if interface is None:
             return False
 
-        # Get the Packet from the Link connected to the Interface        
+        # Get the Packet from the Link connected to the Interface
         packet: Packet = interface.receive_from_link()
 
         # Check if there was actually a Packet to receive
@@ -447,13 +447,12 @@ class Host(Node):
             return random.randint(8, 10)
         elif self.send_rate >= 10:
             return random.randint(9, 10)
-        else:
-            return 10
+        return 10
 
     def calculate_ppv(self) -> int:
         """
         Calculates the PPV for the next Packet \n
-        This is a specific, simple policy, and thus new policies can be 
+        This is a specific, simple policy, and thus new policies can be
         easily added for future use
 
         Returns:
@@ -596,7 +595,7 @@ class Router(Node):
         if interface is None:
             return (False, dropped_pack)
 
-        # Get the Packet from the Link connected to the Interface        
+        # Get the Packet from the Link connected to the Interface
         packet: Packet = interface.receive_from_link()
 
         # Check if there was actually a Packet to receive
