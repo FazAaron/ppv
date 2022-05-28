@@ -75,8 +75,9 @@ class Network:
         for router in self.routers:
             self.avg_ppv_dropped += router.ppv_dropped
 
-        # Get the average
-        self.avg_ppv_sent /= float(self.total_pack)
+        # Get the averages
+        if self.send_packet > 0:
+            self.avg_ppv_sent /= float(self.total_pack)
         if self.received_pack > 0:
             self.avg_ppv_received /= float(self.received_pack)
         if self.dropped_pack > 0:
