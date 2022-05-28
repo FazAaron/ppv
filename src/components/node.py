@@ -399,9 +399,9 @@ class Host(Node):
         if feedback == 1:
             self.send_rate += 1
             self.application.send_rate += 1
-            if self.send_rate > 99:
-                self.send_rate = 99
-                self.application.send_rate = 99
+            if self.send_rate > 9:
+                self.send_rate = 9
+                self.application.send_rate = 9
         # If the feedback was negative (the buffer was full), we need to decrease
         # the speed the Host is sending at
         elif feedback == -1:
@@ -428,26 +428,11 @@ class Host(Node):
             if packet_source == self.ip:
                 self.__handle_feedback(feedback)
 
-    def __ten_color_gold(self) -> int:
-        if self.send_rate >= 90:
-            return random.randint(1, 10)
-        elif self.send_rate >= 80:
-            return random.randint(2, 10)
-        elif self.send_rate >= 70:
-            return random.randint(3, 10)
-        elif self.send_rate >= 60:
-            return random.randint(4, 10)
-        elif self.send_rate >= 50:
-            return random.randint(5, 10)
-        elif self.send_rate >= 40:
-            return random.randint(6, 10)
-        elif self.send_rate >= 30:
-            return random.randint(7, 10)
-        elif self.send_rate >= 20:
-            return random.randint(8, 10)
-        elif self.send_rate >= 10:
-            return random.randint(9, 10)
-        return 10
+    def __nine_color_gold(self) -> int:
+        """
+        Gives a random PPV based on what the actual send_rate is
+        """
+        return random.randint(10 - self.send_rate, 10)
 
     def calculate_ppv(self) -> int:
         """
@@ -458,7 +443,7 @@ class Host(Node):
         Returns:
         int: The calculated PPV value for the next Packet
         """
-        return self.__ten_color_gold()
+        return self.__nine_color_gold()
 
     def __str__(self) -> str:
         to_return: str = ""

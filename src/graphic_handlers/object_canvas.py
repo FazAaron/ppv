@@ -286,7 +286,7 @@ class ObjectCanvas:
                                             "between 1 and 15 characters"
                                             "\nIP address:\n"
                                             "[0-255].[0-255].[0-255].[0-255]"
-                                            "\nSend Rate:\n1-99"), fg="black")
+                                            "\nSend Rate:\n1-9"), fg="black")
 
         self.label_1.config(text="Host Name")
         self.entry_1.config(state="normal")
@@ -337,7 +337,7 @@ class ObjectCanvas:
                                             "between 1 and 15 characters"
                                             "\nIP address:\n"
                                             "[0-255].[0-255].[0-255].[0-255]"
-                                            "\nSend Rate: 1-99"
+                                            "\nSend Rate: 1-9"
                                             "\nBuffer Size: 1-99"), fg="black")
 
         self.label_1.config(text="Router Name")
@@ -467,7 +467,7 @@ class ObjectCanvas:
         self.information_label.config(text="Application Name:\n"
                                       "between 1 and 15 characters"
                                       "\nPacket Amount: 1-99"
-                                      "\nSend Rate: 1-99"
+                                      "\nSend Rate: 1-9"
                                       "\nApplication Type: CONST/AIMD",
                                       fg="black")
 
