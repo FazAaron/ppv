@@ -432,7 +432,7 @@ class Host(Node):
         """
         Gives a random PPV based on what the actual send_rate is
         """
-        return random.randint(10 - self.send_rate, 10)
+        return random.randint(10 - self.send_rate, 9)
 
     def calculate_ppv(self) -> int:
         """
