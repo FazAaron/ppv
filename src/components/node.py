@@ -273,6 +273,8 @@ class Host(Node):
                       (Interface, Node)]): Host - Node connections
     routing_table          (RoutingTable): Routing table on the Host
     application             (Application): The Application on the Host
+    ppv_received            (int): The PPV sum of the Packets received
+    ppv_sent                (int): The PPV sum of the Packets sent
     """
 
     def __init__(self,
@@ -282,6 +284,8 @@ class Host(Node):
                  ) -> None:
         super().__init__(name, ip, send_rate)
         self.application: Application = None
+        self.ppv_received: int = 0
+        self.ppv_sent:     int = 0
 
     def set_application(self,
                         name: str,
@@ -320,9 +324,11 @@ class Host(Node):
         if self.application.can_send():
             # Get the PPV, and get the corresponding Packet
             # Also fetch the best possible Route to the destination
-            # TODO not random PPV and not random size
+            # Currently, the size of a Packet does not matter, because
+            # there is no policy enforced that could use it
             ppv: int = self.calculate_ppv()
-            packet: Packet = self.application.send(destination, ppv, random.randint(1, 10))
+            packet: Packet = self.application.send(destination, ppv,
+                                                   random.randint(1, 10))
             route: Route = self.get_best_route(destination)
 
             # Check if the destination can be reached, and the Packet was created
@@ -342,6 +348,9 @@ class Host(Node):
 
                     # Put the Packet to the Link
                     interface.put_to_link(packet)
+
+                    # Save the PPV for statistics in Network
+                    self.ppv_sent += ppv
 
                     # Return the next hop and it's corresponding receiver Interface
                     return route.gateway, receiver_interface
@@ -371,6 +380,9 @@ class Host(Node):
         if packet is not None:
             # Pass the Packet to the Application
             self.application.receive(packet)
+
+            # Save the PPV for statistics in Network
+            self.ppv_received += packet.ppv
             return True
 
         return False
@@ -416,15 +428,38 @@ class Host(Node):
             if packet_source == self.ip:
                 self.__handle_feedback(feedback)
 
-    # TODO make it so that packages' PPV are not randomly generated + comments
+    def __ten_color_gold(self) -> int:
+        if self.send_rate >= 90:
+            return random.randint(1, 10)
+        elif self.send_rate >= 80:
+            return random.randint(2, 10)
+        elif self.send_rate >= 70:
+            return random.randint(3, 10)
+        elif self.send_rate >= 60:
+            return random.randint(4, 10)
+        elif self.send_rate >= 50:
+            return random.randint(5, 10)
+        elif self.send_rate >= 40:
+            return random.randint(6, 10)
+        elif self.send_rate >= 30:
+            return random.randint(7, 10)
+        elif self.send_rate >= 20:
+            return random.randint(8, 10)
+        elif self.send_rate >= 10:
+            return random.randint(9, 10)
+        else:
+            return 10
+
     def calculate_ppv(self) -> int:
         """
-        Calculates the PPV for the next Packet.
+        Calculates the PPV for the next Packet \n
+        This is a specific, simple policy, and thus new policies can be 
+        easily added for future use
 
         Returns:
         int: The calculated PPV value for the next Packet
         """
-        return random.randint(1, 10)
+        return self.__ten_color_gold()
 
     def __str__(self) -> str:
         to_return: str = ""
@@ -453,15 +488,17 @@ class Router(Node):
     These are the Nodes in the Network that handle Packets marked with PPV
 
     Data members:
-    name                            (str): Name of the Host
-    ip                              (str): IP address of the Host
-    send_rate                       (int): Sending rate (Packets / second)
-    interfaces          (List[Interface]): Interfaces available on the Host
-    connections (List[(Interface, Node), \
-                      (Interface, Node)]): Host - Node connections
-    routing_table          (RoutingTable): Routing table on the Host
-    buffer                 (List[Packet]): Buffer for Packets to send out
-    buffer_size                     (int): Maximum buffer size available
+    name          (str): Name of the Host
+    ip            (str): IP address of the Host
+    send_rate     (int): Sending rate (Packets / second)
+    interfaces    (List[Interface]): Interfaces available on the Host
+    connections   (List[(Interface, Node), \
+                        (Interface, Node)]): Host - Node connections
+    routing_table (RoutingTable): Routing table on the Host
+    buffer        (List[Packet]): Buffer for Packets to send out
+    buffer_size   (int): Maximum buffer size available
+    ppv_dropped   (int): The PPV sum of Packets dropped, only accounted for \
+                  when the algorithm drops it
     """
 
     def __init__(self,
@@ -473,6 +510,7 @@ class Router(Node):
         super().__init__(name, ip, int(send_rate))
         self.buffer:      List[Packet] = []
         self.buffer_size: int = 0 if buffer_size < 0 else buffer_size
+        self.ppv_dropped: int = 0
 
     def get_buffer_length(self) -> int:
         """
@@ -579,6 +617,9 @@ class Router(Node):
                 if buffer_packet.ppv < packet.ppv:
                     self.buffer.remove(buffer_packet)
                     self.buffer.append(packet)
+                    self.ppv_dropped += buffer_packet.ppv
+                else:
+                    self.ppv_dropped += packet.ppv
 
                 dropped_pack = True
 

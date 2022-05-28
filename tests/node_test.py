@@ -447,8 +447,19 @@ def test_host_receive_packet():
         "Host.receive_packet() failure"
 
 
-# TODO: Test PPV generation properly
-def test_host_something_ppv(): pass
+def test_host_calculate_ppv():
+    # Setup the Host object
+    name = "host_2"
+    ip = "192.166.1.1"
+    send_rate = 10
+    host_2 = Host(name, ip, send_rate)
+    host_2.add_interface("eth2")
+
+    # Calculate a PPV between 9 and 10
+    ppv: int = host_2.calculate_ppv()
+
+    assert ppv == 9 or ppv == 10, \
+        "Host.calculate.ppv() failed"
 
 
 #------------------------------------------------#

@@ -12,6 +12,7 @@ from typing import List, Tuple
 from src.components.interface import Interface
 from src.components.node import Host, Node, Router
 from src.components.routing_table import Route
+from src.components.packet import Packet
 from src.utils.graph import Graph
 
 
@@ -28,12 +29,15 @@ class Network:
     """
 
     def __init__(self) -> None:
-        self.hosts:         List[Host] = []
-        self.routers:       List[Router] = []
-        self.graph:         Graph = Graph()
-        self.total_pack:    int = 0
-        self.dropped_pack:  int = 0
-        self.received_pack: int = 0
+        self.hosts:            List[Host] = []
+        self.routers:          List[Router] = []
+        self.graph:            Graph = Graph()
+        self.total_pack:       int = 0
+        self.dropped_pack:     int = 0
+        self.received_pack:    int = 0
+        self.avg_ppv_sent:     float = 0.0
+        self.avg_ppv_dropped:  float = 0.0
+        self.avg_ppv_received: float = 0.0
 
     def get_nodes(self) -> List[Node]:
         """
@@ -58,6 +62,26 @@ class Network:
             if host_name_or_ip in (host.name, host.ip):
                 return host
         return None
+
+    def __refresh_avg_ppv(self) -> None:
+        # Get the sum from Hosts
+        self.avg_ppv_sent = 0.0
+        self.avg_ppv_received = 0.0
+        self.avg_ppv_dropped = 0.0
+        for host in self.hosts:
+            self.avg_ppv_sent += host.ppv_sent
+            self.avg_ppv_received += host.ppv_received
+
+        # Get the sum from Routers
+        for router in self.routers:
+            self.avg_ppv_dropped += router.ppv_dropped
+
+        # Get the average
+        self.avg_ppv_sent /= float(self.total_pack)
+        if self.received_pack > 0:
+            self.avg_ppv_received /= float(self.received_pack)
+        if self.dropped_pack > 0:
+            self.avg_ppv_dropped /= float(self.dropped_pack)
 
     def __update_routing_tables(self) -> bool:
         """
@@ -518,6 +542,8 @@ class Network:
             self.get_router(destination_name_or_ip)
 
         # If either of them is None, return with None
+        # Needed to check like this, because Router does not require a destination
+        # to send
         if ((host and destination_node) is None) and (router is None):
             return None
 
@@ -534,10 +560,12 @@ class Network:
         # is none, then increase the dropped Packets and return None
         if next_hop is None:
             self.dropped_pack += 1
+            self.__refresh_avg_ppv()
             return None
 
         # Else return the next hop, the next hop's receiver interface and the
         # actual destination of the Packet, for future use by other classes
+        self.__refresh_avg_ppv()
         return (next_hop[0], next_hop[1], destination_name_or_ip)
 
     def receive_packet(self,
@@ -573,7 +601,9 @@ class Network:
         # If the Node is a Host, we are done
         if router is None:
             self.received_pack += 1
-            return node.receive_packet(interface_name)
+            success: bool = node.receive_packet(interface_name)
+            self.__refresh_avg_ppv()
+            return success
 
         # In the other case, we need to handle the dropped Packet and the
         # success separately
@@ -582,6 +612,7 @@ class Network:
         # If it dropped a Packet, increase the counter
         if ret_val[1]:
             self.dropped_pack += 1
+        self.__refresh_avg_ppv()
 
         # Return the success / failure
         return ret_val[0]

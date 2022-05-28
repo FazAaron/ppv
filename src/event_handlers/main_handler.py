@@ -229,10 +229,16 @@ class MainHandler:
         total_packets:    int = self.network.total_pack
         packets_dropped:  int = self.network.dropped_pack
         packets_received: int = self.network.received_pack
+        avg_sent:         float = self.network.avg_ppv_sent
+        avg_dropped:      float = self.network.avg_ppv_dropped
+        avg_received:     float = self.network.avg_ppv_received
 
         self.statistics_frame_handler.update_labels(total_packets,
                                                     packets_dropped,
-                                                    packets_received)
+                                                    packets_received,
+                                                    avg_sent,
+                                                    avg_dropped,
+                                                    avg_received)
 
     def __handle_interface_delete_submit(self) -> None:
         """
