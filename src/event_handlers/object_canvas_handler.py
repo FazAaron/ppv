@@ -568,11 +568,9 @@ class ObjectCanvasHandler:
         # name_regex is used for word-based names
         # ip_regex is used for IPs
         # digit_regex is used for almost anything that only consists of numbers
-        # send_rate_regex is used for the send rate
         name_regex: str = "^.{1,15}$"
         ip_regex: str = "^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$"
         digit_regex: str = "^\d{1,2}$"
-        send_rate_regex: str = "^[1-9]$"
 
         # Check the regex against the Entry fields based on what text the title
         # Label is currently showing
@@ -582,7 +580,7 @@ class ObjectCanvasHandler:
             snd: bool = regex_matches(
                 ip_regex, self.object_canvas.entry_2.get())
             thrd: bool = regex_matches(
-                send_rate_regex, self.object_canvas.entry_3.get())
+                digit_regex, self.object_canvas.entry_3.get())
             return frst and snd and thrd
         elif title_label.upper() == "PLACE ROUTER":
             frst: bool = regex_matches(
@@ -590,7 +588,7 @@ class ObjectCanvasHandler:
             snd: bool = regex_matches(
                 ip_regex, self.object_canvas.entry_2.get())
             thrd: bool = regex_matches(
-                send_rate_regex, self.object_canvas.entry_3.get())
+                digit_regex, self.object_canvas.entry_3.get())
             frth: bool = regex_matches(
                 digit_regex, self.object_canvas.entry_4.get())
             return frst and snd and thrd and frth
@@ -609,7 +607,7 @@ class ObjectCanvasHandler:
             snd: bool = regex_matches(
                 digit_regex, self.object_canvas.entry_2.get())
             thrd: bool = regex_matches(
-                send_rate_regex, self.object_canvas.entry_3.get())
+                digit_regex, self.object_canvas.entry_3.get())
             frth: bool = regex_matches(
                 app_type_regex, self.object_canvas.entry_4.get())
             return frst and snd and thrd and frth

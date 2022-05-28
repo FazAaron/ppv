@@ -458,7 +458,7 @@ def test_host_calculate_ppv():
     # Calculate a PPV between 9 and 10
     ppv: int = host_2.calculate_ppv()
 
-    assert ppv == 9, \
+    assert ppv == 10 or ppv == 9, \
         "Host.calculate.ppv() failed"
 
 
