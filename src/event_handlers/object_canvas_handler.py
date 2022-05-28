@@ -48,7 +48,6 @@ class ObjectCanvasHandler:
 
         self.hosts: List[Tuple[int, int, int]] = []
         self.routers: List[Tuple[int, int, int]] = []
-        #self.packets: List[List[int, int, int, int, int]] = []
         self.links: List[Tuple[int, int, int, int, int]] = []
 
         self.shown_message: Tuple[int, int, str] = ()
@@ -61,9 +60,6 @@ class ObjectCanvasHandler:
 
         self.node_width: int = 60
         self.node_height: int = 60
-
-        #self.packet_width: int = 10
-        #self.packet_height: int = 15
 
         self.frame_width: int = 350
         self.frame_height: int = 350
@@ -240,10 +236,6 @@ class ObjectCanvasHandler:
                 x, y, self.node_width, self.node_height, "ROUTER")
         for _, x1, y1, x2, y2 in self.links:
             self.object_canvas.draw_link(x1, y1, x2, y2)
-        #for _, x1, y1, x2, y2 in self.packets:
-            #self.object_canvas.draw_packet(x1, y1,
-                                           #self.packet_width,
-                                           #self.packet_height)
 
         # Only redraw the message, if there is actually a message to show
         if (self.shown_message != ()):
@@ -476,11 +468,6 @@ class ObjectCanvasHandler:
             self.links.append((item_id,
                                link_coords[0], link_coords[1],
                                link_coords[2], link_coords[3]))
-        #elif comp_type.upper() == "PACKET":
-            #item_id: int = self.object_canvas.draw_packet(x1, y1,
-                                                          #self.packet_width,
-                                                          #self.packet_height)
-            #self.packets.append([item_id, x1, y1, x2, y2])
 
         return item_id
 

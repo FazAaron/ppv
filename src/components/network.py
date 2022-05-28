@@ -12,7 +12,6 @@ from typing import List, Tuple
 from src.components.interface import Interface
 from src.components.node import Host, Node, Router
 from src.components.routing_table import Route
-from src.components.packet import Packet
 from src.utils.graph import Graph
 
 

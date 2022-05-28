@@ -1,9 +1,6 @@
 """
 This module makes Interface objects available for use when imported
 """
-# Built-in modules
-from typing import List
-
 # Self-made modules
 from src.components.link import Channel, Link
 from src.components.packet import Packet

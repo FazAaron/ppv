@@ -228,23 +228,6 @@ class ObjectCanvas:
         # Anchor is needed to make it right (east) aligned
         self.canvas.create_text(x, y, text=text, anchor="e")
 
-    #def draw_packet(self, x: int, y: int, width: int, height: int) -> int:
-        #"""
-        #Draws a Packet onto the Canvas
-
-        #Parameters:
-        #x      (int): The x coordinate of the starting point
-        #y      (int): The y coordinate of the starting point
-        #width  (int): The width of the Packet
-        #height (int): The height of the Packet
-
-        #Returns:
-        #int: The ID of the drawn item
-        #"""
-        #return self.canvas.create_rectangle(x, y,
-                                            #x + width, y + height,
-                                            #fill="black")
-
     def clear_canvas(self) -> None:
         """
         Clears the Canvas, removing everything that was drawn beforehand
